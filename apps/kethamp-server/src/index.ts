@@ -309,17 +309,13 @@ export const app = new Elysia()
   )
   .post(
     "/deploy",
-    async (req) => {
-      if (req.query.reset) await reset();
+    async () => {
+      await reset();
       const playlist = await getDeployPlaylist();
       playPlaylist(playlist);
       return "deploying...";
     },
-    {
-      query: t.Object({
-        reset: t.Boolean(),
-      }),
-    }
+    {}
   )
   .get(
     "/txs",

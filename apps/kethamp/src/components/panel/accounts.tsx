@@ -3,10 +3,14 @@
 import useSWR from "swr";
 
 export const Accounts = () => {
-  const { data, isLoading } = useSWR("/accounts", async () => {
-    const response = await fetch("http://localhost:1337/accounts");
-    return await response.json();
-  });
+  const { data, isLoading } = useSWR(
+    "/accounts",
+    async () => {
+      const response = await fetch("http://localhost:1337/accounts");
+      return await response.json();
+    },
+    { refreshInterval: 1000 }
+  );
   if (isLoading) return <div>Loading...</div>;
   const { chain0, chain1 } = data;
   return (

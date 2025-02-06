@@ -23,10 +23,14 @@ const Txs = ({ title, txs }: { title: string; txs: any[] }) => {
 };
 
 export const Transactions = () => {
-  const { data, isLoading } = useSWR("/", async () => {
-    const response = await fetch("http://localhost:1337/txs");
-    return await response.json();
-  });
+  const { data, isLoading } = useSWR(
+    "/",
+    async () => {
+      const response = await fetch("http://localhost:1337/txs");
+      return await response.json();
+    },
+    { refreshInterval: 1000 }
+  );
   if (isLoading) return <div>Loading...</div>;
   const chain0Txs = data.filter((tx: any) => tx.network === "kadena_devnet1");
   const chain1Txs = data.filter((tx: any) => tx.network === "kadena_devnet2");

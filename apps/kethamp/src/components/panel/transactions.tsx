@@ -1,6 +1,23 @@
 "use client";
 
 import useSWR from "swr";
+const Log = ({ log }: { log: any }) => {
+  if (log.event.startsWith("Transfer"))
+    return (
+      <div className="flex flex-col border p-4">
+        <div>{log.event}</div>
+        <div>
+          {log.args[0]} {"->"} {log.args[1]}: {log.args[2]}
+        </div>
+      </div>
+    );
+  return (
+    <div className="flex flex-col border p-4">
+      <div>{log.event}</div>
+      <div>{log.args.join(", ")}</div>
+    </div>
+  );
+};
 const Txs = ({ title, txs }: { title: string; txs: any[] }) => {
   return (
     <div className="flex flex-col border p-4">
@@ -9,11 +26,11 @@ const Txs = ({ title, txs }: { title: string; txs: any[] }) => {
         {txs.flatMap((tx: any) => (
           <div className="flex flex-col border p-4" key={tx.hash}>
             <div>{tx.blockNumber}</div>
+            {!tx.logs.length && (
+              <div>No Events available for this transaction</div>
+            )}
             {tx.logs.map((log: any) => (
-              <div className="flex flex-col" key={log.event}>
-                <div>{log.event}</div>
-                <div>{log.args.join(", ")}</div>
-              </div>
+              <Log log={log} key={tx.hash + log.args.join(",")} />
             ))}
           </div>
         ))}

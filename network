@@ -153,7 +153,7 @@ function blockscout () {
 # Devnet
 
 function show-ports () {
-    for i in chainweb-node chainweb-miner chainweb-evm-chain0 chainweb-evm-chain1 ; do
+    for i in chainweb-node chainweb-miner chainweb-evm-chain0 chainweb-evm-chain1 chainweb-evm-nginx ; do
         echo "$i:"
         docker port $i
         echo

@@ -216,6 +216,7 @@ services:
       info $$HEIGHT
 
   nginx:
+    container_name: chainweb-evm-nginx
     image: nginx:alpine
     ports:
       - 8888:80

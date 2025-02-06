@@ -1,0 +1,331 @@
+import hre from "hardhat";
+import { KDA } from "../typechain-types";
+import { Elysia, t } from "elysia";
+import { swagger } from "@elysiajs/swagger";
+import cors from "@elysiajs/cors";
+import { readFile, writeFile } from "fs/promises";
+import { existsSync, readFileSync } from "fs";
+
+type NetworkId = "kadena_devnet1" | "kadena_devnet2";
+type DeployTrack = {
+  type: "deploy";
+  network: NetworkId;
+};
+type RegisterCrossChainTrack = {
+  type: "register-cross-chain";
+  networks: NetworkId[];
+};
+type FundTrack = {
+  type: "fund";
+  network: NetworkId;
+  address: string;
+};
+type HardhatEthersSigner = Awaited<
+  ReturnType<typeof hre.ethers.getSigners>
+>[number];
+type TransferTrack = {
+  type: "transfer";
+  from: HardhatEthersSigner;
+  fromNetwork: NetworkId;
+  to: HardhatEthersSigner;
+  toNetwork: NetworkId;
+  amount: bigint;
+};
+type Track = DeployTrack | RegisterCrossChainTrack | FundTrack | TransferTrack;
+const getDeployPlaylist = async () => {
+  await hre.switchNetwork("kadena_devnet1");
+  const [, alice] = await hre.ethers.getSigners();
+  await hre.switchNetwork("kadena_devnet2");
+  const [, , bob] = await hre.ethers.getSigners();
+  const playlist: Track[] = [
+    {
+      type: "deploy",
+      network: "kadena_devnet1",
+    },
+    {
+      type: "deploy",
+      network: "kadena_devnet2",
+    },
+    {
+      type: "register-cross-chain",
+      networks: ["kadena_devnet1", "kadena_devnet2"],
+    },
+    {
+      type: "fund",
+      network: "kadena_devnet1",
+      address: alice.address,
+    },
+  ];
+  return playlist;
+};
+export const getPlaylist = async () => {
+  await hre.switchNetwork("kadena_devnet1");
+  const [, alice] = await hre.ethers.getSigners();
+  await hre.switchNetwork("kadena_devnet2");
+  const [, , bob] = await hre.ethers.getSigners();
+  const playlist: Track[] = [
+    {
+      type: "transfer",
+      from: alice,
+      fromNetwork: "kadena_devnet1",
+      to: bob,
+      toNetwork: "kadena_devnet2",
+      amount: 100n,
+    },
+    {
+      type: "transfer",
+      from: alice,
+      fromNetwork: "kadena_devnet1",
+      to: bob,
+      toNetwork: "kadena_devnet2",
+      amount: 200n,
+    },
+    {
+      type: "transfer",
+      from: bob,
+      fromNetwork: "kadena_devnet2",
+      to: alice,
+      toNetwork: "kadena_devnet1",
+      amount: 50n,
+    },
+  ];
+  return playlist;
+};
+
+type ContractMeta = {
+  [network: string]: string;
+};
+const reset = async () => {
+  await writeFile(".contracts.json", "{}");
+  await writeFile(".txs.json", "[]");
+};
+const saveContracts = async (contracts: ContractMeta) => {
+  const currentContracts = existsSync(".contracts.json")
+    ? JSON.parse(readFileSync(".contracts.json", "utf-8"))
+    : {};
+  await writeFile(
+    ".contracts.json",
+    JSON.stringify({ ...currentContracts, ...contracts })
+  );
+};
+const getContracts = async () => {
+  if (!existsSync(".contracts.json")) return {};
+  const data = await readFile(".contracts.json", "utf-8");
+  const contracts: ContractMeta = JSON.parse(data || "{}");
+  const result: any = {};
+  for (const [network, address] of Object.entries(contracts)) {
+    await hre.switchNetwork(network);
+    result[network] = await hre.ethers.getContractAt("KDA", address);
+  }
+  return result;
+};
+const getContract = async (network: NetworkId): Promise<KDA> => {
+  const contracts = await getContracts();
+  const contract = contracts[network];
+  if (!contract) throw new Error("Contract not deployed");
+  return contract;
+};
+const deploy = async (track: DeployTrack) => {
+  await hre.switchNetwork(track.network);
+  const KDA = await hre.ethers.getContractFactory("KDA");
+  const kda = await KDA.deploy();
+  const receipt = await kda.deploymentTransaction()?.wait();
+  await saveContracts({
+    [track.network]: await kda.getAddress(),
+  });
+  await saveTx(track.network, receipt);
+  return kda;
+};
+const eventSigHash =
+  "0x9d2528c24edd576da7816ca2bdaa28765177c54b32fb18e2ca18567fbc2a9550";
+const transfer = async (track: TransferTrack) => {
+  await hre.switchNetwork(track.fromNetwork);
+  const kda = await getContract(track.fromNetwork);
+  const tx = await kda
+    .connect(track.from)
+    .crossChainTransfer(
+      track.from.address,
+      track.to.address,
+      track.amount,
+      track.toNetwork
+    );
+  const receipt = await tx.wait();
+  if (!receipt) throw new Error("Transaction failed");
+  await saveTx(track.fromNetwork, receipt);
+  const logIndex = receipt?.logs.findIndex(
+    (log) => log.topics[0] === eventSigHash
+  );
+  // fetch SPV proof
+  getSPVProof({
+    networkId: track.fromNetwork,
+    height: receipt.blockNumber,
+    txIdx: receipt.index,
+    eventIdx: logIndex,
+  });
+  // send SPV proof to target chain
+  await hre.switchNetwork(track.toNetwork);
+  const kdaTo = await getContract(track.toNetwork);
+  const txTo = await kdaTo
+    .connect(track.to)
+    .crossChainReceive(
+      track.from.address,
+      track.to.address,
+      track.amount,
+      track.toNetwork,
+      receipt.blockNumber,
+      track.fromNetwork
+    );
+  await saveTx(track.toNetwork, await txTo.wait());
+};
+const getSPVProof = async ({}: {
+  networkId: NetworkId;
+  height: number;
+  txIdx: number;
+  eventIdx: number;
+}) => {};
+const fund = async (track: FundTrack) => {
+  await hre.switchNetwork(track.network);
+  const [owner] = await hre.ethers.getSigners();
+  const kda = await getContract(track.network);
+  if (!kda) throw new Error("Contract not deployed");
+  const tx = await kda.connect(owner).transfer(track.address, 1000n);
+  await saveTx(track.network, await tx.wait());
+};
+const registerCrossChain = async (track: RegisterCrossChainTrack) => {
+  for (const network of track.networks) {
+    await hre.switchNetwork(network);
+    const kda = await getContract(network);
+    const address = await kda.getAddress();
+    for (const otherNetwork of track.networks) {
+      if (network === otherNetwork) continue;
+      await hre.switchNetwork(otherNetwork);
+      const [owner] = await hre.ethers.getSigners();
+      const tx = await kda
+        .connect(owner)
+        .setCrossChainAddress(network, address);
+      await saveTx(network, await tx.wait());
+    }
+  }
+};
+export const play = async (track: Track) => {
+  if (track.type === "deploy") return await deploy(track);
+  if (track.type === "fund") return await fund(track);
+  if (track.type === "transfer") return await transfer(track);
+  if (track.type === "register-cross-chain")
+    return await registerCrossChain(track);
+  throw new Error("Unknown track type");
+};
+
+const playPlaylist = async (playList: Track[]) => {
+  for (const track of playList) {
+    console.warn("DEBUGPRINT[97]: playlist.ts:169: track=", track.type);
+    try {
+      await play(track);
+    } catch (e) {
+      console.error("Error in track", e);
+    }
+  }
+};
+const getTxs = async () => {
+  if (!existsSync(".txs.json")) return [];
+  const data = await readFile(".txs.json", "utf-8");
+  return JSON.parse(data || "[]") as any[];
+};
+const saveTx = async (network: NetworkId, newTx: any) => {
+  const currentTxs = await getTxs();
+  const contracts = await getContracts();
+  const allTxs = [
+    ...currentTxs,
+    {
+      ...newTx.toJSON(),
+      network,
+      logs: newTx.logs.map((log: any) => {
+        const x = contracts.kadena_devnet1?.interface.parseLog(log);
+        return {
+          event: x?.fragment.format(),
+          args: x?.args.map((arg: any) => arg.toString()),
+        };
+      }),
+    },
+  ];
+  await writeFile(".txs.json", JSON.stringify(allTxs));
+};
+const getBalance = async (address: any, network: NetworkId) => {
+  try {
+    await hre.switchNetwork(network);
+    const kda = await getContract(network);
+    return hre.ethers.FixedNumber.fromValue(
+      await kda.connect(address).balanceOf(address.address),
+      18
+    ).toString();
+  } catch (e) {
+    return 0;
+  }
+};
+
+export const app = new Elysia()
+  .use(cors())
+  .use(swagger())
+  .get(
+    "/accounts",
+    async () => {
+      await hre.switchNetwork("kadena_devnet1");
+      const [owner, alice, bob] = await hre.ethers.getSigners();
+      const chain0 = {
+        alice: {
+          address: alice.address,
+          balance: await getBalance(alice, "kadena_devnet1"),
+        },
+        bob: {
+          address: bob.address,
+          balance: await getBalance(bob, "kadena_devnet1"),
+        },
+      };
+      await hre.switchNetwork("kadena_devnet2");
+      const [owner1, alice1, bob1] = await hre.ethers.getSigners();
+      const chain1 = {
+        alice: {
+          address: alice1.address,
+          balance: await getBalance(alice1, "kadena_devnet2"),
+        },
+        bob: {
+          address: bob1.address,
+          balance: await getBalance(bob1, "kadena_devnet2"),
+        },
+      };
+
+      return { chain0, chain1 };
+    },
+    {}
+  )
+  .post(
+    "/playlist",
+    async () => {
+      const playlist = await getPlaylist();
+      playPlaylist(playlist);
+      return "queued";
+    },
+    {}
+  )
+  .post(
+    "/deploy",
+    async (req) => {
+      if (req.query.reset) await reset();
+      const playlist = await getDeployPlaylist();
+      playPlaylist(playlist);
+      return "deploying...";
+    },
+    {
+      query: t.Object({
+        reset: t.Boolean(),
+      }),
+    }
+  )
+  .get(
+    "/txs",
+    async () => {
+      return await getTxs();
+    },
+    {}
+  )
+  .listen(1337);

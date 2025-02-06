@@ -1,0 +1,15 @@
+{
+  "name": "kethamp-server",
+  "devDependencies": {
+    "@nomicfoundation/hardhat-toolbox": "^5.0.0",
+    "@openzeppelin/contracts": "^5.2.0",
+    "hardhat": "^2.22.18",
+    "hardhat-switch-network": "^1.2.0",
+    "hardhat-watcher": "^2.5.0"
+  },
+  "dependencies": {
+    "@elysiajs/cors": "^1.2.0",
+    "@elysiajs/swagger": "^1.2.0",
+    "elysia": "^1.2.12"
+  }
+}

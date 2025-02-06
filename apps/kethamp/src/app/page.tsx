@@ -1,11 +1,13 @@
+import { Accounts } from "@app/components/panel/accounts";
 import Panel from "@app/components/panel/panel";
+import { Transactions } from "@app/components/panel/transactions";
 
 export default function Main() {
   return (
     <div className="font-[family-name:var(--font-geist-sans)]">
-      <main className="w-full m-auto max-w-[640px]">
-        <Panel />
-      </main>
+      <Panel />
+      <Accounts />
+      <Transactions />
     </div>
   );
 }

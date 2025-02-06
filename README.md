@@ -44,8 +44,8 @@ For running the development network:
 
 For deploying the Solidity contracts with hardhat:
 
--   A local [Node.js](https://nodejs.org) and
-    [npx](https://docs.npmjs.com/cli/v8/commands/npx) installation.
+-   A local [Node.js](https://nodejs.org), [npm](https://www.npmjs.com) (or
+    yarn), and [npx](https://docs.npmjs.com/cli/v8/commands/npx) installation.
 
 For running the Blockscout instances:
 
@@ -83,13 +83,6 @@ Check that blocks are being produced:
 Call the previous command repeatedly and check that the cut height value is
 increasing.
 
-Deploy the simple token contract and test that cross chain transfers are
-working:
-
-```sh
-./network solidity test
-```
-
 Explore available commands for managing and monitoring the network:
 
 ```sh
@@ -108,6 +101,24 @@ via:
 ```sh
 ./network devnet restart
 ```
+
+### Test Simple Token Contract
+
+Before running the simple token contract tests for the first time one needs to
+install hardhat. This can be done with the following command.
+
+```sh
+./network solidity setup
+```
+
+When hardhat is installed the simple token contract can be tested via:
+
+```sh
+./network solidity test
+```
+
+This will run several tests for contract deployment and cross chain transfers
+between the two EVM chains.
 
 ## Network Components
 

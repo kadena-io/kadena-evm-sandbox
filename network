@@ -17,7 +17,8 @@ function info() {
 
 function solidity-help () {
     echo "Solidity commands:"
-    echo "  solidity test  run all simple token contract tests"
+    echo "  solidity setup  install hardhat"
+    echo "  solidity test   run all simple token contract tests"
 }
 
 function blockscout-help () {
@@ -67,6 +68,13 @@ function solidity () {
         help|h) 
             shift
             solidity-help
+            ;;
+        setup)
+            shift
+            (
+                cd solidity &&
+                npm install hardhat
+            )
             ;;
         test)
             shift

@@ -1,5 +1,9 @@
 {
   "name": "kethamp-server",
+  "scripts": {
+    "start": "bun run ./src/index.ts",
+    "dev": "bun run ./src/index.ts --watch"
+  },
   "devDependencies": {
     "@nomicfoundation/hardhat-toolbox": "^5.0.0",
     "@openzeppelin/contracts": "^5.2.0",

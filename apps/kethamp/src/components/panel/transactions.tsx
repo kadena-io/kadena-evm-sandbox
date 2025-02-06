@@ -52,7 +52,7 @@ export const Transactions = () => {
     },
     { refreshInterval: 1000 }
   );
-  if (isLoading) return <div>Loading...</div>;
+  if (!data?.length || isLoading) return <div>Loading...</div>;
   const [firstTx] = data;
   const minBlockNumber = firstTx.blockNumber;
   const lastBlockNumber = data[data.length - 1].blockNumber;

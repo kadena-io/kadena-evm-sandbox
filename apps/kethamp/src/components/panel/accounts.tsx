@@ -11,7 +11,7 @@ export const Accounts = () => {
     },
     { refreshInterval: 1000 }
   );
-  if (isLoading) return <div>Loading...</div>;
+  if (!data || isLoading) return <div>Loading...</div>;
   const { chain0, chain1 } = data;
   return (
     <div className="grid grid-cols-2">

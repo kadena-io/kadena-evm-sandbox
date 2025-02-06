@@ -70,7 +70,7 @@ export const getPlaylist = async () => {
       fromNetwork: "kadena_devnet1",
       to: bob,
       toNetwork: "kadena_devnet2",
-      amount: 100n,
+      amount: 100n * 10n ** 2n,
     },
     {
       type: "transfer",
@@ -78,7 +78,7 @@ export const getPlaylist = async () => {
       fromNetwork: "kadena_devnet1",
       to: bob,
       toNetwork: "kadena_devnet2",
-      amount: 200n,
+      amount: 200n * 10n ** 2n,
     },
     {
       type: "transfer",
@@ -86,7 +86,7 @@ export const getPlaylist = async () => {
       fromNetwork: "kadena_devnet2",
       to: alice,
       toNetwork: "kadena_devnet1",
-      amount: 50n,
+      amount: 50n * 10n ** 2n,
     },
   ];
   return playlist;
@@ -188,7 +188,9 @@ const fund = async (track: FundTrack) => {
   const [owner] = await hre.ethers.getSigners();
   const kda = await getContract(track.network);
   if (!kda) throw new Error("Contract not deployed");
-  const tx = await kda.connect(owner).transfer(track.address, 1000n);
+  const tx = await kda
+    .connect(owner)
+    .transfer(track.address, 1000n * 10n ** 2n);
   await saveTx(track.network, await tx.wait());
 };
 const registerCrossChain = async (track: RegisterCrossChainTrack) => {

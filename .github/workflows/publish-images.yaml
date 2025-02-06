@@ -1,0 +1,93 @@
+name: publish-images
+
+on:
+  push:
+  workflow_dispatch:
+
+env:
+  AMD_VERSION: ${{ github.sha }}-linux-amd64
+  ARM_VERSION: ${{ github.sha }}-linux-arm64
+
+jobs:
+  bake-amd:
+    env:
+      VERSION: ${{ github.sha }}-linux-amd64
+    runs-on: ubuntu-latest
+    steps:
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: kadena-build
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Build and push
+        uses: docker/bake-action@v6
+        with:
+          push: true
+          set: |
+            *.platform=linux/amd64
+
+  bake-arm:
+    env:
+      VERSION: ${{ github.sha }}-linux-arm64
+    runs-on: ubuntu-22.04-arm
+    steps:
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: kadena-build
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Build and push
+        uses: docker/bake-action@v6
+        with:
+          push: true
+          set: |
+            *.platform=linux/arm64
+
+  collect:
+    env:
+      VERSION: latest
+    runs-on: ubuntu-latest
+    needs:
+      - bake-amd
+      - bake-arm
+    steps:
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: kadena-build
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create Kadena-Reth multiplatform image
+        run: >
+          docker buildx imagetools create 
+            -t ghcr.io/kadena-io/evm-devnet-kadena-reth:${{ env.VERSION }}
+            -t ghcr.io/kadena-io/evm-devnet-kadena-reth:${{ github.sha }}
+            ghcr.io/kadena-io/evm-devnet-kadena-reth:${{ env.AMD_VERSION }}
+            ghcr.io/kadena-io/evm-devnet-kadena-reth:${{ env.ARM_VERSION }}
+
+      - name: Create Allocations multiplatform image
+        run: >
+          docker buildx imagetools create 
+            -t ghcr.io/kadena-io/evm-devnet-allocations:${{ env.VERSION }}
+            -t ghcr.io/kadena-io/evm-devnet-kadena-reth:${{ github.sha }}
+            ghcr.io/kadena-io/evm-devnet-allocations:${{ env.AMD_VERSION }}
+            ghcr.io/kadena-io/evm-devnet-allocations:${{ env.ARM_VERSION }}
+
+      - name: Create Chainweb-Node multiplatform image
+        run: >
+          docker buildx imagetools create 
+            -t ghcr.io/kadena-io/evm-devnet-chainweb-node:${{ env.VERSION }}
+            -t ghcr.io/kadena-io/evm-devnet-kadena-reth:${{ github.sha }}
+            ghcr.io/kadena-io/evm-devnet-chainweb-node:${{ env.AMD_VERSION }}
+            ghcr.io/kadena-io/evm-devnet-chainweb-node:${{ env.ARM_VERSION }}
+

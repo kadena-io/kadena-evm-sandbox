@@ -1,0 +1,45 @@
+services:
+
+  reth-common:
+    restart: unless-stopped
+    image: ghcr.io/kadena-io/evm-devnet-kadena-reth:latest
+    build:
+      context: ../rust
+      dockerfile: Dockerfile
+    volumes:
+      - logs:/root/logs/
+    secrets:
+      - jwtsecret
+    expose:
+      - 8545
+      - 8546
+      - 8551
+      - 9001
+    ulimits:
+      nofile:
+        soft: 65535
+        hard: 65535
+    entrypoint:
+      - /app/kadena-reth
+      - node
+      - --metrics=0.0.0.0:9001
+      - --log.file.directory=/root/logs
+      # authrpc
+      - --authrpc.jwtsecret=/run/secrets/jwtsecret
+      - --authrpc.addr=0.0.0.0
+      - --authrpc.port=8551
+      # http
+      - --http
+      - --http.addr=0.0.0.0
+      - --http.port=8545
+      - --http.api=admin,debug,eth,net,trace,txpool,web3,rpc,reth,ots
+      # websocket
+      - --ws
+      - --ws.addr=0.0.0.0
+      - --ws.port=8546
+      - --ws.api=admin,debug,eth,net,trace,txpool,web3,rpc,reth,ots
+      # discovery
+      - --disable-nat
+      - --nat=none
+      - --disable-dns-discovery
+      - --discovery.port=30303

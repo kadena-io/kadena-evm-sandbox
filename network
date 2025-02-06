@@ -1,0 +1,308 @@
+#!/usr/bin/env bash
+
+NETWORK_DIR=devnet
+SOLIDITY_DIR=solidity
+BLOCKSCOUT_DIR=blockscout
+
+APP_NAME=$(basename ${0})
+
+# ############################################################################# #
+# Usage and Help
+#
+# Please keep this updated
+
+function info() {
+    echo "$APP_NAME: Control Kadena EVM Devnet"
+}
+
+function solidity-help () {
+    echo "Solidity commands:"
+    echo "  solidity test  run all simple token contract tests"
+}
+
+function blockscout-help () {
+    echo "Blockscout commands:"
+    echo "  blockscout pull   pull container images for all blockscout services"
+    echo "  blockscout start  start block scope instances for the EVM chains"
+    echo "  blockscout stop   stop block scope instances for the EVM chains"
+    echo "  (The UIs are served at http://localhost:8000 and http://localhost:8001.)"
+}
+
+function devnet-help () {
+    echo "Devnet commands:"
+    echo "  devnet pull            pull container images for all devnet services"
+    echo "  devnet start|up        start the network with default components"
+    echo "  devnet stop|down       shutdown the network and reset all database"
+    echo "  devnet allocations     print information about pre-allocated wallets"
+    echo "  devnet state|status    print lastest consensus state for all chains in the network"
+    echo "  devnet restart         restart the chainweb-node service"
+    echo "  devnet ports           show ports of available services"
+    echo "  devnet height-details  return detailed information for a given block height or 'latest' in JSON"
+    echo "  devnet services        show status of services in the network (docker compose ps)"
+    echo "  devnet chain-config    show chainweb chain configuration"
+    echo "  devnet curl            run a curl command from within the docker network"
+    echo "  devnet reth-db         run a reth CLI database debugging command (first argument is the chain, i.e. 0 or 1)"
+}
+
+function usage() {
+    echo "Common commands:"
+    echo "  pull  pull container images for all services"
+    echo "  help  print this message"
+    echo
+    devnet-help
+    echo
+    solidity-help
+    echo 
+    blockscout-help
+}
+
+# ############################################################################# #
+# Solidity
+
+# TODO check that the network is running
+#
+function solidity () {
+    local CMD=$1
+    case "$CMD" in
+        help|h) 
+            shift
+            solidity-help
+            ;;
+        test)
+            shift
+            (
+                cd solidity &&
+                npx hardhat test
+            )
+            ;;
+        "")
+            shift
+            echo "Missing solidity command"
+            echo
+            solidity-help
+            ;;
+        *)
+            shift
+            echo "Unknown solidity command: $CMD"
+            echo
+            solidity-help
+            ;;
+    esac
+}
+
+# ############################################################################# #
+# Blockscout
+
+function blockscout () {
+    local CMD=$1
+    case "$CMD" in
+        help|h) 
+            shift
+            blockscout-help
+            ;;
+        pull)
+            shift
+            (
+                cd "$BLOCKSCOUT_DIR" && 
+                docker compose -f chain-0.yaml pull
+                docker compose -f chain-1.yaml pull
+            )
+            ;;
+        start|up)
+            shift
+            (
+                cd "$BLOCKSCOUT_DIR" &&
+                docker compose -f chain-0.yaml up -d --pull=missing
+                docker compose -f chain-1.yaml up -d --pull=missing
+                echo "chain 0: http://localhost:8000"
+                echo "chain 1: http://localhost:8001"
+            )
+            ;;
+        stop|down|shutdown)
+            shift
+            (
+                cd "$BLOCKSCOUT_DIR" && 
+                docker compose -f chain-0.yaml down --remove-orphans -v
+                docker compose -f chain-1.yaml down --remove-orphans -v
+            )
+            ;;
+        "")
+            shift
+            echo "Missing blockscout command"
+            echo
+            blockscout-help
+            ;;
+        *)
+            shift
+            echo "Unknown blockscout command: $CMD"
+            echo
+            blockscout-help
+            ;;
+    esac
+}
+
+# ############################################################################# #
+# Devnet
+
+function show-ports () {
+    for i in chainweb-node chainweb-miner chainweb-evm-chain0 chainweb-evm-chain1 ; do
+        echo "$i:"
+        docker port $i
+        echo
+    done
+}
+
+function devnet () {
+    local CMD=$1
+    case "$CMD" in
+        help|h) 
+            shift
+            devnet-help
+            ;;
+        pull)
+            shift
+            (
+                cd "$NETWORK_DIR" && 
+                docker compose pull
+            )
+            ;;
+        start|up)
+            shift
+            (
+                cd "$NETWORK_DIR" && 
+                docker compose up -d && 
+                docker compose run --rm -t allocations
+            )
+            ;;
+        stop|down|shutdown)
+            shift
+            (
+                cd "$NETWORK_DIR" && 
+                docker compose down --remove-orphans -v
+            )
+            ;;
+        restart)
+            shift
+            (
+                cd "$NETWORK_DIR" && 
+                docker compose restart chainweb-node
+            )
+            ;;
+        state|status)
+            shift
+            (
+                cd "$NETWORK_DIR" && 
+                bash state.sh
+            )
+            ;;
+        allocations)
+            shift
+            (
+                cd "$NETWORK_DIR" &&
+                docker compose run --rm -t allocations
+            )
+            ;;
+        chain-config)
+            shift
+            (
+                cd "$NETWORK_DIR" && 
+                docker compose run -ti --rm curl -skL https://chainweb-node:1789/config | jq -rC '.payloadProviders'
+            )
+            ;;
+        ports)
+            shift
+            (
+                cd "$NETWORK_DIR" &&
+                show-ports
+            )
+            ;;
+        height-details)
+            shift
+            export HEIGHT=${1:-latest}
+            shift
+            (
+                cd "$NETWORK_DIR" &&
+                docker compose run --rm -t debug "source ./functions.sh; info $HEIGHT"
+            )
+            ;;
+        curl)
+            shift
+            (
+                cd "$NETWORK_DIR" &&
+                docker compose run --rm -t curl "$@"
+            )
+            ;;
+        services)
+            shift
+            (
+                cd "$NETWORK_DIR" &&
+                docker compose ps
+            )
+            ;;
+        reth-db)
+            shift
+            export CHAIN=${1:-0}
+            shift
+            (
+                cd "$NETWORK_DIR" &&
+                docker compose exec "chainweb-evm-chain$CHAIN" kadena-reth db --datadir="/root/.local/share/reth/$((1789 + $CHAIN))/" "$@"
+            )
+            ;;
+        "")
+            shift
+            echo "Missing devnet command"
+            echo
+            devnet-help
+            ;;
+        *)
+            shift
+            echo "Unknown devnet command: $CMD"
+            echo
+            devnet-help
+            ;;
+    esac
+}
+
+# ############################################################################# #
+# Main
+
+CMD=$1
+
+case "$CMD" in
+    help|usage|h) 
+        shift
+        info
+        echo
+        usage "$@"
+        ;;
+    pull)
+        shift
+        devnet pull
+        blockscout pull
+        ;;
+    devnet)
+        shift
+        devnet "$@"
+        ;;
+    blockscout)
+        shift
+        blockscout "$@"
+        ;;
+    solidity)
+        shift
+        solidity "$@"
+        ;;
+    "")
+        shift
+        echo "Missing Command"
+        echo
+        usage
+        ;;
+    *)
+        shift
+        echo "Unknown command: $CMD" 
+        echo
+        usage
+        ;;
+esac
+

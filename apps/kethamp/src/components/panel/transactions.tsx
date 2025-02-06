@@ -1,5 +1,6 @@
 "use client";
 
+import { useCallback, useState } from "react";
 import useSWR from "swr";
 const Log = ({ log }: { log: any }) => {
   if (log.event.startsWith("Transfer"))
@@ -40,6 +41,9 @@ const Txs = ({ title, txs }: { title: string; txs: any[] }) => {
 };
 
 export const Transactions = () => {
+  const [playTime, setPlayTime] = useState(0);
+  const forward = useCallback(() => setPlayTime((t) => t + 1), []);
+  const backwards = useCallback(() => setPlayTime((t) => t - 1), []);
   const { data, isLoading } = useSWR(
     "/",
     async () => {
@@ -49,12 +53,40 @@ export const Transactions = () => {
     { refreshInterval: 1000 }
   );
   if (isLoading) return <div>Loading...</div>;
-  const chain0Txs = data.filter((tx: any) => tx.network === "kadena_devnet1");
-  const chain1Txs = data.filter((tx: any) => tx.network === "kadena_devnet2");
+  const [firstTx] = data;
+  const minBlockNumber = firstTx.blockNumber;
+  const lastBlockNumber = data[data.length - 1].blockNumber;
+  const duration = lastBlockNumber - minBlockNumber;
+
+  const maxDisplayedTxBlock = playTime * 0.01 * duration;
+
+  const displayedTxs = data.filter(
+    (tx: any) => tx.blockNumber > lastBlockNumber - maxDisplayedTxBlock
+  );
+  const chain0Txs = displayedTxs.filter(
+    (tx: any) => tx.network === "kadena_devnet1"
+  );
+  const chain1Txs = displayedTxs.filter(
+    (tx: any) => tx.network === "kadena_devnet2"
+  );
   return (
-    <div className="grid grid-cols-2">
-      <Txs title="Chain 0" txs={chain0Txs} />
-      <Txs title="Chain 1" txs={chain1Txs} />
+    <div>
+      <button
+        className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+        onClick={backwards}
+      >
+        {"<"}
+      </button>
+      <button
+        className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+        onClick={forward}
+      >
+        {">"}
+      </button>
+      <div className="grid grid-cols-2">
+        <Txs title="Chain 0" txs={chain0Txs} />
+        <Txs title="Chain 1" txs={chain1Txs} />
+      </div>
     </div>
   );
 };

@@ -13,7 +13,7 @@ const kodeMono = Kode_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "KEthAmp | Kadena @ ETH Denver",
+  title: "Kadena @ ETH Denver 2025",
   description: "Demo app created for ETH Denver 2025",
 };
 

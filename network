@@ -7,48 +7,119 @@ BLOCKSCOUT_DIR=blockscout
 APP_NAME=$(basename ${0})
 
 # ############################################################################# #
+# Failure Messages
+
+if [ -t 1 ] ; then
+    B="\x1B[1;97m"
+    RED="\x1B[31m"
+    BRED="\x1B[1;31m"
+    FRED="\x1B[2;31m"
+    GREEN="\x1B[32m"
+    YELLOW="\x1B[33m"
+    BLUE="\x1B[34m"
+    R="\x1B[0m"
+else
+    B=
+    RED=
+    BRED=
+    FRED=
+    GREEN=
+    YELLOW=
+    BLUE=
+    R=
+fi
+
+function color-echo () {
+    local color=$1
+    shift
+    echo -e "${color}$@${R}"
+}
+
+function fail-unknown () {
+    local topic=$1
+    local help=$2
+    local cmd=$3
+    { 
+        echo -e "${BRED}Error: unknown" $topic "command: ${cmd}${R}"
+        echo
+        "${help}"
+    } >&2
+    exit 1
+}
+
+function fail-missing () {
+    local topic=$1
+    local help=$2
+    { 
+        echo -e "${BRED}Error: missing" $topic "command${R}"
+        echo
+        "${help}"
+    } >&2
+    exit 1
+}
+
+# ############################################################################# #
+# Check dependencies
+
+function check-tool () {
+    command -v "$1" >/dev/null 2>&1 || 
+        { color-echo $RED >&2 "Missing program $1 ($2), which is required. Exiting."; exit 1; }
+}
+
+function check-docker-compose () {
+    docker compose version 1>/dev/null 2>&1 ||
+        { color-echo $RED >&2 "Missing docker compose extension (https://docs.docker.com/compose/), which is required. Exiting."; exit 1; }
+}
+
+check-tool "docker" "https://www.docker.com"
+check-docker-compose
+check-tool "npm" "https://www.npmjs.com"
+check-tool "npx" "https://docs.npmjs.com/cli/v8/commands/npx"
+check-tool "jq" "https://jqlang.org"
+
+# ############################################################################# #
 # Usage and Help
 #
 # Please keep this updated
 
 function info() {
-    echo "$APP_NAME: Control Kadena EVM Devnet"
+    echo -e "${BLUE}$APP_NAME: Control Kadena EVM Devnet${R}"
 }
 
 function solidity-help () {
-    echo "Solidity commands:"
-    echo "  solidity setup  install hardhat"
-    echo "  solidity test   run all simple token contract tests"
+    echo -e "${YELLOW}Solidity commands:${R}"
+    echo -e "  ${B}solidity setup${R}  install hardhat"
+    echo -e "  ${B}solidity test${R}   run all simple token contract tests"
 }
 
 function blockscout-help () {
-    echo "Blockscout commands:"
-    echo "  blockscout pull   pull container images for all blockscout services"
-    echo "  blockscout start  start block scope instances for the EVM chains"
-    echo "  blockscout stop   stop block scope instances for the EVM chains"
-    echo "  (The UIs are served at http://localhost:8000 and http://localhost:8001.)"
+    echo -e "${YELLOW}Blockscout commands:${R}"
+    echo -e "  ${B}blockscout pull${R}   pull container images for all blockscout services"
+    echo -e "  ${B}blockscout start${R}  start block scope instances for the EVM chains"
+    echo -e "  ${B}blockscout stop${R}   stop block scope instances for the EVM chains"
+    echo -e "  (The UIs are served at http://localhost:8000 and http://localhost:8001.)"
 }
 
 function devnet-help () {
-    echo "Devnet commands:"
-    echo "  devnet pull            pull container images for all devnet services"
-    echo "  devnet start|up        start the network with default components"
-    echo "  devnet stop|down       shutdown the network and reset all database"
-    echo "  devnet allocations     print information about pre-allocated wallets"
-    echo "  devnet state|status    print lastest consensus state for all chains in the network"
-    echo "  devnet restart         restart the chainweb-node service"
-    echo "  devnet ports           show ports of available services"
-    echo "  devnet height-details  return detailed information for a given block height or 'latest' in JSON"
-    echo "  devnet services        show status of services in the network (docker compose ps)"
-    echo "  devnet chain-config    show chainweb chain configuration"
-    echo "  devnet curl            run a curl command from within the docker network"
-    echo "  devnet reth-db         run a reth CLI database debugging command (first argument is the chain, i.e. 0 or 1)"
+    echo -e "${YELLOW}Devnet commands:${R}"
+    echo -e "  ${B}devnet pull${R}            pull container images for all devnet services"
+    echo -e "  ${B}devnet start|up${R}        start the network with default components"
+    echo -e "  ${B}devnet stop|down${R}       shutdown the network and reset all database"
+    echo -e "  ${B}devnet allocations${R}     print information about pre-allocated wallets"
+    echo -e "  ${B}devnet state|status${R}    print lastest consensus state for all chains in the network"
+    echo -e "  ${B}devnet restart${R}         restart the chainweb-node service"
+    echo -e "  ${B}devnet ports${R}           show ports of available services"
+    echo -e "  ${B}devnet height-details${R}  return detailed information for a given block height or 'latest' in JSON"
+    echo -e "  ${B}devnet services${R}        show status of services in the network (docker compose ps)"
+    echo -e "  ${B}devnet chain-config${R}    show chainweb chain configuration"
+    echo -e "  ${B}devnet curl${R}            run a curl command from within the docker network"
+    echo -e "  ${B}devnet reth-db${R}         run a reth CLI database debugging command (first argument is the chain, i.e. 0 or 1)"
 }
 
 function usage() {
-    echo "Common commands:"
-    echo "  pull  pull container images for all services"
-    echo "  help  print this message"
+    echo -e "${YELLOW}Common commands:${R}"
+    echo -e "  ${B}pull${R}  pull container images for all services"
+    echo -e "  ${B}help${R}  print this message"
     echo
     devnet-help
     echo
@@ -85,15 +156,11 @@ function solidity () {
             ;;
         "")
             shift
-            echo "Missing solidity command"
-            echo
-            solidity-help
+            fail-missing solidity solidity-help
             ;;
         *)
             shift
-            echo "Unknown solidity command: $CMD"
-            echo
-            solidity-help
+            fail-unknown solidity solidity-help "$CMD"
             ;;
     esac
 }
@@ -122,8 +189,8 @@ function blockscout () {
                 cd "$BLOCKSCOUT_DIR" &&
                 docker compose -f chain-0.yaml up -d --pull=missing
                 docker compose -f chain-1.yaml up -d --pull=missing
-                echo "chain 0: http://localhost:8000"
-                echo "chain 1: http://localhost:8001"
+                color-echo $GREEN "chain 0: http://localhost:8000"
+                color-echo $GREEN "chain 1: http://localhost:8001"
             )
             ;;
         stop|down|shutdown)
@@ -136,15 +203,11 @@ function blockscout () {
             ;;
         "")
             shift
-            echo "Missing blockscout command"
-            echo
-            blockscout-help
+            fail-missing blockscout blockscout-help
             ;;
         *)
             shift
-            echo "Unknown blockscout command: $CMD"
-            echo
-            blockscout-help
+            fail-unknown blockscout blockscout-help "$CMD"
             ;;
     esac
 }
@@ -258,15 +321,11 @@ function devnet () {
             ;;
         "")
             shift
-            echo "Missing devnet command"
-            echo
-            devnet-help
+            fail-missing devnet devnet-help
             ;;
         *)
             shift
-            echo "Unknown devnet command: $CMD"
-            echo
-            devnet-help
+            fail-unknown devnet devnet-help "$CMD"
             ;;
     esac
 }
@@ -302,15 +361,11 @@ case "$CMD" in
         ;;
     "")
         shift
-        echo "Missing Command"
-        echo
-        usage
+        fail-missing "" usage
         ;;
     *)
         shift
-        echo "Unknown command: $CMD" 
-        echo
-        usage
+        fail-unknown "" usage "$CMD"
         ;;
 esac
 

@@ -6,12 +6,12 @@ const EVENT_SIG_HASH = "0x9d2528c24edd576da7816ca2bdaa28765177c54b32fb18e2ca1856
 
 async function getSigners() {
   await switchNetwork('kadena_devnet0');
-  const [deployer, alice, bob, ...otherSigners] = await ethers.getSigners();
+  const [deployer, alice, bob, carol] = await ethers.getSigners();
   return {
     deployer,
     alice,
     bob,
-    otherSigners
+    carol
   };
 }
 
@@ -60,6 +60,50 @@ async function deployContracts() {
   };
 }
 
+async function deployMocks() {
+  const networks = Object.keys(hre.config.networks).filter(net => net.includes('kadena_devnet'));
+  console.log(`Found ${networks.length} Kadena devnet networks while deploying mocks: ${networks.join(', ')}`);
+  const deployments = {};
+  const tokens = [];
+  const signers = await getSigners();
+
+  for (const netname of networks) {
+    try {
+      await switchNetwork(netname);
+      const cid = network.config.chainwebChainId;
+      const [deployer] = await ethers.getSigners();
+      console.log(`Deploying with signer: ${deployer.address} on network ${netname}`);
+
+      /* Deploy the mock token contract */
+      const factory = await ethers.getContractFactory("WrongOperationTypeToken");
+      const contract = await factory.deploy(ethers.parseEther("1000000"));
+      let deploymentTx = contract.deploymentTransaction()
+      await deploymentTx.wait();
+      const tokenAddress = await contract.getAddress();
+
+      // Store deployment info in both formats
+      const deploymentInfo = {
+        contract,
+        address: tokenAddress,
+        chain: cid,
+        network: {
+          name: netname
+        }
+      };
+
+      deployments[netname] = deploymentInfo;
+      tokens.push(deploymentInfo);
+    } catch (error) {
+      console.error(`Failed to deploy to network ${netname}:`, error);
+    }
+  }
+
+  return {
+    byNetwork: deployments,
+    tokens
+  };
+}
+
 
 function computeOriginHash(origin) {
   // Create a proper ABI encoding matching Solidity struct layout
@@ -92,6 +136,9 @@ async function authorizeContracts(token, tokenInfo, authorizedTokenInfos) {
 /* Initiate Cross-Chain Transfer */
 
 async function initCrossChain(sourceToken, sourceTokenInfo, targetTokenInfo, sender, receiver, amount) {
+  console.log(`Initiating cross-chain transfer from ${sourceTokenInfo.network.name} to ${targetTokenInfo.network.name}`);
+  console.log("sourceTokenInfo", sourceTokenInfo);
+  console.log("targetTokenInfo", targetTokenInfo);
   await switchNetwork(sourceTokenInfo.network.name);
   let response1 = await sourceToken.connect(sender).transferCrossChain(receiver.address, amount, targetTokenInfo.chain);
   let receipt1 = await response1.wait();
@@ -120,17 +167,11 @@ async function getProof(trgChain, origin) {
 }
 
 // Request cross-chain transfer SPV proof
-//
 async function requestSpvProof(targetChain, origin) {
   const spvCall = await getProof(targetChain, origin);
-  console.log("spvCall", spvCall);
   const proof = await spvCall.json();
-  console.log("proof", proof);
-  console.log(`Emitted SPV proof providing evidence for ${origin} to chain ${targetChain}`)
   const proofStr = JSON.stringify(proof);
-  console.log(`Proof string: ${proofStr}`);
   const hexProof = "0x" + Buffer.from(proofStr, 'utf8').toString('hex');
-  console.log(`Hex proof: ${hexProof}`);
   return hexProof
 }
 
@@ -146,11 +187,7 @@ async function createTamperedProof(targetChain, origin) {
   return "0x" + Buffer.from(bytes).toString('hex');
 }
 
-/* *************************************************************************** */
-/* Redeem Cross-Chain */
-
 // Redeem cross-chain transfer tokens
-//
 async function redeemCrossChain(targetToken, targetTokenInfo, receiver, amount, proof) {
   await switchNetwork(targetTokenInfo.network.name);
   console.log(`Redeeming tokens on chain ${targetTokenInfo.network.name}`);
@@ -159,11 +196,8 @@ async function redeemCrossChain(targetToken, targetTokenInfo, receiver, amount, 
   console.log(`result at block height ${receipt2.blockNumber} received with status ${response2.status}`)
 }
 
-/* *************************************************************************** */
-/* Cross-Chain Transfer */
 
 // Make a cross-chain transfer
-//
 async function crossChainTransfer(sourceToken, sourceTokenInfo, targetToken, targetTokenInfo, sender, receiver, amount) {
   console.log(`Transfering ${amount} tokens from ${sourceTokenInfo.chain}:${sourceTokenInfo.address}:${sender.addresss} to ${targetTokenInfo.chain}:${targetTokenInfo.address}:${receiver.address}`);
   const origin = await initCrossChain(sourceToken, sourceTokenInfo, targetTokenInfo, sender, receiver, amount);
@@ -175,8 +209,6 @@ const CrossChainOperation = {
   None: 0,
   Erc20Transfer: 1,
   Erc20TransferFrom: 2,
-  ERC721TransferFrom: 3,
-  ERC721SafeTransferFrom: 4
 };
 
 
@@ -190,5 +222,6 @@ module.exports = {
   redeemCrossChain,
   computeOriginHash,
   createTamperedProof,
-  CrossChainOperation
+  CrossChainOperation,
+  deployMocks
 };

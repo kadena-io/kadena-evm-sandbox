@@ -67,26 +67,26 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Create Kadena-Reth multiplatform image
-        run: >
-          docker buildx imagetools create 
-            -t ghcr.io/kadena-io/evm-devnet-kadena-reth:${{ env.VERSION }}
-            -t ghcr.io/kadena-io/evm-devnet-kadena-reth:${{ github.sha }}
-            ghcr.io/kadena-io/evm-devnet-kadena-reth:${{ env.AMD_VERSION }}
+        run: |
+          docker buildx imagetools create  \
+            -t ghcr.io/kadena-io/evm-devnet-kadena-reth:${{ env.VERSION }} \
+            -t ghcr.io/kadena-io/evm-devnet-kadena-reth:${{ github.sha }} \
+            ghcr.io/kadena-io/evm-devnet-kadena-reth:${{ env.AMD_VERSION }} \
             ghcr.io/kadena-io/evm-devnet-kadena-reth:${{ env.ARM_VERSION }}
 
       - name: Create Allocations multiplatform image
-        run: >
-          docker buildx imagetools create 
-            -t ghcr.io/kadena-io/evm-devnet-allocations:${{ env.VERSION }}
-            -t ghcr.io/kadena-io/evm-devnet-kadena-reth:${{ github.sha }}
-            ghcr.io/kadena-io/evm-devnet-allocations:${{ env.AMD_VERSION }}
+        run: |
+          docker buildx imagetools create \
+            -t ghcr.io/kadena-io/evm-devnet-allocations:${{ env.VERSION }} \
+            -t ghcr.io/kadena-io/evm-devnet-kadena-reth:${{ github.sha }} \
+            ghcr.io/kadena-io/evm-devnet-allocations:${{ env.AMD_VERSION }} \
             ghcr.io/kadena-io/evm-devnet-allocations:${{ env.ARM_VERSION }}
 
       - name: Create Chainweb-Node multiplatform image
-        run: >
-          docker buildx imagetools create 
-            -t ghcr.io/kadena-io/evm-devnet-chainweb-node:${{ env.VERSION }}
-            -t ghcr.io/kadena-io/evm-devnet-kadena-reth:${{ github.sha }}
-            ghcr.io/kadena-io/evm-devnet-chainweb-node:${{ env.AMD_VERSION }}
+        run: |
+          docker buildx imagetools create \
+            -t ghcr.io/kadena-io/evm-devnet-chainweb-node:${{ env.VERSION }} \
+            -t ghcr.io/kadena-io/evm-devnet-kadena-reth:${{ github.sha }} \
+            ghcr.io/kadena-io/evm-devnet-chainweb-node:${{ env.AMD_VERSION }} \
             ghcr.io/kadena-io/evm-devnet-chainweb-node:${{ env.ARM_VERSION }}
 

@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.28;
+import "hardhat/console.sol";
 
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
@@ -53,7 +54,7 @@ contract SimpleToken is ERC20("SimpleToken", "SIM"), Ownable {
 
     /// @notice Precompile that provides the chainweb-chain-id
     address public constant CHAIN_ID_PRECOMPILE =
-        address(0x0000000000000000000000000000000000000422);
+        address(uint160(uint256(keccak256("/Chainweb/Chain/Id/"))));
 
     /// @notice Mapping of chainId to the address of the same contract on other chains
     mapping(uint32 => address) private crossChainAddresses;

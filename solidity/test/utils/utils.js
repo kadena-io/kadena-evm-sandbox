@@ -1,11 +1,48 @@
 const { ethers, network, switchNetwork } = require("hardhat");
+const { getSpvProof, startHardhatNetwork, stopHardhatNetwork, CHAIN_ID_ADDRESS, CHAIN_ID_ABI  } = require('./chainweb.mjs');
 
 // hash of CrossChainInitialized(uint32,address,uint64,bytes)
 const EVENT_SIG_HASH = "0x9d2528c24edd576da7816ca2bdaa28765177c54b32fb18e2ca18567fbc2a9550"
 
+const NETWORK_STEM = process.env.NETWORK_STEM || "kadena_hardhat";
+
+function getNetworks() {
+  return Object
+    .keys(hre.config.networks)
+    .filter(net => net.includes(NETWORK_STEM));
+}
+
+function usesHardhatNetwork () {
+  return (NETWORK_STEM == "kadena_hardhat");
+}
+
+function withChainweb() {
+  if (usesHardhatNetwork()) {
+    before(async function () {
+      await startHardhatNetwork()
+    });
+
+    after(async function () {
+      await stopHardhatNetwork()
+    });
+  }
+}
+
+function getChainIdContract () {
+  return new ethers.Contract(CHAIN_ID_ADDRESS, CHAIN_ID_ABI, ethers.provider);
+}
+
+async function callChainIdContract () {
+  const hex = await ethers.provider.send("eth_call", [
+    { to: CHAIN_ID_ADDRESS },
+    'latest',
+    {},
+  ]);
+  return parseInt(hex, 16);
+}
 
 async function getSigners() {
-  await switchNetwork('kadena_devnet0');
+  await switchNetwork(`${NETWORK_STEM}0`);
   const [deployer, alice, bob, carol] = await ethers.getSigners();
   return {
     deployer,
@@ -16,7 +53,7 @@ async function getSigners() {
 }
 
 async function deployContracts() {
-  const networks = Object.keys(hre.config.networks).filter(net => net.includes('kadena_devnet'));
+  const networks = getNetworks();
   console.log(`Found ${networks.length} Kadena devnet networks: ${networks.join(', ')}`);
 
   const deployments = {};
@@ -45,7 +82,7 @@ async function deployContracts() {
           name: netname
         }
       };
-      
+
       tokens.push(deploymentInfo);
     } catch (error) {
       console.error(`Failed to deploy to network ${netname}:`, error);
@@ -59,7 +96,7 @@ async function deployContracts() {
 }
 
 async function deployMocks() {
-  const networks = Object.keys(hre.config.networks).filter(net => net.includes('kadena_devnet'));
+  const networks = getNetworks();
   console.log(`Found ${networks.length} Kadena devnet networks while deploying mocks: ${networks.join(', ')}`);
   const deployments = {};
   const tokens = [];
@@ -162,11 +199,17 @@ async function getProof(trgChain, origin) {
 
 // Request cross-chain transfer SPV proof
 async function requestSpvProof(targetChain, origin) {
-  const spvCall = await getProof(targetChain, origin);
-  const proof = await spvCall.json();
-  const proofStr = JSON.stringify(proof);
-  const hexProof = "0x" + Buffer.from(proofStr, 'utf8').toString('hex');
-  return hexProof
+  if (usesHardhatNetwork()) {
+    const hexProof = await getSpvProof(targetChain, origin);
+    console.log(`Hex proof: ${hexProof}`);
+    return hexProof;
+  } else {
+    const spvCall = await getProof(targetChain, origin);
+    const proof = await spvCall.json();
+    const proofStr = JSON.stringify(proof);
+    const hexProof = "0x" + Buffer.from(proofStr, 'utf8').toString('hex');
+    return hexProof
+  }
 }
 
 async function createTamperedProof(targetChain, origin) {
@@ -217,5 +260,9 @@ module.exports = {
   computeOriginHash,
   createTamperedProof,
   CrossChainOperation,
-  deployMocks
+  deployMocks,
+  getChainIdContract,
+  getNetworks,
+  withChainweb,
+  callChainIdContract,
 };

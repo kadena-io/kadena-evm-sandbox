@@ -37,10 +37,11 @@ For running the development network:
 -   At least 4 CPU cores and 8GB of Memory that are available to docker. (Please
     check the docker configuration if it provides sufficient resources to
     docker.)
--   A network connection for downloading the container images for the network
+-   Network connection for downloading the container images for the network
     components.
--   A command line terminal with a POSIX compliant shell.
--   A `bash` installation.
+-   Command line terminal with a POSIX compliant shell.
+-   `bash` installation.
+-   [jq](https://jqlang.org).
 
 For deploying the Solidity contracts with hardhat:
 

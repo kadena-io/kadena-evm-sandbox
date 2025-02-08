@@ -4,13 +4,17 @@ import Header from "@app/components/panel/header/header";
 import type { HeaderProps } from "@app/components/panel/header/header";
 import Playback from "@app/components/panel/body/playback/playback";
 import React from "react";
+import Layout from "./body/layout/layout";
 
-export type PanelTypes = "playback";
+export type PanelTypes = "playback" | "list";
 
 export type PanelProps = {
   children?: React.ReactNode;
   type: PanelTypes;
   data: ListItem[];
+  handlers?: {
+    [key: string]: () => void;
+  };
 } &
   HeaderProps;
 
@@ -28,7 +32,7 @@ export type EventProps = {
   readonly data: string;
 }
 
-export const Panel: React.FC<PanelProps> = ({ type, title, data, children }) => {
+export const Panel: React.FC<PanelProps> = ({ type, title, data, handlers, children }) => {
   const [progress, setProgress] = React.useState(0);
   const [list, setList] = React.useState<ListItem[]>(data);
   const [activeItem, setActiveItem] = React.useState<ListItem | null>(null);
@@ -49,7 +53,7 @@ export const Panel: React.FC<PanelProps> = ({ type, title, data, children }) => 
 
   return (
     <div>
-      <Header title={title} />
+      <Header title={title} type={type} />
       {
         type === "playback" ? 
         <Playback
@@ -60,9 +64,11 @@ export const Panel: React.FC<PanelProps> = ({ type, title, data, children }) => 
           progress={progress}
           progressSteps={list.length}
           onChange={setProgress}
-        /> : null
+          handlers={handlers}
+        /> :
+        type === "list" ?
+        <Layout>{children}</Layout> : null
       }
-      {children}
     </div>
   )
 }

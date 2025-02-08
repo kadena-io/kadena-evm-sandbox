@@ -2,6 +2,7 @@
 
 import React from "react";
 import styles from "./playback.module.css"
+import UseActions from "@app/hooks/actions";
 
 export type PlaybackProps = {
   readonly i1: [number, number];
@@ -11,6 +12,7 @@ export type PlaybackProps = {
   readonly progress: number;
   readonly progressSteps: number;
   onChange?: (progress: number) => void;
+  handlers?: { [key: string]: () => void };
 };
 
 const Playback: React.FC<PlaybackProps> = ({
@@ -21,7 +23,13 @@ const Playback: React.FC<PlaybackProps> = ({
   progress: _progress,
   progressSteps,
   onChange,
+  handlers,
 }) => {
+  const {
+    play,
+    deploy,
+  } = UseActions();
+
   const [i1, setI1] = React.useState('');
   const [i2, setI2] = React.useState(_i2);
   const [i3, setI3] = React.useState(_i3);
@@ -29,6 +37,16 @@ const Playback: React.FC<PlaybackProps> = ({
   const [progress, setProgress] = React.useState(_progress);
 
   const rangeRef = React.useRef<HTMLInputElement>(null);
+
+  const getBarHeight = React.useCallback(() => {
+    const percentage = Math.floor(Math.random() * 100);
+
+    if (percentage < 10) {
+      return '10%';
+    }
+
+    return `${percentage}%`;
+  }, []);
   
   const setHandler = React.useCallback((progressValue: number) => {
     setProgress(progressValue);
@@ -70,9 +88,60 @@ const Playback: React.FC<PlaybackProps> = ({
   }, [_progress]);
 
   return (
-    <div className={styles.container}>
+    <section className={styles.container}>
       <div className={styles.main}>
         <span className={[styles.uiDisplayText, styles.i1].join(' ')}>{i1}</span>
+
+        <div className={styles.indicators}>
+          <span>0</span>
+          <span className={styles.active}>A</span>
+          <span>I</span>
+          <span>D</span>
+          <span>V</span>
+        </div>
+
+        <div className={styles.graphWrapper}>
+          <div className={styles.graphContainer}>
+            <div className={styles.bar} style={{ height: getBarHeight() }} />
+            <div className={styles.bar} style={{ height: getBarHeight() }} />
+            <div className={styles.bar} style={{ height: getBarHeight() }} />
+            <div className={styles.bar} style={{ height: getBarHeight() }} />
+            <div className={styles.bar} style={{ height: getBarHeight() }} />
+            <div className={styles.bar} style={{ height: getBarHeight() }} />
+            <div className={styles.bar} style={{ height: getBarHeight() }} />
+            <div className={styles.bar} style={{ height: getBarHeight() }} />
+            <div className={styles.bar} style={{ height: getBarHeight() }} />
+            <div className={styles.bar} style={{ height: getBarHeight() }} />
+            <div className={styles.bar} style={{ height: getBarHeight() }} />
+            <div className={styles.bar} style={{ height: getBarHeight() }} />
+            <div className={styles.bar} style={{ height: getBarHeight() }} />
+            <div className={styles.bar} style={{ height: getBarHeight() }} />
+            <div className={styles.bar} style={{ height: getBarHeight() }} />
+            <div className={styles.bar} style={{ height: getBarHeight() }} />
+          </div>
+          <div className={styles.graphContainer}>
+            <div className={styles.bar} style={{ height: getBarHeight() }} />
+            <div className={styles.bar} style={{ height: getBarHeight() }} />
+            <div className={styles.bar} style={{ height: getBarHeight() }} />
+            <div className={styles.bar} style={{ height: getBarHeight() }} />
+            <div className={styles.bar} style={{ height: getBarHeight() }} />
+            <div className={styles.bar} style={{ height: getBarHeight() }} />
+            <div className={styles.bar} style={{ height: getBarHeight() }} />
+            <div className={styles.bar} style={{ height: getBarHeight() }} />
+            <div className={styles.bar} style={{ height: getBarHeight() }} />
+            <div className={styles.bar} style={{ height: getBarHeight() }} />
+            <div className={styles.bar} style={{ height: getBarHeight() }} />
+            <div className={styles.bar} style={{ height: getBarHeight() }} />
+            <div className={styles.bar} style={{ height: getBarHeight() }} />
+            <div className={styles.bar} style={{ height: getBarHeight() }} />
+            <div className={styles.bar} style={{ height: getBarHeight() }} />
+            <div className={styles.bar} style={{ height: getBarHeight() }} />
+            <div className={styles.bar} style={{ height: getBarHeight() }} />
+            <div className={styles.bar} style={{ height: getBarHeight() }} />
+            <div className={styles.bar} style={{ height: getBarHeight() }} />
+            <div className={styles.bar} style={{ height: getBarHeight() }} />
+          </div>
+        </div>
       </div>
       <div className={[styles.uiDisplayText, styles.i2].join(' ')}>
         <span>{i2}</span>
@@ -89,9 +158,17 @@ const Playback: React.FC<PlaybackProps> = ({
           type="range"
           min="0" max={100} step={Math.ceil(100 / progressSteps)}
           defaultValue={progress.toString()}
-          />
+        />
       </div>
-    </div>
+      <div className={styles.buttons}>
+        <button className={styles.prev} onClick={() => handlers?.backwards()} />
+        <button className={styles.play} onClick={play} />
+        <button className={styles.pause} onClick={() => console.log('>> c')} />
+        <button className={styles.stop} onClick={() => console.log('>> d')} />
+        <button className={styles.next} onClick={handlers?.forwards} />
+        <button className={styles.eject} onClick={deploy} />
+      </div>
+    </section>
   )
 }
 

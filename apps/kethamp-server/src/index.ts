@@ -5,33 +5,16 @@ import { swagger } from "@elysiajs/swagger";
 import cors from "@elysiajs/cors";
 import { readFile, writeFile } from "fs/promises";
 import { existsSync, readFileSync } from "fs";
+import {
+  DeployTrack,
+  NetworkId,
+  Track,
+  TransferTrack,
+  FundTrack,
+  RegisterCrossChainTrack,
+} from "./types";
+import { getPlaylist } from "./playlists";
 
-type NetworkId = "kadena_devnet1" | "kadena_devnet2";
-type DeployTrack = {
-  type: "deploy";
-  network: NetworkId;
-};
-type RegisterCrossChainTrack = {
-  type: "register-cross-chain";
-  networks: NetworkId[];
-};
-type FundTrack = {
-  type: "fund";
-  network: NetworkId;
-  address: string;
-};
-type HardhatEthersSigner = Awaited<
-  ReturnType<typeof hre.ethers.getSigners>
->[number];
-type TransferTrack = {
-  type: "transfer";
-  from: HardhatEthersSigner;
-  fromNetwork: NetworkId;
-  to: HardhatEthersSigner;
-  toNetwork: NetworkId;
-  amount: bigint;
-};
-type Track = DeployTrack | RegisterCrossChainTrack | FundTrack | TransferTrack;
 const getDeployPlaylist = async () => {
   await hre.switchNetwork("kadena_devnet1");
   const [, alice] = await hre.ethers.getSigners();
@@ -54,39 +37,6 @@ const getDeployPlaylist = async () => {
       type: "fund",
       network: "kadena_devnet1",
       address: alice.address,
-    },
-  ];
-  return playlist;
-};
-export const getPlaylist = async () => {
-  await hre.switchNetwork("kadena_devnet1");
-  const [, alice] = await hre.ethers.getSigners();
-  await hre.switchNetwork("kadena_devnet2");
-  const [, , bob] = await hre.ethers.getSigners();
-  const playlist: Track[] = [
-    {
-      type: "transfer",
-      from: alice,
-      fromNetwork: "kadena_devnet1",
-      to: bob,
-      toNetwork: "kadena_devnet2",
-      amount: 100n * 10n ** 2n,
-    },
-    {
-      type: "transfer",
-      from: alice,
-      fromNetwork: "kadena_devnet1",
-      to: bob,
-      toNetwork: "kadena_devnet2",
-      amount: 200n * 10n ** 2n,
-    },
-    {
-      type: "transfer",
-      from: bob,
-      fromNetwork: "kadena_devnet2",
-      to: alice,
-      toNetwork: "kadena_devnet1",
-      amount: 50n * 10n ** 2n,
     },
   ];
   return playlist;
@@ -138,7 +88,7 @@ const deploy = async (track: DeployTrack) => {
 };
 const eventSigHash =
   "0x9d2528c24edd576da7816ca2bdaa28765177c54b32fb18e2ca18567fbc2a9550";
-const transfer = async (track: TransferTrack) => {
+const crossChainTransfer = async (track: TransferTrack) => {
   await hre.switchNetwork(track.fromNetwork);
   const kda = await getContract(track.fromNetwork);
   const tx = await kda
@@ -176,6 +126,18 @@ const transfer = async (track: TransferTrack) => {
       track.fromNetwork
     );
   await saveTx(track.toNetwork, await txTo.wait());
+};
+const transfer = async (track: TransferTrack) => {
+  if (track.fromNetwork !== track.toNetwork)
+    return await crossChainTransfer(track);
+
+  await hre.switchNetwork(track.fromNetwork);
+  const kda = await getContract(track.fromNetwork);
+  const tx = await kda
+    .connect(track.from)
+    .transfer(track.to.address, track.amount);
+  const receipt = await tx.wait();
+  await saveTx(track.fromNetwork, receipt);
 };
 const getSPVProof = async ({}: {
   networkId: NetworkId;
@@ -272,7 +234,7 @@ export const app = new Elysia()
     "/accounts",
     async () => {
       await hre.switchNetwork("kadena_devnet1");
-      const [owner, alice, bob] = await hre.ethers.getSigners();
+      const [owner, alice, bob, greg] = await hre.ethers.getSigners();
       const chain0 = {
         alice: {
           address: alice.address,
@@ -282,9 +244,13 @@ export const app = new Elysia()
           address: bob.address,
           balance: await getBalance(bob, "kadena_devnet1"),
         },
+        greg: {
+          address: greg.address,
+          balance: await getBalance(greg, "kadena_devnet1"),
+        },
       };
       await hre.switchNetwork("kadena_devnet2");
-      const [owner1, alice1, bob1] = await hre.ethers.getSigners();
+      const [owner1, alice1, bob1, greg1] = await hre.ethers.getSigners();
       const chain1 = {
         alice: {
           address: alice1.address,
@@ -293,6 +259,10 @@ export const app = new Elysia()
         bob: {
           address: bob1.address,
           balance: await getBalance(bob1, "kadena_devnet2"),
+        },
+        greg: {
+          address: greg1.address,
+          balance: await getBalance(greg1, "kadena_devnet2"),
         },
       };
 
@@ -303,7 +273,7 @@ export const app = new Elysia()
   .post(
     "/playlist",
     async () => {
-      const playlist = await getPlaylist();
+      const playlist = await getPlaylist("chain1");
       playPlaylist(playlist);
       return "queued";
     },

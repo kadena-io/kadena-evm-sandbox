@@ -106,7 +106,7 @@ const crossChainTransfer = async (track: TransferTrack) => {
     );
   const receipt = await tx.wait();
   if (!receipt) throw new Error("Transaction failed");
-  await saveTx(track.fromNetwork, receipt);
+  await saveTx(track.fromNetwork, receipt, `${track.title} - Start`);
   const logIndex = receipt?.logs.findIndex(
     (log) => log.topics[0] === eventSigHash
   );
@@ -130,7 +130,7 @@ const crossChainTransfer = async (track: TransferTrack) => {
       receipt.blockNumber,
       track.fromNetwork
     );
-  await saveTx(track.toNetwork, await txTo.wait());
+  await saveTx(track.toNetwork, await txTo.wait(), `${track.title} - End`);
 };
 const transfer = async (track: TransferTrack) => {
   if (track.fromNetwork !== track.toNetwork)
@@ -142,7 +142,7 @@ const transfer = async (track: TransferTrack) => {
     .connect(track.from)
     .transfer(track.to.address, track.amount);
   const receipt = await tx.wait();
-  await saveTx(track.fromNetwork, receipt);
+  await saveTx(track.fromNetwork, receipt, track.title);
 };
 const getSPVProof = async ({}: {
   networkId: NetworkId;
@@ -200,12 +200,13 @@ const getTxs = async () => {
   const data = await readFile(".txs.json", "utf-8");
   return JSON.parse(data || "[]") as any[];
 };
-const saveTx = async (network: NetworkId, newTx: any) => {
+const saveTx = async (network: NetworkId, newTx: any, title?: string) => {
   const currentTxs = await getTxs();
   const contracts = await getContracts();
   const allTxs = [
     ...currentTxs,
     {
+      title,
       ...newTx.toJSON(),
       network,
       logs: newTx.logs.map((log: any) => {

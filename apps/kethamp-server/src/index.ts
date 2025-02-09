@@ -38,6 +38,11 @@ const getDeployPlaylist = async () => {
       network: "kadena_devnet1",
       address: alice.address,
     },
+    {
+      type: "fund",
+      network: "kadena_devnet2",
+      address: bob.address,
+    },
   ];
   return playlist;
 };
@@ -272,12 +277,16 @@ export const app = new Elysia()
   )
   .post(
     "/playlist",
-    async () => {
-      const playlist = await getPlaylist("chain1");
+    async (req) => {
+      const playlist = await getPlaylist(req.body.list);
       playPlaylist(playlist);
       return "queued";
     },
-    {}
+    {
+      body: t.Object({
+        list: t.String(),
+      }),
+    }
   )
   .post(
     "/deploy",

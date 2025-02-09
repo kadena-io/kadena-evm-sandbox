@@ -3,94 +3,149 @@
 import React from "react";
 import styles from "./playback.module.css"
 import UseActions from "@app/hooks/actions";
+import UseData from "@app/hooks/data";
 
 export type PlaybackProps = {
-  readonly i1: [number, number];
-  readonly i2: string;
-  readonly i3: number;
-  readonly i4: number;
-  readonly progress: number;
-  readonly progressSteps: number;
-  onChange?: (progress: number) => void;
+  data: {
+    accounts: any;
+    transactions: any;
+  };
   handlers?: { [key: string]: () => void };
 };
 
 const Playback: React.FC<PlaybackProps> = ({
-  i1:_i1,
-  i2:_i2,
-  i3:_i3,
-  i4:_i4,
-  progress: _progress,
-  progressSteps,
-  onChange,
-  handlers,
+  data,
 }) => {
   const {
-    play,
+    playlist,
     deploy,
+    reset,
   } = UseActions();
-
-  const [i1, setI1] = React.useState('');
-  const [i2, setI2] = React.useState(_i2);
-  const [i3, setI3] = React.useState(_i3);
-  const [i4, setI4] = React.useState(_i4);
-  const [progress, setProgress] = React.useState(_progress);
-
+  const {
+    graphData,
+    networks,
+    options: {
+      stepSize,
+      maxStepCount,
+    }
+  } = UseData({ data });
+  const timerRef = React.useRef<any>(null);
+  const trackRef = React.useRef<HTMLDivElement>(null);
   const rangeRef = React.useRef<HTMLInputElement>(null);
+  const graphContainerRef = React.useRef<HTMLDivElement>(null);
+  
+  const [topGraphId, bottomGraphId] = networks;
+  const [progress, setProgress] = React.useState(0);
 
-  const getBarHeight = React.useCallback(() => {
-    const percentage = Math.floor(Math.random() * 100);
+  const getBarHeight = React.useCallback((data) => {
+    if (graphContainerRef.current && maxStepCount > 0) {
+      const container = graphContainerRef.current;
+      const height = container.clientHeight;
+      const stepHeight = height / maxStepCount;
+      
+      return `${data.length * stepHeight}px`;
+    }
+  }, [maxStepCount]);
 
-    if (percentage < 10) {
-      return '10%';
+  const resetPlayer = React.useCallback(() => {
+    if (trackRef.current) {
+      trackRef.current.classList.remove(styles.playing);
+      
+      setTimeout(() => {
+        if (trackRef.current) {
+          trackRef.current.style.backgroundPositionX = '0%';
+          setProgress(0);
+        }
+      }, 400);
+    }
+  }, [trackRef]);
+
+  const forwards = React.useCallback(() => {
+    if (progress < 100) {
+      setProgress((prev) => {
+        const next = prev + stepSize;
+
+        if (next > 100) {
+          return 100;
+        }
+
+        return next;
+      });
+    }
+  }, [progress, stepSize]);
+
+  const backwards = React.useCallback(() => {
+    if (progress > 0) {
+      setProgress((prev) => {
+        const next = prev - stepSize;
+
+        if (next < 0) {
+          return 0;
+        }
+
+        return next;
+      });
+    }
+  }, [progress, stepSize]);
+
+  const playHandler = React.useCallback(async () => {
+    if (progress === 100) {
+      setProgress(0);
     }
 
-    return `${percentage}%`;
-  }, []);
-  
-  const setHandler = React.useCallback((progressValue: number) => {
-    setProgress(progressValue);
-    onChange?.(progressValue);
-  }, [onChange])
-
-  React.useEffect(() => {
-    setI1(_i1.join(':'));
-  }, [_i1]);
-
-  React.useEffect(() => {
-    setI2(_i2);
-  }, [_i2]);
-
-  React.useEffect(() => {
-    setI3(_i3);
-  }, [_i3]);
-
-  React.useEffect(() => {
-    setI4(_i4);
-  }, [_i4]);
-
-  React.useEffect(() => {
-    const currentRangeRef = rangeRef.current;
+    if (trackRef.current) {
+      trackRef.current.classList.add(styles.playing);
+    }
     
-    if (currentRangeRef) {
-      currentRangeRef.addEventListener('change', (e) => {
-        setHandler(parseInt((e.target as HTMLInputElement).value));
-      });
+    timerRef.current = setInterval(() => {
+      setProgress((prev) => {
+        const next = prev + stepSize;
 
-      return () => {
-        currentRangeRef.removeEventListener('input', () => {});
+        if (next > 100) {
+          clearInterval(timerRef.current);
+          return 100;
+        }
+
+        return next;
+      });
+    }, 1000);
+  }, [progress, stepSize]);
+
+  React.useEffect(() => {
+    const range = rangeRef.current;
+    const track = trackRef.current;
+
+    if (range && track) {
+      range.addEventListener('input', () => {
+        setProgress(parseInt(range.value));
+        track.classList.remove(styles.playing);
+        clearInterval(timerRef.current);
+      });
+    }
+
+    return () => {
+      if (range) {
+        range.removeEventListener('input', () => {});
       }
     }
-  }, []);
+  }, [setProgress]);
+
+  // React.useEffect(() => {
+  //   console.log('graphData', graphData);
+  // }, [graphData]);
 
   React.useEffect(() => {
-    setProgress(_progress);
-  }, [_progress]);
+    console.log('networks', networks);
+  }, [networks]);
+
+  React.useEffect(() => {
+    console.log('maxStepCount', maxStepCount);
+  }, [maxStepCount]);
 
   return (
     <section className={styles.container}>
       <div className={styles.main}>
-        <span className={[styles.uiDisplayText, styles.i1].join(' ')}>{i1}</span>
+        <span className={[styles.uiDisplayText, styles.i1].join(' ')}>{progress}</span>
 
         <div className={styles.indicators}>
           <span>0</span>
@@ -101,71 +156,46 @@ const Playback: React.FC<PlaybackProps> = ({
         </div>
 
         <div className={styles.graphWrapper}>
-          <div className={styles.graphContainer}>
-            <div className={styles.bar} style={{ height: getBarHeight() }} />
-            <div className={styles.bar} style={{ height: getBarHeight() }} />
-            <div className={styles.bar} style={{ height: getBarHeight() }} />
-            <div className={styles.bar} style={{ height: getBarHeight() }} />
-            <div className={styles.bar} style={{ height: getBarHeight() }} />
-            <div className={styles.bar} style={{ height: getBarHeight() }} />
-            <div className={styles.bar} style={{ height: getBarHeight() }} />
-            <div className={styles.bar} style={{ height: getBarHeight() }} />
-            <div className={styles.bar} style={{ height: getBarHeight() }} />
-            <div className={styles.bar} style={{ height: getBarHeight() }} />
-            <div className={styles.bar} style={{ height: getBarHeight() }} />
-            <div className={styles.bar} style={{ height: getBarHeight() }} />
-            <div className={styles.bar} style={{ height: getBarHeight() }} />
-            <div className={styles.bar} style={{ height: getBarHeight() }} />
-            <div className={styles.bar} style={{ height: getBarHeight() }} />
-            <div className={styles.bar} style={{ height: getBarHeight() }} />
+          <div ref={graphContainerRef} className={styles.graphContainer}>
+            {Object.values(graphData)
+              .map((d) => d.filter(d => d.network === topGraphId))
+              .map((d, i) => 
+                <div key={`graph-top--${i * stepSize}`} className={[styles.bar, (progress === i * stepSize ? styles.active : null)].join(' ')} style={{ height: getBarHeight(d) }} />
+              )}
           </div>
           <div className={styles.graphContainer}>
-            <div className={styles.bar} style={{ height: getBarHeight() }} />
-            <div className={styles.bar} style={{ height: getBarHeight() }} />
-            <div className={styles.bar} style={{ height: getBarHeight() }} />
-            <div className={styles.bar} style={{ height: getBarHeight() }} />
-            <div className={styles.bar} style={{ height: getBarHeight() }} />
-            <div className={styles.bar} style={{ height: getBarHeight() }} />
-            <div className={styles.bar} style={{ height: getBarHeight() }} />
-            <div className={styles.bar} style={{ height: getBarHeight() }} />
-            <div className={styles.bar} style={{ height: getBarHeight() }} />
-            <div className={styles.bar} style={{ height: getBarHeight() }} />
-            <div className={styles.bar} style={{ height: getBarHeight() }} />
-            <div className={styles.bar} style={{ height: getBarHeight() }} />
-            <div className={styles.bar} style={{ height: getBarHeight() }} />
-            <div className={styles.bar} style={{ height: getBarHeight() }} />
-            <div className={styles.bar} style={{ height: getBarHeight() }} />
-            <div className={styles.bar} style={{ height: getBarHeight() }} />
-            <div className={styles.bar} style={{ height: getBarHeight() }} />
-            <div className={styles.bar} style={{ height: getBarHeight() }} />
-            <div className={styles.bar} style={{ height: getBarHeight() }} />
-            <div className={styles.bar} style={{ height: getBarHeight() }} />
+            {Object.values(graphData)
+              .map((d) => d.filter(d => d.network === bottomGraphId))
+              .map((d, i) =>
+                <div key={`graph-bottom--${i * stepSize}`} className={[styles.bar, (progress === i * stepSize ? styles.active : null)].join(' ')} style={{ height: getBarHeight(d) }} />
+              )}
           </div>
         </div>
       </div>
       <div className={[styles.uiDisplayText, styles.i2].join(' ')}>
-        <span>{i2}</span>
-        <span>{i2}</span>
+        <span>{'AA'}</span>
+        <span>{'BB'}</span>
       </div>
       <div className={[styles.uiDisplayText, styles.i3i4wrapper].join(' ')}>
-        <span className={styles.i3}>{i3}</span>
-        <span className={styles.i4}>{i4}</span>
+        <span className={styles.i3}>{'DD'}</span>
+        <span className={styles.i4}>{'EE'}</span>
       </div>
-      <div className={styles.track} style={{ backgroundPositionX: `${progress}%` }}>
+      <div ref={trackRef} className={styles.track} style={{ backgroundPositionX: `${progress}%` }}>
         <input
           ref={rangeRef}
           className={styles.progress}
           type="range"
-          min="0" max={100} step={Math.ceil(100 / progressSteps)}
+          min="0" max={100}
+          step={stepSize}
           defaultValue={progress.toString()}
         />
       </div>
       <div className={styles.buttons}>
-        <button className={styles.prev} onClick={() => handlers?.backwards()} />
-        <button className={styles.play} onClick={play} />
-        <button className={styles.pause} onClick={() => console.log('>> c')} />
-        <button className={styles.stop} onClick={() => console.log('>> d')} />
-        <button className={styles.next} onClick={handlers?.forwards} />
+        <button className={styles.prev} onClick={backwards} disabled={progress===0} />
+        <button className={styles.play} onClick={playHandler} />
+        <button className={styles.pause} onClick={playlist} /> {/* @TODO: Temporaryly using playlist as pause */}
+        <button className={styles.stop} onClick={reset} />
+        <button className={styles.next} onClick={forwards} disabled={progress===100} />
         <button className={styles.eject} onClick={deploy} />
       </div>
     </section>

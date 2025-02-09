@@ -2,11 +2,12 @@
 
 import React from "react";
 
-import List from "../components/panel/body/list/list";
+import List from "@app/components/panel/body/list/list";
 import Panel from "@app/components/panel/panel";
 
 import UseAccounts from "@app/hooks/accounts";
 import UseTransactions from "@app/hooks/transactions";
+import UseData from "@app/hooks/data";
 
 export default function Main() {
   const [isLoading, setIsLoading] = React.useState(false);
@@ -18,10 +19,15 @@ export default function Main() {
   } = UseAccounts();
   const { 
     data: transactionsData,
-    list: listTransactions,
+    // list: listTransactions,
     isLoading: isLoadingTXS,
-    playback,
   } = UseTransactions();
+  const {
+    graphData,
+  } = UseData({
+    accounts: accountsData,
+    transactions: transactionsData,
+  });
 
   const maskAccountAddress = (address: string) => {
     if (!address) return "";
@@ -38,12 +44,12 @@ export default function Main() {
   }, [listAccounts]);
 
   React.useEffect(() => {
-    console.log('time', playback.time);
-  }, [playback.time]);
-
-  React.useEffect(() => {
     setIsLoading(isLoadingAccounts || isLoadingTXS);
   }, [isLoadingAccounts, isLoadingTXS]);
+
+  React.useEffect(() => {
+    console.log('graphData', graphData);
+  }, [graphData]);
 
   
   return (
@@ -53,33 +59,10 @@ export default function Main() {
         <Panel
           type="playback"
           title={"Kadena @ ETH Denver 2025"}
-          data={[
-            { 
-              blockHeight: 0,
-              from: "transaction title 1",
-              to: "transaction description 1",
-              gasPrice: "1",
-              network: "network 1",
-              events: [{ name: "event 1", data: "data 1" }],
-            },
-            { 
-              blockHeight: 1,
-              from: "transaction title 1",
-              to: "transaction description 1",
-              gasPrice: "1",
-              network: "network 1",
-              events: [{ name: "event 1", data: "data 1" }],
-            },
-            { 
-              blockHeight: 2,
-              from: "transaction title 1",
-              to: "transaction description 1",
-              gasPrice: "1",
-              network: "network 1",
-              events: [{ name: "event 1", data: "data 1" }],
-            },
-          ]}
-          handlers={playback}
+          data={{
+            accounts: accountsData,
+            transactions: transactionsData,
+          }}
         />
         <Panel
           type="list"
@@ -97,7 +80,7 @@ export default function Main() {
           data={[]}
         >
           <List
-            data={listTransactions}
+            data={[]}
             hasSearch
             config={{ searchCol: "blockNumber" }}
             cols={[

@@ -32,38 +32,14 @@ export type EventProps = {
   readonly data: string;
 }
 
-export const Panel: React.FC<PanelProps> = ({ type, title, data, handlers, children }) => {
-  const [progress, setProgress] = React.useState(0);
-  const [list, setList] = React.useState<ListItem[]>(data);
-  const [activeItem, setActiveItem] = React.useState<ListItem | null>(null);
-
-  React.useEffect(() => {
-    setList(data.map((item, index) => ({ ...item, index: Math.ceil(index * 100 / data.length) })));
-    setActiveItem(data[0]);
-  }, [data, list.length]);
-
-  React.useEffect(() => {
-    setActiveItem(data[progress]);
-  }, [data, progress]);
-
-  React.useEffect(() => {
-    console.log(list)
-  }, [list]);
-
-
+export const Panel: React.FC<PanelProps> = ({ type, title, data, handlers={}, children }) => {
   return (
     <div>
       <Header title={title} type={type} />
       {
         type === "playback" ? 
         <Playback
-          i1={[progress, 34]}
-          i2={activeItem?.from ?? ""}
-          i3={12}
-          i4={34}
-          progress={progress}
-          progressSteps={list.length}
-          onChange={setProgress}
+          data={data}
           handlers={handlers}
         /> :
         type === "list" ?

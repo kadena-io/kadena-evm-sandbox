@@ -1,7 +1,7 @@
 const { expect } = require("chai");
 const { ethers, network, switchNetwork } = require("hardhat");
 const { ZeroAddress } = require("ethers");
-const { getSigners, deployContracts, authorizeContracts, crossChainTransfer, initCrossChain, requestSpvProof, redeemCrossChain, computeOriginHash, createTamperedProof } = require("./utils/utils");
+const { getSigners, deployContracts, authorizeContracts, crossChainTransfer, initCrossChain, requestSpvProof, redeemCrossChain } = require("./utils/utils");
 
 
 describe("SimpleToken Integration Tests", async function () {

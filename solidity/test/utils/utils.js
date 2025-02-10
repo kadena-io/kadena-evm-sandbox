@@ -45,8 +45,7 @@ async function deployContracts() {
           name: netname
         }
       };
-
-      deployments[netname] = deploymentInfo;
+      
       tokens.push(deploymentInfo);
     } catch (error) {
       console.error(`Failed to deploy to network ${netname}:`, error);
@@ -55,7 +54,6 @@ async function deployContracts() {
 
   // Return both formats
   return {
-    byNetwork: deployments,  // Access like: deployments.byNetwork.kadena_devnet0
     tokens     // Access like: deployments.tokens[0]
   };
 }
@@ -91,7 +89,6 @@ async function deployMocks() {
         }
       };
 
-      deployments[netname] = deploymentInfo;
       tokens.push(deploymentInfo);
     } catch (error) {
       console.error(`Failed to deploy to network ${netname}:`, error);
@@ -99,7 +96,6 @@ async function deployMocks() {
   }
 
   return {
-    byNetwork: deployments,
     tokens
   };
 }
@@ -137,8 +133,6 @@ async function authorizeContracts(token, tokenInfo, authorizedTokenInfos) {
 
 async function initCrossChain(sourceToken, sourceTokenInfo, targetTokenInfo, sender, receiver, amount) {
   console.log(`Initiating cross-chain transfer from ${sourceTokenInfo.network.name} to ${targetTokenInfo.network.name}`);
-  console.log("sourceTokenInfo", sourceTokenInfo);
-  console.log("targetTokenInfo", targetTokenInfo);
   await switchNetwork(sourceTokenInfo.network.name);
   let response1 = await sourceToken.connect(sender).transferCrossChain(receiver.address, amount, targetTokenInfo.chain);
   let receipt1 = await response1.wait();

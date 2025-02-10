@@ -433,7 +433,7 @@ describe("SimpleToken Unit Tests", async function () {
   }); // End of redeemCrossChain
 
   describe("getChainwebChainId", async function () {
-    // Can't test error cases without chaning the precompile implementation
+    // Can't test error cases without changing the precompile implementation
     context("Success Test Cases", async function () {
       it("Should return the correct chainweb chain id", async function () {
         // Token0 is deployed on chain 0

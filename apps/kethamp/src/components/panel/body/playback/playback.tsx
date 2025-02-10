@@ -30,7 +30,7 @@ const Playback: React.FC = () => {
   const graphContainerRef = React.useRef<HTMLDivElement>(null);
 
   const [activeTitle, setActiveTitle] = React.useState("Select account or transaction");
-  const [activeMetaData, setActiveMetaData] = React.useState<String | Number>({
+  const [activeMetaData, setActiveMetaData] = React.useState<Record<string, string|number>>({
     a: '-',
     b: '-',
   });
@@ -178,14 +178,14 @@ const Playback: React.FC = () => {
       } = activeGraph.account
       setActiveTitle(`${name} @ ${chain} ${balance} | Address: ${address}`);
       setActiveMetaData({
-        a: balance,
-        b: chain,
+        a: '-',
+        b: '-',
       })
     } else if (activeGraph.transaction) {
       setActiveTitle(activeGraph.transaction?.title);
       setActiveMetaData({
-        a: balance,
-        b: chain,
+        a: '-',
+        b: '-',
       })
     } else {
       setActiveTitle("Select account or transaction");

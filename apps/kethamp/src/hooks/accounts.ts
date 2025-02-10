@@ -34,6 +34,9 @@ const UseAccounts = () => {
           title: chainRef,
           list: Object.keys(data[chainRef]).map((accountId) => {
             return {
+              ...data[chainRef][accountId],
+              chain: chainRef,
+              accountLabel: accountId,
               title: accountId,
               balance: data[chainRef][accountId].balance,
             }

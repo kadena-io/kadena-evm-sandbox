@@ -79,8 +79,13 @@
         user-select: none;
         overflow: hidden;
   
-        &:hover, &.active {
+        &:hover {
           background-color: #0000BD;
+        }
+
+        &.activeItem {
+          background-color: #fff;
+          color: black;
         }
   
         .number {

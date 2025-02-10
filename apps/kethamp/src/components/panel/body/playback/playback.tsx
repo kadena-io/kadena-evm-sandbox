@@ -13,11 +13,13 @@ const Playback: React.FC = () => {
       list: networksList,
     },
     graph: {
+      active: activeGraph,
       data: graphData,
       options: {
         stepSize,
         maxStepCount,
         progress,
+        isPlaying,
       },
     },
   } = useContext();
@@ -26,6 +28,12 @@ const Playback: React.FC = () => {
   const trackRef = React.useRef<HTMLDivElement>(null);
   const rangeRef = React.useRef<HTMLInputElement>(null);
   const graphContainerRef = React.useRef<HTMLDivElement>(null);
+
+  const [activeTitle, setActiveTitle] = React.useState("Select account or transaction");
+  const [activeMetaData, setActiveMetaData] = React.useState<String | Number>({
+    a: '-',
+    b: '-',
+  });
 
   const [topGraphId, bottomGraphId] = networksList;
 
@@ -42,14 +50,21 @@ const Playback: React.FC = () => {
     [maxStepCount]
   );
 
-  const stopPlayer = React.useCallback(() => {
+  const stopPlayer = React.useCallback((isNoTimeout=false) => {
     const track = trackRef.current;
 
     if (track && timerRef.current) {
-      track.classList.remove(styles.playing);
+      if (!isNoTimeout) {
+        setTimeout(() => {
+          track.classList.remove(styles.playing);
+        }, 1000);
+      } else {
+        track.classList.remove(styles.playing);
+      }
+
       clearInterval(timerRef.current);
     }
-  }, [trackRef.current, timerRef.current]);
+  }, []);
 
   const resetPlayer = React.useCallback(() => {
     if (trackRef.current) {
@@ -64,9 +79,9 @@ const Playback: React.FC = () => {
         }
       }, 400);
     }
-  }, [trackRef]);
+  }, [dispatch]);
 
-  const forwards = React.useCallback(() => {
+  const forwards = React.useCallback((isStopPlayer=true) => {
     dispatch({
       type: "SET_PROGRESS",
       payload: {
@@ -75,8 +90,8 @@ const Playback: React.FC = () => {
       },
     });
     
-    stopPlayer();
-  }, [progress, dispatch, stopPlayer]);
+    isStopPlayer && stopPlayer();
+  }, [dispatch, progress, stepSize, stopPlayer]);
 
   const backwards = React.useCallback(() => {
     dispatch({
@@ -88,9 +103,16 @@ const Playback: React.FC = () => {
     });
 
     stopPlayer();
-  }, [progress, dispatch, stopPlayer]);
+  }, [dispatch, progress, stepSize, stopPlayer]);
 
   const playHandler = React.useCallback(async () => {
+    if (isPlaying) {
+      stopPlayer(true);
+      dispatch({
+        type: "RESET_PROGRESS"
+      });
+    }
+
     if (progress === 100) {
       dispatch({
         type: "RESET_PROGRESS"
@@ -102,30 +124,35 @@ const Playback: React.FC = () => {
     }
 
     timerRef.current = setInterval(() => {
+      const progressValue = parseInt(rangeRef.current.value, 10) ?? 0
+
       dispatch({
         type: "SET_PROGRESS",
         payload: {
           direction: "forwards",
-        },
+          isPlaying: progressValue + stepSize !== 100,
+          next: progressValue + stepSize,
+        }
       });
 
-      if (progress > 100) {
-        clearInterval(timerRef.current);
-        return 100;
+      if (progressValue === 100) {
+        stopPlayer();
       }
     }, 1000);
-  }, [dispatch, progress]);
+  }, [isPlaying, progress, stopPlayer, dispatch, stepSize]);
 
   React.useEffect(() => {
     const range = rangeRef.current;
     const track = trackRef.current;
 
     if (range && track) {
-      range.addEventListener("input", () => {
+      range.addEventListener("input", (e) => {
         dispatch({
           type: "SET_PROGRESS",
           payload: {
-            progress: parseInt(range.value),
+            direction: "forwards",
+            isPlaying: false,
+            next: parseInt(e.target.value, 10),
           },
         });
         
@@ -141,7 +168,35 @@ const Playback: React.FC = () => {
   }, [dispatch, stopPlayer]);
 
   React.useEffect(() => {
-    console.log({progress})
+    console.log({activeGraph})
+    if (activeGraph.account) {
+      const {
+        name,
+        chain,
+        address,
+        balance,
+      } = activeGraph.account
+      setActiveTitle(`${name} @ ${chain} ${balance} | Address: ${address}`);
+      setActiveMetaData({
+        a: balance,
+        b: chain,
+      })
+    } else if (activeGraph.transaction) {
+      setActiveTitle(activeGraph.transaction?.title);
+      setActiveMetaData({
+        a: balance,
+        b: chain,
+      })
+    } else {
+      setActiveTitle("Select account or transaction");
+      setActiveMetaData({
+        a: '-',
+        b: '-',
+      })
+    }
+  }, [activeGraph, setActiveTitle]);
+
+  React.useEffect(() => {
     return () => {
       if (timerRef.current && progress === 100-stepSize) {
         stopPlayer();
@@ -155,6 +210,7 @@ const Playback: React.FC = () => {
 
   return (
     <section className={styles.container}>
+      {isPlaying ? <div className="text-white">Playing...</div> : null}
       <div className={styles.main}>
         <span className={[styles.uiDisplayText, styles.i1].join(" ")}>
           {progress}
@@ -200,12 +256,12 @@ const Playback: React.FC = () => {
         </div>
       </div>
       <div className={[styles.uiDisplayText, styles.i2].join(" ")}>
-        <span>{"AA"}</span>
-        <span>{"BB"}</span>
+        <span>{activeTitle}</span>
+        <span>{activeTitle}</span>
       </div>
       <div className={[styles.uiDisplayText, styles.i3i4wrapper].join(" ")}>
-        <span className={styles.i3}>{"DD"}</span>
-        <span className={styles.i4}>{"EE"}</span>
+        <span className={styles.i3}>{activeMetaData.a}</span>
+        <span className={styles.i4}>{activeMetaData.b}</span>
       </div>
       <div
         ref={trackRef}
@@ -219,7 +275,7 @@ const Playback: React.FC = () => {
           min="0"
           max={100}
           step={stepSize}
-          defaultValue={progress.toString()}
+          defaultValue={progress}
         />
       </div>
       <div className={styles.buttons}>

@@ -9,6 +9,7 @@ import UseAccounts from "@app/hooks/accounts";
 import UseTransactions from "@app/hooks/transactions";
 
 import { useContext, useContextDispatch } from '../../context/context';
+import { title } from 'process';
 
 const Main = () => {
   const state = useContext();
@@ -49,10 +50,6 @@ const Main = () => {
     }
   }, [accountsData, dispatch, transactionsData]);
 
-  React.useEffect(() => {
-    console.log('state', state);
-  }, [state]);
-
   return <div className="font-[family-name:var(--font-geist-sans)] py-10">
     <main className="w-full m-auto max-w-[640px]">
       <Panel
@@ -65,50 +62,131 @@ const Main = () => {
       >
         <List
           data={listAccounts}
-          cols={[{ key: "title", style: { flex: 1 } }, { key: "balance", formatter: (value: string) => `${value} KDA` }]}
+          cols={[
+            { key: "title", style: { flex: 1 } },
+            { key: "balance", formatter: (value: string) => `${value} KDA` }
+          ]}
+          config={{
+            entity: "account",
+            entityKey: ["address", "chain"],
+            onClick: (item) => dispatch({
+              type: "SET_ACTIVE_ACCOUNT",
+              payload: {
+                address: item.address,
+                chain: item.chain,
+              },
+            })
+          }}
         />
       </Panel>
       <Panel
         type="list"
-        title="Networks"
+        title="Network Transactions"
       >
         {
           state?.transactions?.list?.network ? (
             <List
-              data={state.transactions.list.network}
+              data={(state.graph.active.account && state.transactions.list?.filtered?.network) || state.transactions.list.network}
               hasSearch
-              config={{ searchCol: "blockNumber" }}
+              config={{
+                searchCol: "title",
+                entity: "transaction",
+                entityKey: "hash",
+                onClick: (item) => dispatch({
+                  type: "SET_ACTIVE_TRANSACTION",
+                  payload: {
+                    hash: item.hash,
+                  },
+                })
+              }}
               cols={[
                 { key: "blockNumber", style: { }, formatter: (value: string) => `#${value}` },
-                { key: "title", style: { }},
+                { key: "title", style: { maxWidth: '200px' } },
                 // { key: "from", style: { width: '100px' }, formatter: maskAccountAddress },
                 // { key: "to", style: { width: '100px' }, formatter: maskAccountAddress },
-                { key: "", style: { flex: 1 } },
+                // { key: "", style: { flex: 1 } },
               ]}
             />
           ) : null
         }
       </Panel>
       
-      <Panel
-        type="list"
-        title="Transfers"
-      >
-        <List
-          hasSearch
-          data={[
-            {
-              title: "Chain 1",
-              list: Array.from({length: 20}).map((_, i) => ({ title: "Apollo Omega Point " + i, i: i+1})),
-            },
-            {
-              title: "Chain 2",
-              list: Array.from({length: 20}).map((_, i) => ({ title: "Apollo Omega Point", i: i+1})),
-            },
-          ]}
-          cols={[{ key: "title", style: { flex: 1 } }]}
-        />
-      </Panel>
+      {
+        state.graph.active.transaction ? (
+          <Panel
+            type="list"
+            title="Transaction Details"
+          >
+            <List
+              hasSearch
+              config={{
+                searchCol: "value",
+              }}
+              data={[
+                {
+                  title: state.graph.active.transaction.title,
+                  list: state.graph.active?.transaction && Object.keys(state.graph.active.transaction).reduce((res, key) => {
+                    const value = state.graph.active.transaction?.[key]
+                    return [
+                      ...res,
+                      {
+                        title: key,
+                        value: (typeof value === "string") ? value : JSON.stringify(value),
+                      }
+                    ]
+                  }, []).sort((a, b) => a.title.localeCompare(b.title))
+                }
+              ]}
+              cols={[
+                { key: "title", style: { maxWidth: '200px', width: '100%' } },
+                { key: "value", style: { }, formatter: (value: string) => value ?? "-" },
+              ]}
+            />
+          </Panel>
+        ) : null
+        }
+        { state.graph.active.transaction?.logs?.length ? (
+            <Panel
+              type="list"
+              title="Transaction Logs"
+            >
+              <List
+                hasSearch
+                config={{
+                  searchCol: "value",
+                  customCount: state.graph.active?.transaction.logs.length,
+                }}
+                data={[
+                  {
+                    title: state.graph.active.transaction.title,
+                    list: state.graph.active?.transaction.logs.reduce((res, value, index) => {
+                      return [
+                        ...res,
+                        {
+                          title: `---`,
+                          value: "---",
+                        },
+                        ...Object.keys(value).reduce((acc, key) => { 
+                          return [
+                            ...acc,
+                            {
+                              title: `${key} [${index}]`,
+                              value: value[key]
+                            }
+                          ]
+                        }, []),
+                      ]
+                    }, [])/* .sort((a, b) => a.value.localeCompare(b.value)) */
+                  }
+                ]}
+                cols={[
+                  { key: "title", style: { maxWidth: '80px', width: '100%' } },
+                  { key: "value", style: { } },
+                ]}
+              />
+            </Panel>
+          ) : null
+      }
     </main>
   </div>
 }

@@ -130,6 +130,41 @@ function getTransactionsListByNetwork (state, networkList, graphData) {
   return [];
 }
 
+function getAccountsList(accounts) {
+  return Object.keys(accounts).reduce((accChain, keyChain) => {
+    return [
+      ...accChain,
+      ...Object.keys(accounts[keyChain]).reduce((accAccounts, keyName) => {
+        return [
+          ...accAccounts,
+          {
+            chain: keyChain,
+            name: keyName,
+            ...accounts[keyChain][keyName],
+          },
+        ]
+      }, [])
+    ]
+  }, []);
+}
+
+function filterListByAccount(list, account) {
+  if (list && account) {
+    return Object.values(list).reduce((acc, d) => {
+      return [
+        ...acc,
+        {
+          ...d,
+          list: d.list.filter((d) =>
+            d.from === account?.address || d.to === account?.address),
+        },
+      ];
+    }, []);
+  }
+
+  return list
+}
+
 function stateReducer(state, action) {
   switch (action.type) {
     case "UPDATE_DATA":
@@ -146,7 +181,7 @@ function stateReducer(state, action) {
           accounts: {
             ...state.accounts,
             data: action.payload.accounts,
-            list: [],
+            list: getAccountsList(action.payload.accounts),
           },
           transactions: {
             ...state.transactions,
@@ -190,6 +225,20 @@ function stateReducer(state, action) {
           options: {
             ...state.graph.options,
             progress: 0,
+            isPlaying: false,
+          }
+        }
+      }
+    }
+
+    case "STOP_PROGRESS": {
+      return {
+        ...state,
+        graph: {
+          ...state.graph,
+          options: {
+            ...state.graph.options,
+            isPlaying: false,
           }
         }
       }
@@ -198,22 +247,20 @@ function stateReducer(state, action) {
     case "SET_PROGRESS": {
       const progress = action.payload.progress ?? state.graph.options.progress;
       let next = action.payload.next ?? 0;
-
+      
       if (action.payload.direction === 'forwards') {
-        if (progress < 100) {
-          if (next > 100) {
-            next = 100;
-          }
+        if (progress < 100 && next > 100) {
+          next = 100;
         }
       } else if (action.payload.direction === 'backwards') {
         if (progress > 0 && next < 0) {
           next = 0;
         }
       }
-
+      
       const nextState = {...state };
       nextState.graph.options.progress = next;
-
+      
       return {
         ...state,
         transactions: {
@@ -230,8 +277,64 @@ function stateReducer(state, action) {
           ...state.graph,
           options: {
             ...state.graph.options,
+            isPlaying: action.payload.isPlaying || false,
             progress: action.payload.progress ?? next,
           }
+        }
+      }
+    }
+
+    case "SET_ACTIVE_TRANSACTION": {
+      let transaction = state.transactions.data.find((d) => d.hash === action.payload.hash) || null;
+
+      if (state.graph.active.transaction?.hash === action.payload.hash) {
+        transaction = null;
+      }
+
+      return {
+        ...state,
+        graph: {
+          ...state.graph,
+          active: {
+            ...state.graph.active,
+            transaction,
+          }
+        }
+      }
+    }
+
+    case "SET_ACTIVE_ACCOUNT": {
+      let account = state.accounts.list.
+        find((d) =>
+          d.address === action.payload.address &&
+          d.chain === action.payload.chain) || null;
+      
+      if (
+        state.graph.active.account?.address === action.payload.address &&
+        state.graph.active.account?.chain === action.payload.chain
+      ) {
+        account = null;
+      }
+
+      return {
+        ...state,
+        graph: {
+          ...state.graph,
+          active: {
+            ...state.graph.active,
+            transaction: null,
+            account,
+          }
+        },
+        transactions: {
+          ...state.transactions,
+          list: {
+            ...state.transactions.list,
+            filtered: {
+              ...state.transactions.list.filtered,
+              network: filterListByAccount(state.transactions.list.network, account),
+            },
+          },
         }
       }
     }
@@ -252,16 +355,24 @@ const initialState = {
   
   accounts: {
     isLoading: false,
-    list: [],
+    list: {
+      filtered: {},
+    },
     data: {},
   },
   transactions: {
     isLoading: false,
-    list: [],
+    list: {
+      filtered: {},
+    },
     data: {},
   },
   graph: {
     data: {},
+    active: {
+      transaction: null,
+      account: null,
+    },
     options: {
       progress: 0,
       stepSize: 10,

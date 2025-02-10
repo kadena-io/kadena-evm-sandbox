@@ -116,9 +116,6 @@ function getTransactionsListByNetwork (state, networkList, graphData) {
   }
 
   if (data && (networkList || state.networks.list)) {
-    
-    debugger
-
     return (networkList || state.networks.list).reduce((list, networkId) => {
       return [
         ...list,

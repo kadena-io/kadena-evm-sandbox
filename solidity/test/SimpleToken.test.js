@@ -172,7 +172,7 @@ describe("SimpleToken Unit Tests", async function () {
         const expectedCrossChainData = ethers.AbiCoder.defaultAbiCoder().encode(
           ["tuple(address,uint256)"],
           [[
-            receiver.address,    // receiverAccount
+            receiver.address,    // receiver
             amount              // value
           ]]
         );

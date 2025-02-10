@@ -130,7 +130,7 @@ describe("SimpleToken Integration Tests", async function () {
       expect(receiver2BalanceAfter).to.equal(receiver2BalanceBeforeTransfer2 + amount2);
     });
 
-    // This test case is skipped because it should be succeeding but is reverting on redeem with IncorrectTargetChainId
+    // This test case is skipped because it should be succeeding  but the receiver amount is not as expected after the redeem
     it.skip("Should allow third party to redeem on behalf of receiver", async function () {
       const sender = signers.alice;
       const receiver = signers.bob;
@@ -143,7 +143,6 @@ describe("SimpleToken Integration Tests", async function () {
 
       // Transfer 
       const origin = await initCrossChain(token0, token0Info, token1Info, sender, receiver, amount);
-      console.log("origin", origin);
       const proof = await requestSpvProof(token1Info.chain, origin);
 
       // Third party redeems

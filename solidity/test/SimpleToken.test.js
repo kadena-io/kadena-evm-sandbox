@@ -431,6 +431,41 @@ describe("SimpleToken Unit Tests", async function () {
       });
     }); // End of Error Test Cases
   }); // End of redeemCrossChain
+
+  describe("getChainwebChainId", async function () {
+    // Can't test error cases without chaning the precompile implementation
+    context("Success Test Cases", async function () {
+      it("Should return the correct chainweb chain id", async function () {
+        // Token0 is deployed on chain 0
+        // Token1 is deployed on chain 1
+        // getChainwebChainId() should return the correct chain id for each token, regardless of the current network
+        expect(await token0.getChainwebChainId()).to.equal(0n);
+        expect(await token1.getChainwebChainId()).to.equal(1n);
+        await switchNetwork(token1Info.network.name);
+        expect(await token1.getChainwebChainId()).to.equal(1n);
+        expect(await token0.getChainwebChainId()).to.equal(0n);
+      });
+    }); // End of Success Test Cases
+  }); // End of getChainwebChainId
+
+  describe("getCrossChainAddress", async function () {
+    context("Success Test Cases", async function () {
+      it("Should return the correct cross chain address", async function () {
+        // Explicitly set cross-chain addresses for token0
+        const tx1 = await token0.setCrossChainAddress(token1Info.chain, await token1.getAddress());
+        await tx1.wait();
+        expect(await token0.getCrossChainAddress(token1Info.chain)).to.equal(await token1.getAddress());
+        expect(await token0.getCrossChainAddress(token0Info.chain)).to.equal(ZeroAddress);
+
+        // Explicitly set cross-chain addresses for token1
+        await switchNetwork(token1Info.network.name);
+        const tx2 = await token1.setCrossChainAddress(token0Info.chain, await token0.getAddress());
+        await tx2.wait();
+        expect(await token1.getCrossChainAddress(token0Info.chain)).to.equal(await token0.getAddress());
+        expect(await token1.getCrossChainAddress(token1Info.chain)).to.equal(ZeroAddress);
+      });
+    }); // End of Success Test Cases
+  }); // End of getCrossChainAddress
 }); // End of SimpleToken Unit Tests
 
 

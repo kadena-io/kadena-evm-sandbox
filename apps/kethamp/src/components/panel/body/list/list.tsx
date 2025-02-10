@@ -18,7 +18,9 @@ const List: React.FC<any> = ({ data, hasSearch, cols, config={} }) => {
     }
   }, [data]);
 
-
+  if (!data?.length) {
+    return null
+  }
 
   return <article ref={ref} className={styles.wrapper}>
     {data.map((item: any, index: number) => (

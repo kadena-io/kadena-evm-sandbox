@@ -3,30 +3,31 @@
 import React from "react";
 import styles from "./playback.module.css";
 import UseActions from "@app/hooks/actions";
-import UseData from "@app/hooks/data";
+import { useContext, useContextDispatch } from "@app/context/context";
 
-export type PlaybackProps = {
-  data: {
-    accounts: any;
-    transactions: any;
-  };
-  handlers?: { [key: string]: () => void };
-};
-
-const Playback: React.FC<PlaybackProps> = ({ data }) => {
-  const { playlist, deploy, reset } = UseActions();
+const Playback: React.FC = () => {
+  const dispatch = useContextDispatch();
+  const { playlist, deploy } = UseActions();
   const {
-    graphData,
-    networks,
-    options: { stepSize, maxStepCount },
-  } = UseData({ data });
+    networks: {
+      list: networksList,
+    },
+    graph: {
+      data: graphData,
+      options: {
+        stepSize,
+        maxStepCount,
+        progress,
+      },
+    },
+  } = useContext();
+  
   const timerRef = React.useRef<any>(null);
   const trackRef = React.useRef<HTMLDivElement>(null);
   const rangeRef = React.useRef<HTMLInputElement>(null);
   const graphContainerRef = React.useRef<HTMLDivElement>(null);
 
-  const [topGraphId, bottomGraphId] = networks;
-  const [progress, setProgress] = React.useState(0);
+  const [topGraphId, bottomGraphId] = networksList;
 
   const getBarHeight = React.useCallback(
     (data) => {
@@ -41,6 +42,15 @@ const Playback: React.FC<PlaybackProps> = ({ data }) => {
     [maxStepCount]
   );
 
+  const stopPlayer = React.useCallback(() => {
+    const track = trackRef.current;
+
+    if (track && timerRef.current) {
+      track.classList.remove(styles.playing);
+      clearInterval(timerRef.current);
+    }
+  }, [trackRef.current, timerRef.current]);
+
   const resetPlayer = React.useCallback(() => {
     if (trackRef.current) {
       trackRef.current.classList.remove(styles.playing);
@@ -48,43 +58,43 @@ const Playback: React.FC<PlaybackProps> = ({ data }) => {
       setTimeout(() => {
         if (trackRef.current) {
           trackRef.current.style.backgroundPositionX = "0%";
-          setProgress(0);
+          dispatch({
+            type: "RESET_PROGRESS"
+          });
         }
       }, 400);
     }
   }, [trackRef]);
 
   const forwards = React.useCallback(() => {
-    if (progress < 100) {
-      setProgress((prev) => {
-        const next = prev + stepSize;
-
-        if (next > 100) {
-          return 100;
-        }
-
-        return next;
-      });
-    }
-  }, [progress, stepSize]);
+    dispatch({
+      type: "SET_PROGRESS",
+      payload: {
+        direction: "forwards",
+        next: progress + stepSize,
+      },
+    });
+    
+    stopPlayer();
+  }, [progress, dispatch, stopPlayer]);
 
   const backwards = React.useCallback(() => {
-    if (progress > 0) {
-      setProgress((prev) => {
-        const next = prev - stepSize;
+    dispatch({
+      type: "SET_PROGRESS",
+      payload: {
+        direction: "backwards",
+        next: progress - stepSize,
+      },
+    });
 
-        if (next < 0) {
-          return 0;
-        }
-
-        return next;
-      });
-    }
-  }, [progress, stepSize]);
+    stopPlayer();
+  }, [progress, dispatch, stopPlayer]);
 
   const playHandler = React.useCallback(async () => {
     if (progress === 100) {
-      setProgress(0);
+      dispatch({
+        type: "RESET_PROGRESS"
+      });
     }
 
     if (trackRef.current) {
@@ -92,18 +102,19 @@ const Playback: React.FC<PlaybackProps> = ({ data }) => {
     }
 
     timerRef.current = setInterval(() => {
-      setProgress((prev) => {
-        const next = prev + stepSize;
-
-        if (next > 100) {
-          clearInterval(timerRef.current);
-          return 100;
-        }
-
-        return next;
+      dispatch({
+        type: "SET_PROGRESS",
+        payload: {
+          direction: "forwards",
+        },
       });
+
+      if (progress > 100) {
+        clearInterval(timerRef.current);
+        return 100;
+      }
     }, 1000);
-  }, [progress, stepSize]);
+  }, [dispatch, progress]);
 
   React.useEffect(() => {
     const range = rangeRef.current;
@@ -111,9 +122,14 @@ const Playback: React.FC<PlaybackProps> = ({ data }) => {
 
     if (range && track) {
       range.addEventListener("input", () => {
-        setProgress(parseInt(range.value));
-        track.classList.remove(styles.playing);
-        clearInterval(timerRef.current);
+        dispatch({
+          type: "SET_PROGRESS",
+          payload: {
+            progress: parseInt(range.value),
+          },
+        });
+        
+        stopPlayer();
       });
     }
 
@@ -122,19 +138,20 @@ const Playback: React.FC<PlaybackProps> = ({ data }) => {
         range.removeEventListener("input", () => {});
       }
     };
-  }, [setProgress]);
-
-  // React.useEffect(() => {
-  //   console.log('graphData', graphData);
-  // }, [graphData]);
+  }, [dispatch, stopPlayer]);
 
   React.useEffect(() => {
-    console.log("networks", networks);
-  }, [networks]);
+    console.log({progress})
+    return () => {
+      if (timerRef.current && progress === 100-stepSize) {
+        stopPlayer();
+      }
+    };
+  }, [progress, stepSize, stopPlayer]);
 
-  React.useEffect(() => {
-    console.log("maxStepCount", maxStepCount);
-  }, [maxStepCount]);
+  if (!graphData) {
+    return null;
+  }
 
   return (
     <section className={styles.container}>

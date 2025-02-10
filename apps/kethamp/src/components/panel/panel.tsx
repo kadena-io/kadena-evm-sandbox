@@ -11,10 +11,6 @@ export type PanelTypes = "playback" | "list";
 export type PanelProps = {
   children?: React.ReactNode;
   type: PanelTypes;
-  data: ListItem[];
-  handlers?: {
-    [key: string]: () => void;
-  };
 } &
   HeaderProps;
 
@@ -32,19 +28,12 @@ export type EventProps = {
   readonly data: string;
 }
 
-export const Panel: React.FC<PanelProps> = ({ type, title, data, handlers={}, children }) => {
+export const Panel: React.FC<PanelProps> = ({ type, title, children }) => {
   return (
     <div>
       <Header title={title} type={type} />
-      {
-        type === "playback" ? 
-        <Playback
-          data={data}
-          handlers={handlers}
-        /> :
-        type === "list" ?
-        <Layout>{children}</Layout> : null
-      }
+      {type === "playback" && <Playback />}
+      {type === "list" && <Layout>{children}</Layout>}
     </div>
   )
 }

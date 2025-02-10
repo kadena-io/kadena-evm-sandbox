@@ -14,9 +14,7 @@ contract SimpleToken is ERC20("SimpleToken", "SIM"), Ownable {
     enum CrossChainOperation {
         None,
         Erc20Transfer,
-        Erc20TransferFrom,
-        ERC721TransferFrom,
-        ERC721SafeTransferFrom
+        Erc20TransferFrom
     }
 
     /**
@@ -24,8 +22,7 @@ contract SimpleToken is ERC20("SimpleToken", "SIM"), Ownable {
      * @dev The members of the struct are operation-specific and are encoded to bytes
      */
     struct CrossChainData {
-        uint32 receiverChainId;
-        address receiverAccount;
+        address receiver;
         uint256 value;
     }
 
@@ -116,10 +113,7 @@ contract SimpleToken is ERC20("SimpleToken", "SIM"), Ownable {
         address originContractAddress,
         address knownOriginContractAddress
     );
-    error IncorrectReceiverChainId(
-        uint32 crossChainReceiverChainId,
-        uint32 currentChainId
-    );
+  
     error IncorrectReceiver(address crossChainReceiver, address receiver);
     error IncorrectAmount(uint256 crossChainValue, uint256 amount);
 
@@ -154,12 +148,6 @@ contract SimpleToken is ERC20("SimpleToken", "SIM"), Ownable {
         require(to != address(0), InvalidReceiver(to));
         require(amount > 0, InvalidAmount(amount));
 
-        uint32 cid = getChainwebChainId();
-        require(
-            targetChainId != cid,
-            TargetChainIsCurrentChain(cid, targetChainId)
-        );
-
         address targetContract = getCrossChainAddress(targetChainId);
         require(
             targetContract != address(0),
@@ -169,12 +157,11 @@ contract SimpleToken is ERC20("SimpleToken", "SIM"), Ownable {
         _burn(msg.sender, amount);
 
         CrossChainData memory cdata = CrossChainData({
-            receiverChainId: targetChainId,
-            receiverAccount: to,
+            receiver: to,
             value: amount
         });
 
-        // Emit the transfer event
+        // Emit the cross chain init event
         emit CrossChainInitialized(
             targetChainId,
             targetContract,
@@ -250,13 +237,8 @@ contract SimpleToken is ERC20("SimpleToken", "SIM"), Ownable {
         );
 
         require(
-            crossChainData.receiverChainId == cid,
-            IncorrectReceiverChainId(crossChainData.receiverChainId, cid)
-        );
-
-        require(
-            crossChainData.receiverAccount == to,
-            IncorrectReceiver(crossChainData.receiverAccount, to)
+            crossChainData.receiver == to,
+            IncorrectReceiver(crossChainData.receiver, to)
         );
 
         require(
@@ -264,7 +246,7 @@ contract SimpleToken is ERC20("SimpleToken", "SIM"), Ownable {
             IncorrectAmount(crossChainData.value, amount)
         );
 
-        _mint(crossChainData.receiverAccount, crossChainData.value);
+        _mint(crossChainData.receiver, crossChainData.value);
 
         completed[originHash] = true;
 

@@ -22,23 +22,28 @@ const getDeployPlaylist = async () => {
   const [, , bob] = await hre.ethers.getSigners();
   const playlist: Track[] = [
     {
+      title: "Deploy KDA on devnet1",
       type: "deploy",
       network: "kadena_devnet1",
     },
     {
+      title: "Deploy KDA on devnet2",
       type: "deploy",
       network: "kadena_devnet2",
     },
     {
+      title: "Register cross-chain address",
       type: "register-cross-chain",
       networks: ["kadena_devnet1", "kadena_devnet2"],
     },
     {
+      title: "Fund Alice on devnet1",
       type: "fund",
       network: "kadena_devnet1",
       address: alice.address,
     },
     {
+      title: "Fund Bob on devnet2",
       type: "fund",
       network: "kadena_devnet2",
       address: bob.address,
@@ -88,7 +93,7 @@ const deploy = async (track: DeployTrack) => {
   await saveContracts({
     [track.network]: await kda.getAddress(),
   });
-  await saveTx(track.network, receipt);
+  await saveTx(track.network, receipt, track.title);
   return kda;
 };
 const eventSigHash =
@@ -158,7 +163,7 @@ const fund = async (track: FundTrack) => {
   const tx = await kda
     .connect(owner)
     .transfer(track.address, 1000n * 10n ** 2n);
-  await saveTx(track.network, await tx.wait());
+  await saveTx(track.network, await tx.wait(), track.title);
 };
 const registerCrossChain = async (track: RegisterCrossChainTrack) => {
   for (const network of track.networks) {
@@ -172,7 +177,7 @@ const registerCrossChain = async (track: RegisterCrossChainTrack) => {
       const tx = await kda
         .connect(owner)
         .setCrossChainAddress(network, address);
-      await saveTx(network, await tx.wait());
+      await saveTx(network, await tx.wait(), `${track.title} - ${network}`);
     }
   }
 };

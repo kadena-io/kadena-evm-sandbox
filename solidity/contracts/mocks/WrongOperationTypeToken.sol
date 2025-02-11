@@ -5,11 +5,11 @@ import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 
 /**
- * @title SimpleToken
+ * @title WrongOperationTypeToken
  * @author Kadena Team
- * @notice A simple ERC-20 token that can be transferred cross chain.
+ * @notice A simple ERC-20 token that can be transferred cross chain. This mock sets incorrect values for error testing.
  */
-contract SimpleToken is ERC20("SimpleToken", "SIM"), Ownable {
+contract WrongOperationTypeToken is ERC20("SimpleToken", "SIM"), Ownable {
     /// @notice The cross chain operation that is being performed
     enum CrossChainOperation {
         None,
@@ -113,7 +113,6 @@ contract SimpleToken is ERC20("SimpleToken", "SIM"), Ownable {
         address originContractAddress,
         address knownOriginContractAddress
     );
-  
     error IncorrectReceiver(address crossChainReceiver, address receiver);
     error IncorrectAmount(uint256 crossChainValue, uint256 amount);
 
@@ -161,11 +160,11 @@ contract SimpleToken is ERC20("SimpleToken", "SIM"), Ownable {
             value: amount
         });
 
-        // Emit the cross chain init event
+       // Emit the cross chain init event
         emit CrossChainInitialized(
             targetChainId,
             targetContract,
-            uint64(CrossChainOperation.Erc20Transfer),
+            uint64(CrossChainOperation.Erc20TransferFrom), // Incorrect operation type
             abi.encode(cdata)
         );
     }

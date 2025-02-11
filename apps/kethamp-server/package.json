@@ -1,13 +1,14 @@
 {
   "name": "kethamp-server",
   "scripts": {
-    "start": "bun run ./src/index.ts",
-    "dev": "bun run ./src/index.ts --watch",
+    "start": "pnpm dlx bun run ./src/index.ts",
+    "dev": "pnpm dlx bun run ./src/index.ts --watch",
     "postinstall": "hardhat compile"
   },
   "devDependencies": {
     "@nomicfoundation/hardhat-toolbox": "^5.0.0",
     "@openzeppelin/contracts": "^5.2.0",
+    "bun": "^1.2.2",
     "hardhat": "^2.22.18",
     "hardhat-switch-network": "^1.2.0",
     "hardhat-watcher": "^2.5.0"

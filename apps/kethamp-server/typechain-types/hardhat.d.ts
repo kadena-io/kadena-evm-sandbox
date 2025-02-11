@@ -49,6 +49,10 @@ declare module "hardhat/types/runtime" {
       name: "KDA",
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.KDA__factory>;
+    getContractFactory(
+      name: "SimpleToken",
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.SimpleToken__factory>;
 
     getContractAt(
       name: "Ownable",
@@ -95,6 +99,11 @@ declare module "hardhat/types/runtime" {
       address: string | ethers.Addressable,
       signer?: ethers.Signer
     ): Promise<Contracts.KDA>;
+    getContractAt(
+      name: "SimpleToken",
+      address: string | ethers.Addressable,
+      signer?: ethers.Signer
+    ): Promise<Contracts.SimpleToken>;
 
     deployContract(
       name: "Ownable",
@@ -132,6 +141,10 @@ declare module "hardhat/types/runtime" {
       name: "KDA",
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.KDA>;
+    deployContract(
+      name: "SimpleToken",
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.SimpleToken>;
 
     deployContract(
       name: "Ownable",
@@ -178,6 +191,11 @@ declare module "hardhat/types/runtime" {
       args: any[],
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.KDA>;
+    deployContract(
+      name: "SimpleToken",
+      args: any[],
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.SimpleToken>;
 
     // default types
     getContractFactory(

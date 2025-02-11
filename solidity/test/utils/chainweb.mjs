@@ -8,9 +8,6 @@ import { spawn } from 'child_process';
 /* *************************************************************************** */
 /* TODO */
 
-// * Add some sanity check to SpvProofs that detects tampering (e.g. HMAC)
-// * implement proper delay until SPV proof become available
-// * install mining trigger that listens on SPV requests
 // * support graphs that include non-evm chains (by just skipping over them)
 // * Consider deploying the spv precompile at an hash address that won't colide
 //   with future Ethereum extensions.
@@ -49,7 +46,7 @@ function logError(color, label, msg) {
 /* *************************************************************************** */
 /* Utils */
 
-function sleep(ms, logFun) {
+function sleep(ms, logFun = console.log) {
   return new Promise((resolve) => {
     logFun(`Sleeping for ${ms} milliseconds`);
     setTimeout(resolve, ms);
@@ -166,7 +163,10 @@ class Chain {
   }
 
   async getBlockNumber() {
-    return await this.provider.getBlockNumber()
+    // this.provider.getBlockNumber() is lagging. Maybe it caches internally or
+    // there's a race in the implementation?
+    // return await this.provider.getBlockNumber()
+    return parseInt(await this.provider.send("eth_blockNumber", []), 16);
   }
 
   async makeBlock() {
@@ -176,17 +176,17 @@ class Chain {
   async mine () {
     await lock.acquire('mine', async () => {
         this.logger.info(`mining requested`);
-        await this._mine();
+        await this.#mine();
     });
   }
 
-  async _mine () {
+  async #mine () {
     const cn = await this.getBlockNumber();
     this.logger.info(`current height is ${cn}`);
     for (const a of this.adjacents) {
       const an = await a.getBlockNumber();
       if (an < cn) {
-          await a._mine();
+          await a.#mine();
       }
     }
     this.logger.info(`make new block`);
@@ -283,6 +283,34 @@ class Chain {
     this.disableAutomine();
     this.provider = null;
     this.stopHardhatNetwork();
+  }
+}
+
+/* *************************************************************************** */
+/* Compute Chain Distances */
+
+// Compute shortest path via breadth first search. For small, connected,
+// degree-diameter graphs this has acceptable performance. (well, it's bad, but
+// not terribly bad)
+//
+function distance(srcChain, trgChain) {
+  if (srcChain.cid == trgChain.cid) {
+    return 0;
+  }
+  const visited = [srcChain.cid];
+  const queue = [[srcChain, 0]];
+
+  while (queue.length > 0) {
+    const [cur,d] = queue.shift();
+    for (const adj of srcChain.adjacents) {
+      if (adj.cid == trgChain.cid) {
+        return d + 1;
+      }
+      if (! visited.includes(i.cid)) {
+        visited.push(i.cid);
+        queue.push([i, d+1]);
+      }
+    }
   }
 }
 
@@ -389,12 +417,13 @@ export async function stopHardhatNetwork () {
 
 // Mock getProof:
 //
-// Call our chainweb SPV api with the necesasry proof parameters
+// Call our chainweb SPV api with the necesasry proof parameters.
+//
+// This mocks the call of the follwing API:
+//
+// http://localhost:1848/chainweb/0.0/evm-development/chain/${trgChain}/spv/chain/${origin.chain}/height/${origin.height}/transaction/${origin.txIdx}/event/${origin.eventIdx}
 //
 export async function getSpvProof(trgChain, origin) {
-  // return fetch(
-  //   `http://localhost:1848/chainweb/0.0/evm-development/chain/${trgChain}/spv/chain/${origin.chain}/height/${origin.height}/transaction/${origin.txIdx}/event/${origin.eventIdx}`
-  // );
 
   // get origin chain
   const provider = network.getProvider(origin.chain);
@@ -417,10 +446,25 @@ export async function getSpvProof(trgChain, origin) {
     throw new Error(`Expected exactly four topics at origin, but got ${topcis.length}`, origin);
   }
 
+  // for target chain to advance enough blocks such that the origin information
+  // is available.
+  //
+  // TODO should fail at least once so that the caller has to wait?
+  //
+  const src = network.chains[origin.chain];
+  const trg = network.chains[trgChain];
+  const dist = BigInt(distance(src, trg));
+  let trgHeight = BigInt(await trg.getBlockNumber())
+  while (trgHeight < origin.height + dist) {
+    console.log(`waiting for SPV proof to become available on chain ${trgChain}; current height ${trgHeight}; required height ${origin.height + dist}`);
+    await trg.mine();
+    sleep(100);
+    trgHeight = BigInt(await trg.getBlockNumber());
+    }
+
   const coder = ethers.AbiCoder.defaultAbiCoder();
 
   // FIXME: double check the event signature
-  // TODO: add and hash or HMAC as mock proof
 
   // (uint32,address,uint64,uint64,uint64)
   const xorigin = Object.values({

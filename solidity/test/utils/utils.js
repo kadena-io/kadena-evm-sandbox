@@ -41,7 +41,6 @@ async function callChainIdContract () {
   ]);
   return parseInt(hex, 16);
 }
->>>>>>> 3b9aa16 (WIP: experimental Chainweb hardhat network support)
 
 async function getSigners() {
   await switchNetwork(`${NETWORK_STEM}0`);

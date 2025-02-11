@@ -256,7 +256,7 @@ export const app = new Elysia()
     "/accounts",
     async () => {
       await hre.switchNetwork("kadena_devnet1");
-      const [owner, alice, bob, greg] = await hre.ethers.getSigners();
+      const [owner, alice, bob, charlie] = await hre.ethers.getSigners();
       const chain0 = {
         alice: {
           address: alice.address,
@@ -266,13 +266,13 @@ export const app = new Elysia()
           address: bob.address,
           balance: await getBalance(bob, "kadena_devnet1"),
         },
-        greg: {
-          address: greg.address,
-          balance: await getBalance(greg, "kadena_devnet1"),
+        charlie: {
+          address: charlie.address,
+          balance: await getBalance(charlie, "kadena_devnet1"),
         },
       };
       await hre.switchNetwork("kadena_devnet2");
-      const [owner1, alice1, bob1, greg1] = await hre.ethers.getSigners();
+      const [owner1, alice1, bob1, charlie1] = await hre.ethers.getSigners();
       const chain1 = {
         alice: {
           address: alice1.address,
@@ -282,9 +282,9 @@ export const app = new Elysia()
           address: bob1.address,
           balance: await getBalance(bob1, "kadena_devnet2"),
         },
-        greg: {
-          address: greg1.address,
-          balance: await getBalance(greg1, "kadena_devnet2"),
+        charlie: {
+          address: charlie1.address,
+          balance: await getBalance(charlie1, "kadena_devnet2"),
         },
       };
 

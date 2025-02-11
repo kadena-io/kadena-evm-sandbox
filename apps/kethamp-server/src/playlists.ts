@@ -15,9 +15,9 @@ export const getPlaylist = async (list: string) => {
 };
 const getCrosschainPlaylist = async () => {
   await hre.switchNetwork("kadena_devnet1");
-  const [, alice, greg] = await hre.ethers.getSigners();
+  const [, alice, charlie] = await hre.ethers.getSigners();
   await hre.switchNetwork("kadena_devnet2");
-  const [, , bob, greg1] = await hre.ethers.getSigners();
+  const [, , bob, charlie1] = await hre.ethers.getSigners();
   const playlist: Track[] = [
     {
       title: "Crosschain Transfer from Alice to Bob",
@@ -29,36 +29,36 @@ const getCrosschainPlaylist = async () => {
       amount: hre.ethers.parseEther("100"),
     },
     {
-      title: "Crosschain Transfer from Alice to Greg",
+      title: "Crosschain Transfer from Alice to charlie",
       type: "transfer",
       from: alice,
       fromNetwork: "kadena_devnet1",
-      to: greg1,
+      to: charlie1,
       toNetwork: "kadena_devnet2",
       amount: hre.ethers.parseEther("100"),
     },
     {
-      title: "Crosschain Transfer from Bob to Greg",
+      title: "Crosschain Transfer from Bob to charlie",
       type: "transfer",
       from: bob,
       fromNetwork: "kadena_devnet2",
-      to: greg,
+      to: charlie,
       toNetwork: "kadena_devnet1",
       amount: hre.ethers.parseEther("50"),
     },
     {
-      title: "Crosschain Transfer from Greg to Greg",
+      title: "Crosschain Transfer from charlie to charlie",
       type: "transfer",
-      from: greg1,
+      from: charlie1,
       fromNetwork: "kadena_devnet2",
-      to: greg,
+      to: charlie,
       toNetwork: "kadena_devnet1",
       amount: hre.ethers.parseEther("100"),
     },
     {
-      title: "Crosschain Transfer from Greg to Bob",
+      title: "Crosschain Transfer from charlie to Bob",
       type: "transfer",
-      from: greg,
+      from: charlie,
       fromNetwork: "kadena_devnet1",
       to: bob,
       toNetwork: "kadena_devnet2",
@@ -78,7 +78,7 @@ const getCrosschainPlaylist = async () => {
 };
 const getChain0Playlist = async () => {
   await hre.switchNetwork("kadena_devnet1");
-  const [, alice, bob, greg] = await hre.ethers.getSigners();
+  const [, alice, bob, charlie] = await hre.ethers.getSigners();
   const playlist: Track[] = [
     {
       title: "Transfer from Alice to Bob",
@@ -108,36 +108,36 @@ const getChain0Playlist = async () => {
       amount: hre.ethers.parseEther("50"),
     },
     {
-      title: "Transfer from Bob to Greg",
+      title: "Transfer from Bob to charlie",
       type: "transfer",
       from: bob,
       fromNetwork: "kadena_devnet1",
-      to: greg,
+      to: charlie,
       toNetwork: "kadena_devnet1",
       amount: hre.ethers.parseEther("50"),
     },
     {
-      title: "Transfer from Alice to Greg",
+      title: "Transfer from Alice to charlie",
       type: "transfer",
-      from: greg,
+      from: charlie,
       fromNetwork: "kadena_devnet1",
       to: alice,
       toNetwork: "kadena_devnet1",
       amount: hre.ethers.parseEther("50"),
     },
     {
-      title: "Transfer from Alice to Greg",
+      title: "Transfer from Alice to charlie",
       type: "transfer",
       from: alice,
       fromNetwork: "kadena_devnet1",
-      to: greg,
+      to: charlie,
       toNetwork: "kadena_devnet1",
       amount: hre.ethers.parseEther("100"),
     },
     {
-      title: "Transfer from Greg to Bob",
+      title: "Transfer from charlie to Bob",
       type: "transfer",
-      from: greg,
+      from: charlie,
       fromNetwork: "kadena_devnet1",
       to: bob,
       toNetwork: "kadena_devnet1",
@@ -153,9 +153,9 @@ const getChain0Playlist = async () => {
       amount: hre.ethers.parseEther("150"),
     },
     {
-      title: "Transfer from Greg to Alice",
+      title: "Transfer from charlie to Alice",
       type: "transfer",
-      from: greg,
+      from: charlie,
       fromNetwork: "kadena_devnet1",
       to: alice,
       toNetwork: "kadena_devnet1",
@@ -176,7 +176,7 @@ const getChain0Playlist = async () => {
 
 const getChain1Playlist = async () => {
   await hre.switchNetwork("kadena_devnet2");
-  const [, alice, bob, greg] = await hre.ethers.getSigners();
+  const [, alice, bob, charlie] = await hre.ethers.getSigners();
   const playlist: Track[] = [
     {
       title: "Transfer from Bob to Alice",
@@ -206,36 +206,36 @@ const getChain1Playlist = async () => {
       amount: hre.ethers.parseEther("50"),
     },
     {
-      title: "Transfer from Alice to Greg",
+      title: "Transfer from Alice to charlie",
       type: "transfer",
       from: alice,
       fromNetwork: "kadena_devnet2",
-      to: greg,
+      to: charlie,
       toNetwork: "kadena_devnet2",
       amount: hre.ethers.parseEther("50"),
     },
     {
-      title: "Transfer from Greg to Bob",
+      title: "Transfer from charlie to Bob",
       type: "transfer",
-      from: greg,
+      from: charlie,
       fromNetwork: "kadena_devnet2",
       to: bob,
       toNetwork: "kadena_devnet2",
       amount: hre.ethers.parseEther("50"),
     },
     {
-      title: "Transfer from Greg to Bob",
+      title: "Transfer from charlie to Bob",
       type: "transfer",
       from: bob,
       fromNetwork: "kadena_devnet2",
-      to: greg,
+      to: charlie,
       toNetwork: "kadena_devnet2",
       amount: hre.ethers.parseEther("100"),
     },
     {
-      title: "Transfer from Greg to Alice",
+      title: "Transfer from charlie to Alice",
       type: "transfer",
-      from: greg,
+      from: charlie,
       fromNetwork: "kadena_devnet2",
       to: alice,
       toNetwork: "kadena_devnet2",
@@ -251,9 +251,9 @@ const getChain1Playlist = async () => {
       amount: hre.ethers.parseEther("150"),
     },
     {
-      title: "Transfer from Greg to Bob",
-      type: "transfer",
-      from: greg,
+      title: "Transfer from charlie to Bob",
+      type: "transfeu",
+      from: charlie,
       fromNetwork: "kadena_devnet2",
       to: bob,
       toNetwork: "kadena_devnet2",

@@ -22,12 +22,12 @@ const getDeployPlaylist = async () => {
   const [, , bob] = await hre.ethers.getSigners();
   const playlist: Track[] = [
     {
-      title: "Deploy KDA on devnet1",
+      title: "Deploy KEWX on devnet1",
       type: "deploy",
       network: "kadena_devnet1",
     },
     {
-      title: "Deploy KDA on devnet2",
+      title: "Deploy KEWX on devnet2",
       type: "deploy",
       network: "kadena_devnet2",
     },
@@ -87,21 +87,21 @@ const getContract = async (network: NetworkId): Promise<SimpleToken> => {
 };
 const deploy = async (track: DeployTrack) => {
   await hre.switchNetwork(track.network);
-  const KDA = await hre.ethers.getContractFactory("SimpleToken");
-  const kda = await KDA.deploy(hre.ethers.parseEther("1000000"));
-  const receipt = await kda.deploymentTransaction()?.wait();
+  const KEWX = await hre.ethers.getContractFactory("SimpleToken");
+  const kewx = await KEWX.deploy(hre.ethers.parseEther("1000000"));
+  const receipt = await kewx.deploymentTransaction()?.wait();
   await saveContracts({
-    [track.network]: await kda.getAddress(),
+    [track.network]: await kewx.getAddress(),
   });
   await saveTx(track.network, receipt, track.title);
-  return kda;
+  return kewx;
 };
 const eventSigHash =
   "0x9d2528c24edd576da7816ca2bdaa28765177c54b32fb18e2ca18567fbc2a9550";
 const crossChainTransfer = async (track: TransferTrack) => {
   await hre.switchNetwork(track.fromNetwork);
-  const kda = await getContract(track.fromNetwork);
-  const tx = await kda
+  const kewx = await getContract(track.fromNetwork);
+  const tx = await kewx
     .connect(track.from)
     .transferCrossChain(
       track.to.address,
@@ -123,8 +123,8 @@ const crossChainTransfer = async (track: TransferTrack) => {
   });
   // send SPV proof to target chain
   await hre.switchNetwork(track.toNetwork);
-  const kdaTo = await getContract(track.toNetwork);
-  const txTo = await kdaTo
+  const kewxTo = await getContract(track.toNetwork);
+  const txTo = await kewxTo
     .connect(track.to)
     .redeemCrossChain(track.to.address, track.amount, proof);
   await saveTx(track.toNetwork, await txTo.wait(), `${track.title} - End`);
@@ -134,8 +134,8 @@ const transfer = async (track: TransferTrack) => {
     return await crossChainTransfer(track);
 
   await hre.switchNetwork(track.fromNetwork);
-  const kda = await getContract(track.fromNetwork);
-  const tx = await kda
+  const kewx = await getContract(track.fromNetwork);
+  const tx = await kewx
     .connect(track.from)
     .transfer(track.to.address, track.amount);
   const receipt = await tx.wait();
@@ -170,9 +170,9 @@ const getSPVProof = async ({
 const fund = async (track: FundTrack) => {
   await hre.switchNetwork(track.network);
   const [owner] = await hre.ethers.getSigners();
-  const kda = await getContract(track.network);
-  if (!kda) throw new Error("Contract not deployed");
-  const tx = await kda
+  const kewx = await getContract(track.network);
+  if (!kewx) throw new Error("Contract not deployed");
+  const tx = await kewx
     .connect(owner)
     .transfer(track.address, hre.ethers.parseEther("1000"));
   await saveTx(track.network, await tx.wait(), track.title);
@@ -180,13 +180,13 @@ const fund = async (track: FundTrack) => {
 const registerCrossChain = async (track: RegisterCrossChainTrack) => {
   for (const network of track.networks) {
     await hre.switchNetwork(network);
-    const kda = await getContract(network);
-    const address = await kda.getAddress();
+    const kewx = await getContract(network);
+    const address = await kewx.getAddress();
     for (const otherNetwork of track.networks) {
       if (network === otherNetwork) continue;
       await hre.switchNetwork(otherNetwork);
       const [owner] = await hre.ethers.getSigners();
-      const tx = await kda
+      const tx = await kewx
         .connect(owner)
         .setCrossChainAddress(network === "kadena_devnet1" ? 0n : 1n, address);
       await saveTx(network, await tx.wait(), `${track.title} - ${network}`);
@@ -240,9 +240,9 @@ const saveTx = async (network: NetworkId, newTx: any, title?: string) => {
 const getBalance = async (address: any, network: NetworkId) => {
   try {
     await hre.switchNetwork(network);
-    const kda = await getContract(network);
+    const kewx = await getContract(network);
     return hre.ethers.formatEther(
-      await kda.connect(address).balanceOf(address.address)
+      await kewx.connect(address).balanceOf(address.address)
     );
   } catch (e) {
     return 0;

@@ -1,5 +1,5 @@
 import hre from "hardhat";
-import { KDA } from "../typechain-types";
+import { SimpleToken } from "../typechain-types";
 import { Elysia, t } from "elysia";
 import { swagger } from "@elysiajs/swagger";
 import cors from "@elysiajs/cors";
@@ -75,11 +75,11 @@ const getContracts = async () => {
   const result: any = {};
   for (const [network, address] of Object.entries(contracts)) {
     await hre.switchNetwork(network);
-    result[network] = await hre.ethers.getContractAt("KDA", address);
+    result[network] = await hre.ethers.getContractAt("SimpleToken", address);
   }
   return result;
 };
-const getContract = async (network: NetworkId): Promise<KDA> => {
+const getContract = async (network: NetworkId): Promise<SimpleToken> => {
   const contracts = await getContracts();
   const contract = contracts[network];
   if (!contract) throw new Error("Contract not deployed");
@@ -87,8 +87,8 @@ const getContract = async (network: NetworkId): Promise<KDA> => {
 };
 const deploy = async (track: DeployTrack) => {
   await hre.switchNetwork(track.network);
-  const KDA = await hre.ethers.getContractFactory("KDA");
-  const kda = await KDA.deploy();
+  const KDA = await hre.ethers.getContractFactory("SimpleToken");
+  const kda = await KDA.deploy(100n * 10n ** 18n);
   const receipt = await kda.deploymentTransaction()?.wait();
   await saveContracts({
     [track.network]: await kda.getAddress(),
@@ -103,11 +103,10 @@ const crossChainTransfer = async (track: TransferTrack) => {
   const kda = await getContract(track.fromNetwork);
   const tx = await kda
     .connect(track.from)
-    .crossChainTransfer(
-      track.from.address,
+    .transferCrossChain(
       track.to.address,
       track.amount,
-      track.toNetwork
+      track.toNetwork === "kadena_devnet1" ? 0n : 1n
     );
   const receipt = await tx.wait();
   if (!receipt) throw new Error("Transaction failed");
@@ -116,7 +115,7 @@ const crossChainTransfer = async (track: TransferTrack) => {
     (log) => log.topics[0] === eventSigHash
   );
   // fetch SPV proof
-  getSPVProof({
+  const proof = await getSPVProof({
     networkId: track.fromNetwork,
     height: receipt.blockNumber,
     txIdx: receipt.index,
@@ -127,14 +126,7 @@ const crossChainTransfer = async (track: TransferTrack) => {
   const kdaTo = await getContract(track.toNetwork);
   const txTo = await kdaTo
     .connect(track.to)
-    .crossChainReceive(
-      track.from.address,
-      track.to.address,
-      track.amount,
-      track.toNetwork,
-      receipt.blockNumber,
-      track.fromNetwork
-    );
+    .redeemCrossChain(track.to.address, track.amount, proof);
   await saveTx(track.toNetwork, await txTo.wait(), `${track.title} - End`);
 };
 const transfer = async (track: TransferTrack) => {
@@ -149,12 +141,32 @@ const transfer = async (track: TransferTrack) => {
   const receipt = await tx.wait();
   await saveTx(track.fromNetwork, receipt, track.title);
 };
-const getSPVProof = async ({}: {
+const getSPVProof = async ({
+  networkId,
+  height,
+  txIdx,
+  eventIdx,
+}: {
   networkId: NetworkId;
   height: number;
   txIdx: number;
   eventIdx: number;
-}) => {};
+}) => {
+  const origin = {
+    height,
+    chain: networkId === "kadena_devnet1" ? 0 : 1,
+    txIdx,
+    eventIdx,
+  };
+  const target = networkId === "kadena_devnet1" ? 0 : 1;
+  const res = await fetch(
+    `http://localhost:1848/chainweb/0.0/evm-development/chain/${target}/spv/chain/${origin.chain}/height/${origin.height}/transaction/${origin.txIdx}/event/${origin.eventIdx}`
+  );
+  const proof = await res.json();
+  const proofStr = JSON.stringify(proof);
+  const hexProof = "0x" + Buffer.from(proofStr, "utf8").toString("hex");
+  return hexProof;
+};
 const fund = async (track: FundTrack) => {
   await hre.switchNetwork(track.network);
   const [owner] = await hre.ethers.getSigners();
@@ -176,7 +188,7 @@ const registerCrossChain = async (track: RegisterCrossChainTrack) => {
       const [owner] = await hre.ethers.getSigners();
       const tx = await kda
         .connect(owner)
-        .setCrossChainAddress(network, address);
+        .setCrossChainAddress(network === "kadena_devnet1" ? 0n : 1n, address);
       await saveTx(network, await tx.wait(), `${track.title} - ${network}`);
     }
   }

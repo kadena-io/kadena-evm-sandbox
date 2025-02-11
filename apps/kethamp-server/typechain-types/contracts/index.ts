@@ -2,3 +2,4 @@
 /* tslint:disable */
 /* eslint-disable */
 export type { KDA } from "./KDA";
+export type { SimpleToken } from "./SimpleToken";

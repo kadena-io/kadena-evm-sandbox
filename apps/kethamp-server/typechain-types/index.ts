@@ -24,3 +24,5 @@ export type { IERC20 } from "./@openzeppelin/contracts/token/ERC20/IERC20";
 export { IERC20__factory } from "./factories/@openzeppelin/contracts/token/ERC20/IERC20__factory";
 export type { KDA } from "./contracts/KDA";
 export { KDA__factory } from "./factories/contracts/KDA__factory";
+export type { SimpleToken } from "./contracts/SimpleToken";
+export { SimpleToken__factory } from "./factories/contracts/SimpleToken__factory";

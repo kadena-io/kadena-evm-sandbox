@@ -189,9 +189,13 @@ async function initCrossChain(
 
 // Call our chainweb SPV api with the necesasry proof parameters
 async function getProof(trgChain, origin) {
-  return fetch(
+  const response = await fetch(
     `http://localhost:1848/chainweb/0.0/evm-development/chain/${trgChain}/spv/chain/${origin.chain}/height/${origin.height}/transaction/${origin.txIdx}/event/${origin.eventIdx}`
   );
+  if (!response.ok) {
+    throw new Error(`Failed to get SPV proof for ${trgChain} from origin`, origin);
+  }
+  return response;
 }
 
 // Request cross-chain transfer SPV proof

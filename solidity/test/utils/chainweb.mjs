@@ -29,7 +29,7 @@ export const CHAIN_ID_ABI = ['function chainwebChainId() view returns (uint32)']
 // FIXME this address is at risk of conflicting with future Ethereum upgrades
 // Instead uses something like address(keccak256("/Chainweb/KIP-34/VERIFY/SVP/"))
 export const VERIFY_ADDRESS = "0x0000000000000000000000000000000000000421";
-export const VERIFY_BYTE_CODE = "0x365f608037366080f3"
+export const VERIFY_BYTE_CODE = "0x60203610601f5736601f1901806020608037806080205f3503601f576080f35b5f80fd"
 export const VERIFY_ABI = ['function verify(bytes memory proof) public pure returns (bytes memory data)']
 
 /* *************************************************************************** */
@@ -441,6 +441,8 @@ export async function getSpvProof(trgChain, origin) {
   });
 
   const params = 'tuple(uint32,address,uint64,bytes,tuple(uint32,address,uint64,uint64,uint64))'
-  return coder.encode([params], [xmsg]);
+  const payload = coder.encode([params], [xmsg]);
+  const hash = ethers.keccak256(payload)
+  return ethers.concat([hash, payload])
 }
 

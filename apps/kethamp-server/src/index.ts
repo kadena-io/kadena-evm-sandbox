@@ -1,4 +1,4 @@
-import hre from "hardhat";
+import hre, { ethers } from "hardhat";
 import { SimpleToken } from "../typechain-types";
 import { Elysia, t } from "elysia";
 import { swagger } from "@elysiajs/swagger";
@@ -88,7 +88,7 @@ const getContract = async (network: NetworkId): Promise<SimpleToken> => {
 const deploy = async (track: DeployTrack) => {
   await hre.switchNetwork(track.network);
   const KDA = await hre.ethers.getContractFactory("SimpleToken");
-  const kda = await KDA.deploy(100n * 10n ** 18n);
+  const kda = await KDA.deploy(hre.ethers.parseEther("1000000"));
   const receipt = await kda.deploymentTransaction()?.wait();
   await saveContracts({
     [track.network]: await kda.getAddress(),
@@ -174,7 +174,7 @@ const fund = async (track: FundTrack) => {
   if (!kda) throw new Error("Contract not deployed");
   const tx = await kda
     .connect(owner)
-    .transfer(track.address, 1000n * 10n ** 2n);
+    .transfer(track.address, hre.ethers.parseEther("1000"));
   await saveTx(track.network, await tx.wait(), track.title);
 };
 const registerCrossChain = async (track: RegisterCrossChainTrack) => {
@@ -241,10 +241,9 @@ const getBalance = async (address: any, network: NetworkId) => {
   try {
     await hre.switchNetwork(network);
     const kda = await getContract(network);
-    return hre.ethers.FixedNumber.fromValue(
-      await kda.connect(address).balanceOf(address.address),
-      18
-    ).toString();
+    return hre.ethers.formatEther(
+      await kda.connect(address).balanceOf(address.address)
+    );
   } catch (e) {
     return 0;
   }

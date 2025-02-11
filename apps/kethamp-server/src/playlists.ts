@@ -26,7 +26,7 @@ const getCrosschainPlaylist = async () => {
       fromNetwork: "kadena_devnet1",
       to: bob,
       toNetwork: "kadena_devnet2",
-      amount: 100n * 10n ** 2n,
+      amount: hre.ethers.parseEther("100"),
     },
     {
       title: "Crosschain Transfer from Alice to Greg",
@@ -35,7 +35,7 @@ const getCrosschainPlaylist = async () => {
       fromNetwork: "kadena_devnet1",
       to: greg1,
       toNetwork: "kadena_devnet2",
-      amount: 100n * 10n ** 2n,
+      amount: hre.ethers.parseEther("100"),
     },
     {
       title: "Crosschain Transfer from Bob to Greg",
@@ -44,7 +44,7 @@ const getCrosschainPlaylist = async () => {
       fromNetwork: "kadena_devnet2",
       to: greg,
       toNetwork: "kadena_devnet1",
-      amount: 50n * 10n ** 2n,
+      amount: hre.ethers.parseEther("50"),
     },
     {
       title: "Crosschain Transfer from Greg to Greg",
@@ -53,7 +53,7 @@ const getCrosschainPlaylist = async () => {
       fromNetwork: "kadena_devnet2",
       to: greg,
       toNetwork: "kadena_devnet1",
-      amount: 100n * 10n ** 2n,
+      amount: hre.ethers.parseEther("100"),
     },
     {
       title: "Crosschain Transfer from Greg to Bob",
@@ -62,7 +62,7 @@ const getCrosschainPlaylist = async () => {
       fromNetwork: "kadena_devnet1",
       to: bob,
       toNetwork: "kadena_devnet2",
-      amount: 150n * 10n ** 2n,
+      amount: hre.ethers.parseEther("150"),
     },
     {
       title: "Crosschain Transfer from Bob to Alice",
@@ -71,7 +71,7 @@ const getCrosschainPlaylist = async () => {
       fromNetwork: "kadena_devnet2",
       to: alice,
       toNetwork: "kadena_devnet1",
-      amount: 200n * 10n ** 2n,
+      amount: hre.ethers.parseEther("200"),
     },
   ];
   return playlist;
@@ -87,7 +87,7 @@ const getChain0Playlist = async () => {
       fromNetwork: "kadena_devnet1",
       to: bob,
       toNetwork: "kadena_devnet1",
-      amount: 100n * 10n ** 2n,
+      amount: hre.ethers.parseEther("100"),
     },
     {
       title: "Transfer from Alice to Bob",
@@ -96,7 +96,7 @@ const getChain0Playlist = async () => {
       fromNetwork: "kadena_devnet1",
       to: bob,
       toNetwork: "kadena_devnet1",
-      amount: 200n * 10n ** 2n,
+      amount: hre.ethers.parseEther("200"),
     },
     {
       title: "Transfer from Bob to Alice",
@@ -105,7 +105,7 @@ const getChain0Playlist = async () => {
       fromNetwork: "kadena_devnet1",
       to: alice,
       toNetwork: "kadena_devnet1",
-      amount: 50n * 10n ** 2n,
+      amount: hre.ethers.parseEther("50"),
     },
     {
       title: "Transfer from Bob to Greg",
@@ -114,7 +114,7 @@ const getChain0Playlist = async () => {
       fromNetwork: "kadena_devnet1",
       to: greg,
       toNetwork: "kadena_devnet1",
-      amount: 50n * 10n ** 2n,
+      amount: hre.ethers.parseEther("50"),
     },
     {
       title: "Transfer from Alice to Greg",
@@ -123,7 +123,7 @@ const getChain0Playlist = async () => {
       fromNetwork: "kadena_devnet1",
       to: alice,
       toNetwork: "kadena_devnet1",
-      amount: 50n * 10n ** 2n,
+      amount: hre.ethers.parseEther("50"),
     },
     {
       title: "Transfer from Alice to Greg",
@@ -132,7 +132,7 @@ const getChain0Playlist = async () => {
       fromNetwork: "kadena_devnet1",
       to: greg,
       toNetwork: "kadena_devnet1",
-      amount: 100n * 10n ** 2n,
+      amount: hre.ethers.parseEther("100"),
     },
     {
       title: "Transfer from Greg to Bob",
@@ -141,7 +141,7 @@ const getChain0Playlist = async () => {
       fromNetwork: "kadena_devnet1",
       to: bob,
       toNetwork: "kadena_devnet1",
-      amount: 50n * 10n ** 2n,
+      amount: hre.ethers.parseEther("50"),
     },
     {
       title: "Transfer from Bob to Alice",
@@ -150,7 +150,7 @@ const getChain0Playlist = async () => {
       fromNetwork: "kadena_devnet1",
       to: alice,
       toNetwork: "kadena_devnet1",
-      amount: 150n * 10n ** 2n,
+      amount: hre.ethers.parseEther("150"),
     },
     {
       title: "Transfer from Greg to Alice",
@@ -159,7 +159,7 @@ const getChain0Playlist = async () => {
       fromNetwork: "kadena_devnet1",
       to: alice,
       toNetwork: "kadena_devnet1",
-      amount: 50n * 10n ** 2n,
+      amount: hre.ethers.parseEther("50"),
     },
     {
       title: "Transfer from Bob to Alice",
@@ -168,7 +168,7 @@ const getChain0Playlist = async () => {
       fromNetwork: "kadena_devnet1",
       to: alice,
       toNetwork: "kadena_devnet1",
-      amount: 100n * 10n ** 2n,
+      amount: hre.ethers.parseEther("100"),
     },
   ];
   return playlist;
@@ -185,7 +185,7 @@ const getChain1Playlist = async () => {
       fromNetwork: "kadena_devnet2",
       to: alice,
       toNetwork: "kadena_devnet2",
-      amount: 100n * 10n ** 2n,
+      amount: hre.ethers.parseEther("100"),
     },
     {
       title: "Transfer from Bob to Alice",
@@ -194,7 +194,7 @@ const getChain1Playlist = async () => {
       fromNetwork: "kadena_devnet2",
       to: alice,
       toNetwork: "kadena_devnet2",
-      amount: 200n * 10n ** 2n,
+      amount: hre.ethers.parseEther("200"),
     },
     {
       title: "Transfer from Alice to Bob",
@@ -203,7 +203,7 @@ const getChain1Playlist = async () => {
       fromNetwork: "kadena_devnet2",
       to: bob,
       toNetwork: "kadena_devnet2",
-      amount: 50n * 10n ** 2n,
+      amount: hre.ethers.parseEther("50"),
     },
     {
       title: "Transfer from Alice to Greg",
@@ -212,7 +212,7 @@ const getChain1Playlist = async () => {
       fromNetwork: "kadena_devnet2",
       to: greg,
       toNetwork: "kadena_devnet2",
-      amount: 50n * 10n ** 2n,
+      amount: hre.ethers.parseEther("50"),
     },
     {
       title: "Transfer from Greg to Bob",
@@ -221,7 +221,7 @@ const getChain1Playlist = async () => {
       fromNetwork: "kadena_devnet2",
       to: bob,
       toNetwork: "kadena_devnet2",
-      amount: 50n * 10n ** 2n,
+      amount: hre.ethers.parseEther("50"),
     },
     {
       title: "Transfer from Greg to Bob",
@@ -230,7 +230,7 @@ const getChain1Playlist = async () => {
       fromNetwork: "kadena_devnet2",
       to: greg,
       toNetwork: "kadena_devnet2",
-      amount: 100n * 10n ** 2n,
+      amount: hre.ethers.parseEther("100"),
     },
     {
       title: "Transfer from Greg to Alice",
@@ -239,7 +239,7 @@ const getChain1Playlist = async () => {
       fromNetwork: "kadena_devnet2",
       to: alice,
       toNetwork: "kadena_devnet2",
-      amount: 50n * 10n ** 2n,
+      amount: hre.ethers.parseEther("50"),
     },
     {
       title: "Transfer from Alice to Bob",
@@ -248,7 +248,7 @@ const getChain1Playlist = async () => {
       fromNetwork: "kadena_devnet2",
       to: bob,
       toNetwork: "kadena_devnet2",
-      amount: 150n * 10n ** 2n,
+      amount: hre.ethers.parseEther("150"),
     },
     {
       title: "Transfer from Greg to Bob",
@@ -257,7 +257,7 @@ const getChain1Playlist = async () => {
       fromNetwork: "kadena_devnet2",
       to: bob,
       toNetwork: "kadena_devnet2",
-      amount: 50n * 10n ** 2n,
+      amount: hre.ethers.parseEther("50"),
     },
     {
       title: "Transfer from Alice to Bob",
@@ -266,7 +266,7 @@ const getChain1Playlist = async () => {
       fromNetwork: "kadena_devnet2",
       to: bob,
       toNetwork: "kadena_devnet2",
-      amount: 100n * 10n ** 2n,
+      amount: hre.ethers.parseEther("100"),
     },
   ];
   return playlist;

@@ -63,12 +63,12 @@
     .i1 {
       position: absolute;
       top: 4px;
-      right: 20px;
-      font-size: 2rem;
+      right: 8px;
+      font-size: 1.75rem;
       font-weight: 100;
       line-height: 2rem;
       text-align: right;
-      max-width: 160px;
+      max-width: 180px;
       width: 100%;
       text-overflow: ellipsis;
       overflow: hidden;
@@ -353,11 +353,42 @@
   }
 }
 
+.logoKadena {
+  position: absolute;
+  bottom: 20px;
+  right: 124px;
+  width: 48px;
+  height: 48px;
+  background-image: url("/assets/images/logo-kadena.png");
+  background-size: cover;
+  background-position: center center;
+  z-index: 2;
+}
+
+.logoEthDenver2025 {
+  position: absolute;
+  bottom: 20px;
+  right: 70px;
+  width: 48px;
+  height: 48px;
+  background-image: url("/assets/images/logo-eth-denver.png");
+  background-size: cover;
+  background-position: center center;
+  z-index: 2;
+}
+
 @keyframes marquee {
   from {
     transform: translateX(0);
   }
   to {
     transform: translateX(-100%);
+  }
+}
+
+@media screen and (max-width: 640px) {
+  .container {
+    transform: scale(0.5);
+    transform-origin: top left;
   }
 }

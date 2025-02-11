@@ -7,7 +7,7 @@ import { useContext, useContextDispatch } from "@app/context/context";
 
 const Playback: React.FC = () => {
   const dispatch = useContextDispatch();
-  const { playlist, deploy } = UseActions();
+  const { playlist, deploy, reset } = UseActions();
   const {
     networks: {
       list: networksList,
@@ -22,6 +22,7 @@ const Playback: React.FC = () => {
         isPlaying,
       },
     },
+    transactions,
   } = useContext();
   
   const timerRef = React.useRef<any>(null);
@@ -29,6 +30,7 @@ const Playback: React.FC = () => {
   const rangeRef = React.useRef<HTMLInputElement>(null);
   const graphContainerRef = React.useRef<HTMLDivElement>(null);
 
+  const [blockNrs, setBlockNrs] = React.useState([0,0]);
   const [activeTitle, setActiveTitle] = React.useState("Select account or transaction");
   const [activeMetaData, setActiveMetaData] = React.useState<Record<string, string|number>>({
     a: '-',
@@ -168,7 +170,6 @@ const Playback: React.FC = () => {
   }, [dispatch, stopPlayer]);
 
   React.useEffect(() => {
-    console.log({activeGraph})
     if (activeGraph.account) {
       const {
         name,
@@ -197,12 +198,28 @@ const Playback: React.FC = () => {
   }, [activeGraph, setActiveTitle]);
 
   React.useEffect(() => {
+    if (transactions.list?.block?.length && blockNrs.length) {
+      const [startBlockNr, endBlockNr] = blockNrs
+      setActiveTitle("Blocks between " + startBlockNr + " and " + endBlockNr + " containing " + transactions.list.block.length + " transactions are displayed -");
+    }
+
     return () => {
       if (timerRef.current && progress === 100-stepSize) {
         stopPlayer();
       }
     };
-  }, [progress, stepSize, stopPlayer]);
+  }, [blockNrs, progress, stepSize, stopPlayer, transactions]);
+
+  React.useEffect(() => {
+    if (transactions.list?.block?.length) {
+      const blockNrs = transactions.list.block.map(item => item.blockNumber)
+      const minBlockNr = Math.min(...blockNrs);
+      const maxBlockNr = Math.max(...blockNrs);
+      setBlockNrs([minBlockNr,maxBlockNr]);
+    } else {
+      setBlockNrs([0,0]);
+    }
+  }, [transactions.list, setBlockNrs]);
 
   if (!graphData) {
     return null;
@@ -210,10 +227,9 @@ const Playback: React.FC = () => {
 
   return (
     <section className={styles.container}>
-      {isPlaying ? <div className="text-white">Playing...</div> : null}
       <div className={styles.main}>
         <span className={[styles.uiDisplayText, styles.i1].join(" ")}>
-          {progress}
+          <span className="text-lg opacity-50">#</span>{blockNrs[0]}-{blockNrs[1]}
         </span>
 
         <div className={styles.indicators}>
@@ -284,14 +300,12 @@ const Playback: React.FC = () => {
           onClick={backwards}
           disabled={progress === 0}
         />
-        <button className={styles.play} onClick={playHandler} />
-        <button
+        <button className={styles.play} onClick={() => playlist()} />
+        {/* <button
           className={styles.pause}
-          onClick={() => playlist("crosschain")}
-        />{" "}
-        {/* @TODO: Temporaryly using playlist as pause */}
-        {/* @TODO: you can also call playlist with 'chain1' */}
-        <button className={styles.stop} onClick={() => playlist("chain0")} />
+          onClick={() => playlist()}
+        /> */}
+        <button className={styles.stop} onClick={reset} />
         <button
           className={styles.next}
           onClick={forwards}
@@ -299,6 +313,8 @@ const Playback: React.FC = () => {
         />
         <button className={styles.eject} onClick={deploy} />
       </div>
+      <div className={styles.logoKadena} />
+      <div className={styles.logoEthDenver2025} />
     </section>
   );
 };

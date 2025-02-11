@@ -339,11 +339,55 @@ function stateReducer(state, action) {
       }
     }
 
+    case "SET_ACTIVE_PLAYLIST": {
+      let playlist = state.playlists.data.find((d) => d.id === action.payload.playlistId) || null;
+
+      if (playlist === state.graph.active.playlist) {
+        playlist = null;
+      }
+
+      return {
+        ...state,
+        graph: {
+          ...state.graph,
+          active: {
+            ...state.graph.active,
+            playlist,
+          }
+        }
+      }
+    }
+
+    case "SET_DEPLOYMENT":
+      return {
+        ...state,
+        deployments: {
+          ...state.deployments,
+          isDeployed: action.payload,
+          playlists: [],
+        },
+      }
+
+    case "DEPLOYED_PLAYLISTS":
+      return {
+        ...state,
+        deployments: {
+          ...state.deployments,
+          playlists: [...new Set([...state.deployments.playlists, action.payload.playlist])],
+        },
+      }
+
     case "LOADING":
       return {
         ...state,
         isLoading: action.payload,
       }
+
+    case "RESET_STATE": {
+      return {
+        ...initialState,
+      }
+    }
 
     default:
       return state;
@@ -352,7 +396,28 @@ function stateReducer(state, action) {
 
 const initialState = {
   isLoading: true,
-  
+  deployments: {
+    isDeployed: false,
+    playlists: [],
+  },
+  playlists: {
+    isLoading: false,
+    list: [],
+    data: [
+      {
+        id: "chain0",
+        title: "Deploy on chain 0",
+      },
+      {
+        id: "chain1",
+        title: "Deploy on chain 1",
+      },
+      {
+        id: "crosschain",
+        title: "Deploy crosschain transfers",
+      },
+    ],
+  },
   accounts: {
     isLoading: false,
     list: {
@@ -372,6 +437,7 @@ const initialState = {
     active: {
       transaction: null,
       account: null,
+      playlist: null,
     },
     options: {
       progress: 0,

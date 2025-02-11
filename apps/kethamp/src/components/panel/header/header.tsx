@@ -4,11 +4,12 @@ import styles from "./header.module.css"
 export type HeaderProps = {
   readonly title: string;
   type: PanelTypes;
+  onClick?: () => void;
 }
 
-const Header: React.FC<HeaderProps> = ({ title, type }) => {
+const Header: React.FC<HeaderProps> = ({ title, type, onClick }) => {
   return (
-    <div className={[styles.container, styles[type]].join(' ')}>
+    <div onClick={onClick} className={[styles.container, styles[type]].join(' ')} role="button" tabIndex={0}>
       <h1 className={styles.title}>
         <span>{title}</span>
       </h1>

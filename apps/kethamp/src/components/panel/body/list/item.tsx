@@ -62,11 +62,11 @@ const ListItem: React.FC<any> = ({ item, hasSearch, cols, config }) => {
   return (
     <div>
       <div className={styles.container}>
-        <h2>{item.title}
+        {item.title ? <h2>{item.title}
           {' '}({ searchTerm ?
             listCount !== list.length ? list.length
             : listCount === list.length ? `${list.length}/${listCount}` : listCount : listCount })
-        </h2>
+        </h2> : null }
         <div className={styles.list}>
           { list?.map((item, i) =>
             <div

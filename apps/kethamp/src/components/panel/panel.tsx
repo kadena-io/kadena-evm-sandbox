@@ -29,11 +29,13 @@ export type EventProps = {
 }
 
 export const Panel: React.FC<PanelProps> = ({ type, title, children }) => {
+  const [expand, setExpand] = React.useState(true);
+
   return (
     <div>
-      <Header title={title} type={type} />
+      <Header title={title} type={type} onClick={() => setExpand(!expand)} />
       {type === "playback" && <Playback />}
-      {type === "list" && <Layout>{children}</Layout>}
+      {type === "list" && <Layout expand={expand}>{children}</Layout>}
     </div>
   )
 }

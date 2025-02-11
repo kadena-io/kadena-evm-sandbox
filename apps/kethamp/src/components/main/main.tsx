@@ -9,7 +9,7 @@ import UseAccounts from "@app/hooks/accounts";
 import UseTransactions from "@app/hooks/transactions";
 
 import { useContext, useContextDispatch } from '../../context/context';
-import { title } from 'process';
+import styles from './main.module.css';
 
 const Main = () => {
   const state = useContext();
@@ -50,13 +50,39 @@ const Main = () => {
     }
   }, [accountsData, dispatch, transactionsData]);
 
+  React.useEffect(() => {
+    console.log("App state", {state})
+  }, [state]);
+
   return <div className="font-[family-name:var(--font-geist-sans)] py-10">
-    <main className="w-full m-auto max-w-[640px]">
+    <main className={[styles.main, "w-full m-auto max-w-[640px]"].join(" ")}>
       <Panel
         type="playback"
         title={"Kadena @ ETH Denver 2025"}
       />
-      <Panel
+      {listAccounts?.length ? <Panel
+        type="list"
+        title="Playlists"
+      >
+        <List
+          data={[{list: state.playlists.data}]}
+          cols={[
+            { key: "title", style: { flex: 1 } },
+            { key: "id" }
+          ]}
+          config={{
+            entity: "playlist",
+            entityKey: "id",
+            onClick: (item) => dispatch({
+              type: "SET_ACTIVE_PLAYLIST",
+              payload: {
+                playlistId: item.id,
+              },
+            })
+          }}
+        />
+      </Panel> : null}
+      {listAccounts?.length ? <Panel
         type="list"
         title="Accounts"
       >
@@ -78,8 +104,8 @@ const Main = () => {
             })
           }}
         />
-      </Panel>
-      <Panel
+      </Panel> : null}
+      {state?.transactions?.list?.network?.length ? <Panel
         type="list"
         title="Network Transactions"
       >
@@ -109,10 +135,8 @@ const Main = () => {
             />
           ) : null
         }
-      </Panel>
-      
-      {
-        state.graph.active.transaction ? (
+      </Panel> : null}
+      {state.graph.active.transaction ? (
           <Panel
             type="list"
             title="Transaction Details"

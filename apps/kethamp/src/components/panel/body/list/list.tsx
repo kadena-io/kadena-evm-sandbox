@@ -9,12 +9,9 @@ const List: React.FC<any> = ({ data, hasSearch, cols, config={} }) => {
 
   React.useEffect(() => {
     if (data && ref.current) {
-      const wrapperRefCssVariable = getComputedStyle(ref.current).getPropertyValue('--max-list-items');
-      const defaultMaxRows = wrapperRefCssVariable ? parseInt(wrapperRefCssVariable) : 10;
-      const [chain] = data;
-      const maxRows = chain?.list?.length && chain.list.length < 10 ? chain.list.length : defaultMaxRows;
-
-      ref.current.style.setProperty('--max-list-items', maxRows.toString());
+      const maxRows = Math.max(...data.map(item => item.list.length))
+      
+      ref.current.style.setProperty('--max-list-items', maxRows > 10 ? "10" : String(maxRows));
     }
   }, [data]);
 

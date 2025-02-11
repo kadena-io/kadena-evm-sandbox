@@ -2,7 +2,8 @@
   "name": "kethamp-server",
   "scripts": {
     "start": "bun run ./src/index.ts",
-    "dev": "bun run ./src/index.ts --watch"
+    "dev": "bun run ./src/index.ts --watch",
+    "postinstall": "hardhat compile"
   },
   "devDependencies": {
     "@nomicfoundation/hardhat-toolbox": "^5.0.0",

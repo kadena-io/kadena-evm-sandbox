@@ -172,13 +172,9 @@ function filterListByAccount(
   if (!list || !account) return list;
 
   return Object.values(list).reduce<TList<TTransaction>[]>((acc, item) => {
-    const filteredList = item.list.filter(
+    acc.push({ ...item, list: item.list.filter(
       (entry) => entry.from === account.address || entry.to === account.address
-    );
-
-    if (filteredList.length > 0) {
-      acc.push({ ...item, list: filteredList });
-    }
+    ) });
 
     return acc;
   }, []);

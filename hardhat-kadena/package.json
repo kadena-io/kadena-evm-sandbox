@@ -1,0 +1,35 @@
+{
+  "name": "hardhat-kadena",
+  "version": "1.0.0",
+  "description": "Hardhat plugin for Kadena's Chainweb network",
+  "main": "src/index.mjs",
+  "scripts": {
+    "test": "mocha"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/kadena-io/hardhat-kadena.git"
+  },
+  "keywords": [
+    "hardhat",
+    "kadena",
+    "chainweb",
+    "ethereum",
+    "hardhat-plugin"
+  ],
+  "author": "Lars Kuhtz <lars@kadena.io>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/kadena-io/hardhat-kadena/issues"
+  },
+  "homepage": "https://github.com/kadena-io/hardhat-kadena#readme",
+  "dependencies": {
+    "async-lock": "^1.4.1",
+    "ethers": "^6.13.5"
+  },
+  "devDependencies": {
+    "chai": "^5.1.2",
+    "hardhat": "^2.22.18",
+    "mocha": "^11.1.0"
+  }
+}

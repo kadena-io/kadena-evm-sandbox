@@ -1,6 +1,7 @@
 require("@nomicfoundation/hardhat-toolbox");
 require("hardhat-switch-network");
 require("@nomicfoundation/hardhat-verify");
+require("@tovarishfin/hardhat-yul");
 const path = require("path");
 const fs = require("fs");
 
@@ -51,6 +52,14 @@ module.exports = {
   },
   // defaultNetwork: "kadena_devnet0",
   networks: {
+    // This is a "fake" network. It is used only as configuration for
+    // externally managed hardhat nodes.
+    hardhat: {
+      chainId: 1789,
+      accounts: devnetAccounts.accounts.map(account => {
+        return { privateKey: account.privateKey, balance: "1000000000000000000000" }
+      }),
+    },
     kadena_devnet0: {
       url: 'http://localhost:8545',
       chainId: 1789,
@@ -58,12 +67,31 @@ module.exports = {
       chainwebChainId: 0,
     },
     kadena_devnet1: {
-      // url: 'http://localhost:8546',
       url: 'http://localhost:8555',
       chainId: 1790,
       accounts: devnetAccounts.accounts.map(account => account.privateKey),
       chainwebChainId: 1,
     },
+
+    // hardhat networks (one for each chainweb chain)
+    kadena_hardhat0: {
+      url: 'http://localhost:9545',
+      // chainId: 1789,
+      accounts: devnetAccounts.accounts.map(account => account.privateKey),
+      chainwebChainId: 0,
+    },
+    kadena_hardhat1: {
+      url: 'http://localhost:9555',
+      // chainId: 1790,
+      accounts: devnetAccounts.accounts.map(account => account.privateKey),
+      chainwebChainId: 1,
+    },
+  },
+  chainweb: {
+    graph: {
+      0: [1],
+      1: [0],
+    }
   },
   sourcify: {
     enabled: false,

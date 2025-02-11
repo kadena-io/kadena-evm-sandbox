@@ -1,8 +1,7 @@
 const { expect } = require("chai");
 const { ethers, network, switchNetwork } = require("hardhat");
 const { ZeroAddress } = require("ethers");
-const { getSigners, deployContracts, authorizeContracts, crossChainTransfer, initCrossChain, requestSpvProof, redeemCrossChain } = require("./utils/utils");
-
+const { getSigners, deployContracts, authorizeContracts, crossChainTransfer, initCrossChain, requestSpvProof, redeemCrossChain, withChainweb } = require("./utils/utils");
 
 describe("SimpleToken Integration Tests", async function () {
   let signers;
@@ -10,6 +9,8 @@ describe("SimpleToken Integration Tests", async function () {
   let token1;
   let token0Info;
   let token1Info;
+
+  withChainweb();
 
   beforeEach(async function () {
     signers = await getSigners();
@@ -141,14 +142,14 @@ describe("SimpleToken Integration Tests", async function () {
       const receiverBalanceBefore = await token1.balanceOf(receiver.address);
       const redeemerBalanceBefore = await token1.balanceOf(redeemer.address);
 
-      // Transfer 
+      // Transfer
       const origin = await initCrossChain(token0, token0Info, token1Info, sender, receiver, amount);
       const proof = await requestSpvProof(token1Info.chain, origin);
 
       // Third party redeems
       const redeemTx = await token1.connect(redeemer).redeemCrossChain(receiver, amount, proof);
       await redeemTx.wait();
-      
+
       const senderBalanceAfter = await token0.balanceOf(sender.address);
       const receiverBalanceAfter = await token1.balanceOf(receiver.address);
       const recdeemerBalanceAfter = await token1.balanceOf(redeemer.address);
@@ -207,7 +208,7 @@ describe("SimpleToken Integration Tests", async function () {
           fakeProof
         )
       ).to.be.revertedWithCustomError(token1, "SPVVerificationFailed");
-     
+
     });
 
   }); // End of Error Test Cases

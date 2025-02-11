@@ -1,7 +1,7 @@
 const { expect } = require("chai");
 const { ethers, network, switchNetwork } = require("hardhat");
 const { ZeroAddress } = require("ethers");
-const { getSigners, deployContracts, authorizeContracts, initCrossChain, computeOriginHash, requestSpvProof, CrossChainOperation, createTamperedProof, redeemCrossChain, deployMocks } = require("./utils/utils");
+const { getSigners, deployContracts, authorizeContracts, initCrossChain, computeOriginHash, requestSpvProof, CrossChainOperation, createTamperedProof, redeemCrossChain, deployMocks, withChainweb } = require("./utils/utils");
 
 describe("SimpleToken Unit Tests", async function () {
   let signers;
@@ -11,6 +11,8 @@ describe("SimpleToken Unit Tests", async function () {
   let sender;
   let receiver;
   let amount;
+
+  withChainweb();
 
   beforeEach(async function () {
     signers = await getSigners();
@@ -343,7 +345,7 @@ describe("SimpleToken Unit Tests", async function () {
         const token2 = await factory.deploy(ethers.parseEther("1000000"));
         const deploymentTx = token2.deploymentTransaction()
         await deploymentTx.wait();
-     
+
         // Call setCrossChainAddress on token2
         await expect(token2.redeemCrossChain(receiver, amount, proof))
           .to.be.revertedWithCustomError(token1, "IncorrectTargetContract")
@@ -380,7 +382,7 @@ describe("SimpleToken Unit Tests", async function () {
       it("Should revert if authorized source contract does not match origin contract address", async function () {
         // Generate a random Ethereum address
         const randomAddress = ethers.Wallet.createRandom().address;
-    
+
         const tx = await token1.setCrossChainAddress(token0Info.chain, randomAddress);
         await tx.wait();
         await expect(token1.redeemCrossChain(receiver, amount, proof))
@@ -467,11 +469,4 @@ describe("SimpleToken Unit Tests", async function () {
     }); // End of Success Test Cases
   }); // End of getCrossChainAddress
 }); // End of SimpleToken Unit Tests
-
-
-
-
-
-
-
 

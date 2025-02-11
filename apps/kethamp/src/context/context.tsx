@@ -5,13 +5,12 @@ import React from "react";
 import { TAccount, TContext, TList, TTransaction } from "./context.type";
 
 const Context = React.createContext<TContext | null>(null);
-const ContextDispatch = React.createContext(null) as unknown as React.Context<React.Dispatch<{ payload?: any; type: string; }>>;
+const ContextDispatch = React.createContext(null) as unknown as React.Context<
+  React.Dispatch<{ payload?: any; type: string }>
+>;
 
 const ContextProvider = ({ children }: { children: React.ReactNode }) => {
-  const [state, dispatch] = React.useReducer(
-    stateReducer,
-    initialState,
-  );
+  const [state, dispatch] = React.useReducer(stateReducer, initialState);
 
   return (
     <Context.Provider value={state}>
@@ -30,7 +29,6 @@ export function useContextDispatch() {
   return React.useContext(ContextDispatch);
 }
 
-
 function groupByStep(list: TGroupTransactions | undefined, step: number) {
   if (!list) {
     return {};
@@ -46,37 +44,50 @@ function groupByStep(list: TGroupTransactions | undefined, step: number) {
     grouped[i] = [];
   }
 
-  keys.forEach(key => {
+  keys.forEach((key) => {
     const groupKey = Math.floor(key / step) * step;
     grouped[groupKey]?.push(...list[key.toString()]);
   });
 
-  return grouped
+  return grouped;
 }
 
 type TGroupTransactions = Record<string, TTransaction[]>;
-function groupTransactions(transactions: TTransaction[], stepSize: number): TGroupTransactions | undefined {
+function groupTransactions(
+  transactions: TTransaction[],
+  stepSize: number
+): TGroupTransactions | undefined {
   if (transactions) {
-    const minBlockNumber = transactions.reduce((acc, d) => Math.min(acc, d?.blockNumber ?? 0), Infinity);
-    const lastBlockNumber = transactions.reduce((acc, d) => Math.max(acc, d?.blockNumber ?? 0), 0);
+    const minBlockNumber = transactions.reduce(
+      (acc, d) => Math.min(acc, d?.blockNumber ?? 0),
+      Infinity
+    );
+    const lastBlockNumber = transactions.reduce(
+      (acc, d) => Math.max(acc, d?.blockNumber ?? 0),
+      0
+    );
     const duration = lastBlockNumber - minBlockNumber;
     const steps = 100 / duration;
 
-    const transactionsByPercentage = transactions.reduce<TGroupTransactions>((acc, d) => {
-      const percentage = (((d?.blockNumber ?? 0) - minBlockNumber) / duration) * 100;
-      const step = Math.floor(percentage * steps);
-      
-      return {
-        ...acc,
-        [percentage]: acc[step] ? [...acc[step], d] : [d],
-      }
-    }, {});
+    const transactionsByPercentage = transactions.reduce<TGroupTransactions>(
+      (acc, d) => {
+        const percentage =
+          (((d?.blockNumber ?? 0) - minBlockNumber) / duration) * 100;
+        const step = Math.floor(percentage * steps);
+
+        return {
+          ...acc,
+          [percentage]: acc[step] ? [...acc[step], d] : [d],
+        };
+      },
+      {}
+    );
 
     return groupByStep(transactionsByPercentage, stepSize);
   }
 }
 
-function networks(transactions: TContext['transactions']['data']): string[] {
+function networks(transactions: TContext["transactions"]["data"]): string[] {
   if (!transactions) {
     return [];
   }
@@ -93,23 +104,30 @@ function networks(transactions: TContext['transactions']['data']): string[] {
 function maxSize(data: TGroupTransactions | undefined): number {
   if (!data) return 0;
 
-  return Math.max(0, ...Object.values(data).map(arr => arr.length));
+  return Math.max(0, ...Object.values(data).map((arr) => arr.length));
 }
 
-function getTransactionsList (state: TContext, graphData?: TContext['graph']['data'] | null): TTransaction[] {
+function getTransactionsList(
+  state: TContext,
+  graphData?: TContext["graph"]["data"] | null
+): TTransaction[] {
   const { progress } = state.graph.options;
 
   if (graphData) {
     return graphData[progress] ?? [];
   }
-  
+
   return state.graph.data?.[progress] ?? [];
 }
 
-function getTransactionsListByNetwork (state: TContext, networkList?: TContext['networks']['list'], graphData?: TContext['graph']['data']) {
+function getTransactionsListByNetwork(
+  state: TContext,
+  networkList?: TContext["networks"]["list"],
+  graphData?: TContext["graph"]["data"]
+) {
   const { progress } = state.graph.options;
   let data = state.graph.data?.[progress] ?? [];
-  
+
   if (graphData) {
     data = graphData[progress] ?? [];
   }
@@ -121,7 +139,7 @@ function getTransactionsListByNetwork (state: TContext, networkList?: TContext['
   if (!networks) return [];
 
   return networks.reduce<TList<TTransaction>[]>((list, networkId) => {
-    const filteredData = data.filter(d => d.network === networkId);
+    const filteredData = data.filter((d) => d.network === networkId);
 
     if (filteredData.length > 0) {
       list.push({
@@ -134,22 +152,28 @@ function getTransactionsListByNetwork (state: TContext, networkList?: TContext['
   }, []);
 }
 
-function getAccountsList(accounts: TContext['accounts']['data']): TContext['accounts']['list'] {
-  return Object.entries(accounts).flatMap(([chainKey, account]) =>
-    Object.entries(account).map(([accountName, accountData]) => ({
-      ...accountData,
-      chain: chainKey,
-      name: accountName,
-    })) as TAccount[]
+function getAccountsList(
+  accounts: TContext["accounts"]["data"]
+): TContext["accounts"]["list"] {
+  return Object.entries(accounts).flatMap(
+    ([chainKey, account]) =>
+      Object.entries(account).map(([accountName, accountData]) => ({
+        ...accountData,
+        chain: chainKey,
+        name: accountName,
+      })) as TAccount[]
   );
 }
 
-function filterListByAccount(list: TList<TTransaction>[] | null, account: TAccount | null) {
+function filterListByAccount(
+  list: TList<TTransaction>[] | null,
+  account: TAccount | null
+) {
   if (!list || !account) return list;
 
   return Object.values(list).reduce<TList<TTransaction>[]>((acc, item) => {
-    const filteredList = item.list.filter(entry =>
-      entry.from === account.address || entry.to === account.address
+    const filteredList = item.list.filter(
+      (entry) => entry.from === account.address || entry.to === account.address
     );
 
     if (filteredList.length > 0) {
@@ -160,42 +184,51 @@ function filterListByAccount(list: TList<TTransaction>[] | null, account: TAccou
   }, []);
 }
 
-function stateReducer(state: TContext, action: { payload?: any; type: string; }) {
+function stateReducer(
+  state: TContext,
+  action: { payload?: any; type: string }
+) {
   switch (action.type) {
-    case "UPDATE_DATA":
-      {
-        const graphData = groupTransactions(action.payload.transactions, state.graph.options.stepSize);
-        const networkData = networks(action.payload.transactions);
-        
-        return {
-          ...state,
-          networks: {
-            ...state.networks,
-            list: networkData,
+    case "UPDATE_DATA": {
+      const graphData = groupTransactions(
+        action.payload.transactions,
+        state.graph.options.stepSize
+      );
+      const networkData = networks(action.payload.transactions);
+
+      return {
+        ...state,
+        networks: {
+          ...state.networks,
+          list: networkData,
+        },
+        accounts: {
+          ...state.accounts,
+          data: action.payload.accounts,
+          list: getAccountsList(action.payload.accounts),
+        },
+        transactions: {
+          ...state.transactions,
+          data: action.payload.transactions,
+          list: {
+            block: getTransactionsList(state, graphData),
+            network: getTransactionsListByNetwork(
+              state,
+              networkData,
+              graphData
+            ),
           },
-          accounts: {
-            ...state.accounts,
-            data: action.payload.accounts,
-            list: getAccountsList(action.payload.accounts),
+        },
+        graph: {
+          ...state.graph,
+          data: graphData || null,
+          options: {
+            ...state.graph.options,
+            maxStepCount: maxSize(graphData),
           },
-          transactions: {
-            ...state.transactions,
-            data: action.payload.transactions,
-            list: {
-              block: getTransactionsList(state, graphData),
-              network: getTransactionsListByNetwork(state, networkData, graphData),
-            },
-          },
-          graph: {
-            ...state.graph,
-            data: graphData || null,
-            options: {
-              ...state.graph.options,
-              maxStepCount: maxSize(graphData),
-            }
-          },
-        };
-      }
+        },
+      };
+    }
 
     case "UPDATE_ACCOUNTS":
       return {
@@ -203,10 +236,10 @@ function stateReducer(state: TContext, action: { payload?: any; type: string; })
         accounts: {
           ...state.accounts,
           data: action.payload.accounts,
-          list: [],/* accounts(action.payload.transactions) */
+          list: [] /* accounts(action.payload.transactions) */,
         },
       };
-    
+
     case "UPDATE_TRANSCATIONS":
       return {
         ...state,
@@ -222,9 +255,9 @@ function stateReducer(state: TContext, action: { payload?: any; type: string; })
             ...state.graph.options,
             progress: 0,
             isPlaying: false,
-          }
-        }
-      }
+          },
+        },
+      };
     }
 
     case "STOP_PROGRESS": {
@@ -235,28 +268,28 @@ function stateReducer(state: TContext, action: { payload?: any; type: string; })
           options: {
             ...state.graph.options,
             isPlaying: false,
-          }
-        }
-      }
+          },
+        },
+      };
     }
 
     case "SET_PROGRESS": {
       const progress = action.payload.progress ?? state.graph.options.progress;
       let next = action.payload.next ?? 0;
-      
-      if (action.payload.direction === 'forwards') {
+
+      if (action.payload.direction === "forwards") {
         if (progress < 100 && next > 100) {
           next = 100;
         }
-      } else if (action.payload.direction === 'backwards') {
+      } else if (action.payload.direction === "backwards") {
         if (progress > 0 && next < 0) {
           next = 0;
         }
       }
-      
-      const nextState = {...state };
+
+      const nextState = { ...state };
       nextState.graph.options.progress = next;
-      
+
       return {
         ...state,
         transactions: {
@@ -275,13 +308,16 @@ function stateReducer(state: TContext, action: { payload?: any; type: string; })
             ...state.graph.options,
             isPlaying: action.payload.isPlaying || false,
             progress: action.payload.progress ?? next,
-          }
-        }
-      }
+          },
+        },
+      };
     }
 
     case "SET_ACTIVE_TRANSACTION": {
-      let transaction = state?.transactions?.data?.find((d) => d.hash === action.payload.hash) || null;
+      let transaction =
+        state?.transactions?.data?.find(
+          (d) => d.hash === action.payload.hash
+        ) || null;
 
       if (state.graph.active.transaction?.hash === action.payload.hash) {
         transaction = null;
@@ -294,17 +330,19 @@ function stateReducer(state: TContext, action: { payload?: any; type: string; })
           active: {
             ...state.graph.active,
             transaction,
-          }
-        }
-      }
+          },
+        },
+      };
     }
 
     case "SET_ACTIVE_ACCOUNT": {
-      let account = state.accounts.list.
-        find((d) =>
-          d.address === action.payload.address &&
-          d.chain === action.payload.chain) || null;
-      
+      let account =
+        state.accounts.list.find(
+          (d) =>
+            d.address === action.payload.address &&
+            d.chain === action.payload.chain
+        ) || null;
+
       if (
         state.graph.active.account?.address === action.payload.address &&
         state.graph.active.account?.chain === action.payload.chain
@@ -320,7 +358,7 @@ function stateReducer(state: TContext, action: { payload?: any; type: string; })
             ...state.graph.active,
             transaction: null,
             account,
-          }
+          },
         },
         transactions: {
           ...state.transactions,
@@ -328,15 +366,20 @@ function stateReducer(state: TContext, action: { payload?: any; type: string; })
             ...state.transactions.list,
             filtered: {
               ...state.transactions.list.filtered,
-              network: filterListByAccount(state.transactions.list.network, account),
+              network: filterListByAccount(
+                state.transactions.list.network,
+                account
+              ),
             },
           },
-        }
-      }
+        },
+      };
     }
 
     case "SET_ACTIVE_PLAYLIST": {
-      let playlist = state.playlists.data.find((d) => d.id === action.payload.playlistId) || null;
+      let playlist =
+        state.playlists.data.find((d) => d.id === action.payload.playlistId) ||
+        null;
 
       if (playlist === state.graph.active.playlist) {
         playlist = null;
@@ -349,9 +392,9 @@ function stateReducer(state: TContext, action: { payload?: any; type: string; })
           active: {
             ...state.graph.active,
             playlist,
-          }
-        }
-      }
+          },
+        },
+      };
     }
 
     case "SET_DEPLOYMENT":
@@ -362,8 +405,8 @@ function stateReducer(state: TContext, action: { payload?: any; type: string; })
           isDeployed: action.payload,
           playlists: [],
         },
-      }
-    
+      };
+
     case "CHECK_DEPLOYMENT":
       return {
         ...state,
@@ -371,27 +414,32 @@ function stateReducer(state: TContext, action: { payload?: any; type: string; })
           ...state.deployments,
           isDeployed: !!state.transactions.data?.length,
         },
-      }
+      };
 
     case "DEPLOYED_PLAYLISTS":
       return {
         ...state,
         deployments: {
           ...state.deployments,
-          playlists: [...new Set([...state.deployments.playlists, action.payload.playlist])],
+          playlists: [
+            ...new Set([
+              ...state.deployments.playlists,
+              action.payload.playlist,
+            ]),
+          ],
         },
-      }
+      };
 
     case "LOADING":
       return {
         ...state,
         isLoading: action.payload,
-      }
+      };
 
     case "RESET_STATE": {
       return {
         ...initialState,
-      }
+      };
     }
 
     default:
@@ -411,15 +459,15 @@ export const initialState = {
     data: [
       {
         id: "chain0",
-        title: "Deploy on chain 0",
+        title: "Play on chain 0",
       },
       {
         id: "chain1",
-        title: "Deploy on chain 1",
+        title: "Play on chain 1",
       },
       {
         id: "crosschain",
-        title: "Deploy crosschain transfers",
+        title: "Play crosschain transfers",
       },
     ],
   },
@@ -456,6 +504,6 @@ export const initialState = {
   networks: {
     list: [],
   },
-}
+};
 
 export default ContextProvider;

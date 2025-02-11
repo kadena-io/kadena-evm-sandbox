@@ -1,13 +1,16 @@
 import React from "react";
 import useSWR from "swr";
+import { TList } from "@app/context/context.type";
+
+type TChainRef = `chain${number}`
+type TAccountId = string
 
 export type TAccount = {
   address: string;
   balance: string;
+  chain: TChainRef;
+  accountLabel: string;
 }
-
-type TChainRef = `chain${number}`
-type TAccountId = string
 
 export type TAccounts = {
   [key: TChainRef]: {
@@ -16,7 +19,7 @@ export type TAccounts = {
 }
 
 const UseAccounts = () => {
-  const [list, setList] = React.useState<any[]>([]);
+  const [list, setList] = React.useState<TList<TAccount>[]>([]);
 
   const { data, isLoading } = useSWR<TAccounts>(
     "/accounts",
@@ -29,20 +32,14 @@ const UseAccounts = () => {
 
   React.useEffect(() => {
     if (data) {
-      setList(Object.keys(data).map((chainRef) => {
-        return {
-          title: chainRef,
-          list: Object.keys(data[chainRef]).map((accountId) => {
-            return {
-              ...data[chainRef][accountId],
-              chain: chainRef,
-              accountLabel: accountId,
-              title: accountId,
-              balance: data[chainRef][accountId].balance,
-            }
-          })
-        }
-      }));
+      setList(Object.entries(data).map(([chainRef, accounts]) => ({
+        title: chainRef,
+        list: Object.entries(accounts).map(([accountId, accountData]) => ({
+          ...accountData,
+          chain: chainRef as TChainRef,
+          accountLabel: accountId,
+        }))
+      })));
     }
   }, [data]);
   

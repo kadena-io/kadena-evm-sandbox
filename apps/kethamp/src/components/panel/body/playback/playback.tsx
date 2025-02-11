@@ -4,29 +4,34 @@ import React from "react";
 import styles from "./playback.module.css";
 import UseActions from "@app/hooks/actions";
 import { useContext, useContextDispatch } from "@app/context/context";
+import { TTransaction } from "@app/context/context.type";
 
 const Playback: React.FC = () => {
   const dispatch = useContextDispatch();
   const { playlist, deploy, reset } = UseActions();
+  const state = useContext();
+
   const {
-    networks: {
-      list: networksList,
-    },
-    graph: {
-      active: activeGraph,
-      data: graphData,
-      options: {
-        stepSize,
-        maxStepCount,
-        progress,
-        isPlaying,
-      },
-    },
+    networks,
+    graph,
     transactions,
     deployments,
-  } = useContext();
+  } = state || {};
+  const {
+    list: networksList,
+  } = networks || {};
+  const {
+    active: activeGraph,
+    data: graphData,
+    options,
+  } = graph || {};
+  const {
+    stepSize = 10,
+    maxStepCount = 10,
+    progress = 0,
+  } = options || {};
   
-  const timerRef = React.useRef<any>(null);
+  const timerRef = React.useRef(null);
   const trackRef = React.useRef<HTMLDivElement>(null);
   const rangeRef = React.useRef<HTMLInputElement>(null);
   const graphContainerRef = React.useRef<HTMLDivElement>(null);
@@ -39,10 +44,10 @@ const Playback: React.FC = () => {
     b: '-',
   });
 
-  const [topGraphId, bottomGraphId] = networksList;
+  const [topGraphId, bottomGraphId] = networksList || [];
 
   const getBarHeight = React.useCallback(
-    (data) => {
+    (data: TTransaction[]) => {
       if (graphContainerRef.current && maxStepCount > 0) {
         const container = graphContainerRef.current;
         const height = container.clientHeight;
@@ -70,21 +75,6 @@ const Playback: React.FC = () => {
     }
   }, []);
 
-  const resetPlayer = React.useCallback(() => {
-    if (trackRef.current) {
-      trackRef.current.classList.remove(styles.playing);
-
-      setTimeout(() => {
-        if (trackRef.current) {
-          trackRef.current.style.backgroundPositionX = "0%";
-          dispatch({
-            type: "RESET_PROGRESS"
-          });
-        }
-      }, 400);
-    }
-  }, [dispatch]);
-
   const forwards = React.useCallback((isStopPlayer=true) => {
     dispatch({
       type: "SET_PROGRESS",
@@ -94,7 +84,9 @@ const Playback: React.FC = () => {
       },
     });
     
-    isStopPlayer && stopPlayer();
+    if (isStopPlayer) {
+      stopPlayer()
+    }
   }, [dispatch, progress, stepSize, stopPlayer]);
 
   const backwards = React.useCallback(() => {
@@ -109,54 +101,17 @@ const Playback: React.FC = () => {
     stopPlayer();
   }, [dispatch, progress, stepSize, stopPlayer]);
 
-  const playHandler = React.useCallback(async () => {
-    if (isPlaying) {
-      stopPlayer(true);
-      dispatch({
-        type: "RESET_PROGRESS"
-      });
-    }
-
-    if (progress === 100) {
-      dispatch({
-        type: "RESET_PROGRESS"
-      });
-    }
-
-    if (trackRef.current) {
-      trackRef.current.classList.add(styles.playing);
-    }
-
-    timerRef.current = setInterval(() => {
-      const progressValue = parseInt(rangeRef.current.value, 10) ?? 0
-
-      dispatch({
-        type: "SET_PROGRESS",
-        payload: {
-          direction: "forwards",
-          isPlaying: progressValue + stepSize !== 100,
-          next: progressValue + stepSize,
-        }
-      });
-
-      if (progressValue === 100) {
-        stopPlayer();
-      }
-    }, 1000);
-  }, [isPlaying, progress, stopPlayer, dispatch, stepSize]);
-
   React.useEffect(() => {
     const range = rangeRef.current;
-    const track = trackRef.current;
 
-    if (range && track) {
-      range.addEventListener("input", (e) => {
+    if (range) {
+      range.addEventListener("input", (e: Event) => {
         dispatch({
           type: "SET_PROGRESS",
           payload: {
             direction: "forwards",
             isPlaying: false,
-            next: parseInt(e.target.value, 10),
+            next: parseInt((e.target as HTMLInputElement).value, 10),
           },
         });
         
@@ -169,10 +124,10 @@ const Playback: React.FC = () => {
         range.removeEventListener("input", () => {});
       }
     };
-  }, [dispatch, stopPlayer]);
+  }, [dispatch, stopPlayer, rangeRef.current]);
 
   React.useEffect(() => {
-    if (activeGraph.account) {
+    if (activeGraph?.account) {
       const {
         name,
         chain,
@@ -184,8 +139,8 @@ const Playback: React.FC = () => {
         a: '-',
         b: '-',
       })
-    } else if (activeGraph.transaction) {
-      setActiveTitle(activeGraph.transaction?.title);
+    } else if (activeGraph?.transaction?.title) {
+      setActiveTitle(activeGraph.transaction.title);
       setActiveMetaData({
         a: '-',
         b: '-',
@@ -200,7 +155,7 @@ const Playback: React.FC = () => {
   }, [activeGraph, setActiveTitle]);
 
   React.useEffect(() => {
-    if (deployments.isDeployed && transactions.list?.block?.length && blockNrs.length) {
+    if (deployments?.isDeployed && transactions?.list?.block?.length && blockNrs.length) {
       const [startBlockNr, endBlockNr] = blockNrs
       setActiveTitle("Blocks between " + startBlockNr + " and " + endBlockNr + " containing " + transactions.list.block.length + " transactions are displayed");
     } else {
@@ -212,18 +167,18 @@ const Playback: React.FC = () => {
         stopPlayer();
       }
     };
-  }, [blockNrs, deployments.isDeployed, progress, stepSize, stopPlayer, transactions]);
+  }, [blockNrs, deployments?.isDeployed, progress, stepSize, stopPlayer, transactions]);
 
   React.useEffect(() => {
-    if (!deployments.isDeployed) {
+    if (!deployments?.isDeployed) {
       setBlockNrs([0,0]);
       setActiveTitle("No deployments found, please deploy a contract");
     }
-  }, [deployments.isDeployed, setBlockNrs, setActiveTitle]);
+  }, [deployments?.isDeployed, setBlockNrs, setActiveTitle]);
 
   React.useEffect(() => {
-    if (deployments.isDeployed) {
-      if (transactions.list?.block?.length) {
+    if (deployments?.isDeployed) {
+      if (transactions?.list?.block?.length) {
         const blockNrs = transactions.list.block.map(item => item.blockNumber)
         const minBlockNr = Math.min(...blockNrs);
         const maxBlockNr = Math.max(...blockNrs);
@@ -232,10 +187,10 @@ const Playback: React.FC = () => {
         setBlockNrs([0,0]);
       }
     }
-  }, [transactions.list, setBlockNrs, deployments.isDeployed]);
+  }, [transactions?.list, setBlockNrs, deployments?.isDeployed]);
 
   React.useEffect(() => {
-    if (deployments.isDeployed && blockNrs.length) {
+    if (deployments?.isDeployed && blockNrs.length) {
       const [startBlockNr, endBlockNr] = blockNrs
       
       if (startBlockNr === endBlockNr) {
@@ -248,7 +203,7 @@ const Playback: React.FC = () => {
     } else {
       setTimerLabel("N/A");
     }
-  }, [setTimerLabel, blockNrs, deployments.isDeployed]);
+  }, [setTimerLabel, blockNrs, deployments?.isDeployed]);
 
   if (!graphData) {
     return null;
@@ -262,15 +217,15 @@ const Playback: React.FC = () => {
         </span>
 
         <div className={styles.indicators}>
-          <span>0</span>
-          <span className={styles.active}>A</span>
-          <span>I</span>
-          <span>D</span>
-          <span>V</span>
+          <span className={styles.char}>0</span>
+          <span className={[styles.char, styles.active].join(' ')}>A</span>
+          <span className={styles.char}>I</span>
+          <span className={styles.char}>D</span>
+          <span className={styles.char}>V</span>
         </div>
 
         <div className={styles.graphWrapper}>
-          {deployments.isDeployed ? <><div ref={graphContainerRef} className={styles.graphContainer}>
+          {deployments?.isDeployed ? <><div ref={graphContainerRef} className={styles.graphContainer}>
             {Object.values(graphData)
               .map((d) => d.filter((d) => d.network === topGraphId))
               .map((d, i) => (
@@ -301,12 +256,12 @@ const Playback: React.FC = () => {
         </div>
       </div>
       <div className={[styles.uiDisplayText, styles.i2].join(" ")}>
-        <span>{activeTitle}</span>
-        <span>- {activeTitle}</span>
+        <span className={styles.i2text}>{activeTitle}</span>
+        <span className={styles.i2text}>- {activeTitle}</span>
       </div>
       <div className={[styles.uiDisplayText, styles.i3i4wrapper].join(" ")}>
-        <span className={styles.i3}>{activeMetaData.a}</span>
-        <span className={styles.i4}>{activeMetaData.b}</span>
+        <span className={styles.i3text}>{activeMetaData.a}</span>
+        <span className={styles.i3text}>{activeMetaData.b}</span>
       </div>
       <div
         ref={trackRef}
@@ -320,28 +275,28 @@ const Playback: React.FC = () => {
           min="0"
           max={100}
           step={stepSize}
-          defaultValue={progress}
-          disabled={!deployments.isDeployed}
+          // defaultValue={progress}
+          disabled={!deployments?.isDeployed}
         />
       </div>
       <div className={styles.buttons}>
         <button
-          className={styles.prev}
-          onClick={backwards}
+          className={[styles.button, styles.prev].join(" ")}
+          onClick={() => backwards()}
           disabled={progress === 0}
         />
-        <button className={styles.play} onClick={() => playlist()} />
+        <button className={[styles.button, styles.play].join(" ")} onClick={() => playlist()} />
         {/* <button
-          className={styles.pause}
+          className={[styles.button, styles.pause].join(" ")}
           onClick={() => playlist()}
         /> */}
-        <button className={styles.stop} onClick={reset} />
+        <button className={[styles.button, styles.stop].join(" ")} onClick={reset} />
         <button
-          className={styles.next}
-          onClick={forwards}
+          className={[styles.button, styles.next].join(" ")}
+          onClick={() => forwards()}
           disabled={progress === 100}
         />
-        <button className={styles.eject} onClick={deploy} />
+        <button className={[styles.button, styles.eject].join(" ")} onClick={() => deploy()} />
       </div>
       <div className={styles.logoKadena} />
       <div className={styles.logoEthDenver2025} />

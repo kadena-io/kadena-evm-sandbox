@@ -26,7 +26,7 @@
     flex-direction: column;
     overflow: hidden;
 
-    h2 {
+    .title {
       position: relative;
       background-color: #525288;
       color: rgba(255,255,255, 0.8);
@@ -93,7 +93,7 @@
           text-align: right;
         }
   
-        div {
+        .itemContainer {
           white-space: nowrap;
           overflow: hidden;
           text-overflow: ellipsis;
@@ -113,20 +113,20 @@
     background-color: #31314d;
     padding: 4px 8px 2px 8px;
 
-    span {
+    .inner {
       display: inline-block;
       margin-top: 3px;
       color: rgba(255,255,255, 0.6);
     }
 
     &.focussed {
-      span {
+      .inner {
         color: rgba(255,255,255, 1);
       }
     }
 
     &:hover {
-      span {
+      .inner {
         color: rgba(255,255,255, 1);
       }
     }

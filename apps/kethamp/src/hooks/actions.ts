@@ -1,4 +1,4 @@
-import { useContext, useContextDispatch } from "../context/context";
+import { useContext, useContextDispatch } from "@app/context/context";
 
 const UseActions = () => {
   const state = useContext();
@@ -21,7 +21,7 @@ const UseActions = () => {
       payload: true,
     });
     
-    if (state.graph.active?.playlist?.id) {
+    if (state?.graph?.active?.playlist?.id) {
       await playlist();
 
       dispatch({
@@ -57,7 +57,7 @@ const UseActions = () => {
   };
 
   const playlist = async () => {
-    const list = state.graph.active?.playlist?.id
+    const list = state?.graph?.active?.playlist?.id
 
     if (!list) {
       alert("No playlist selected");
@@ -70,7 +70,18 @@ const UseActions = () => {
       },
       body: JSON.stringify({ list }),
     });
-    return await response.text();
+    await response.text();
+
+    if (state?.graph?.active?.playlist?.id) {
+      dispatch({
+        type: "DEPLOYED_PLAYLISTS",
+        payload: {
+          playlist: state?.graph?.active.playlist.id,
+        },
+      });
+    }
+    
+    return "Playlist";
   };
 
   return {

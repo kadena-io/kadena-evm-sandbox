@@ -15,7 +15,7 @@ export const getPlaylist = async (list: string) => {
 };
 const getCrosschainPlaylist = async () => {
   await hre.switchNetwork("kadena_devnet1");
-  const [, alice, charlie] = await hre.ethers.getSigners();
+  const [, alice, ,charlie] = await hre.ethers.getSigners();
   await hre.switchNetwork("kadena_devnet2");
   const [, , bob, charlie1] = await hre.ethers.getSigners();
   const playlist: Track[] = [

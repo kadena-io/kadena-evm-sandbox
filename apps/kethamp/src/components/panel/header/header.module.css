@@ -74,7 +74,7 @@
     font-family: var(--font-kode-mono);
     user-select: none;
   
-    span {
+    .inner {
       display: inline-block;
       background-image: var(--background-midde-init);
       background-size: 100% 100%;

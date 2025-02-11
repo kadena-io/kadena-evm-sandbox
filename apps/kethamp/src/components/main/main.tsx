@@ -10,6 +10,7 @@ import UseTransactions from "@app/hooks/transactions";
 
 import { useContext, useContextDispatch } from '../../context/context';
 import styles from './main.module.css';
+import { TContext, TTransaction } from '../../context/context.type';
 
 const Main = () => {
   const state = useContext();
@@ -21,16 +22,9 @@ const Main = () => {
     } = UseAccounts();
     const { 
       data: transactionsData,
-      // list: listTransactions,
       isLoading: isLoadingTXS,
     } = UseTransactions();
 
-  const maskAccountAddress = (address: string) => {
-    if (!address) return "";
-
-    return address.slice(0, 6) + "..." + address.slice(-4);
-  }
-  
   React.useEffect(() => {
     dispatch({
       type: "LOADING",
@@ -47,12 +41,11 @@ const Main = () => {
           transactions: transactionsData,
         },
       });
+      dispatch({
+        type: "CHECK_DEPLOYMENT",
+      });
     }
   }, [accountsData, dispatch, transactionsData]);
-
-  React.useEffect(() => {
-    console.log("App state", {state})
-  }, [state]);
 
   return <div className="font-[family-name:var(--font-geist-sans)] py-10">
     <main className={[styles.main, "w-full m-auto max-w-[640px]"].join(" ")}>
@@ -65,7 +58,7 @@ const Main = () => {
         title="Playlists"
       >
         <List
-          data={[{title: 'Available deployment playlists', list: state.playlists.data}]}
+          data={[{title: 'Available deployment playlists', list: state?.playlists.data || []}]}
           cols={[
             { key: "title", style: { flex: 1 } },
             { key: "id" }
@@ -73,7 +66,7 @@ const Main = () => {
           config={{
             entity: "playlist",
             entityKey: "id",
-            onClick: (item) => dispatch({
+            onClick: (item: TContext['playlists']['data'][0]) => dispatch({
               type: "SET_ACTIVE_PLAYLIST",
               payload: {
                 playlistId: item.id,
@@ -89,13 +82,13 @@ const Main = () => {
         <List
           data={listAccounts}
           cols={[
-            { key: "title", style: { flex: 1 } },
+            { key: "accountLabel", style: { flex: 1 } },
             { key: "balance", formatter: (value: string) => `${value} KDA` }
           ]}
           config={{
             entity: "account",
             entityKey: ["address", "chain"],
-            onClick: (item) => dispatch({
+            onClick: (item: TContext['accounts']['list'][0]) => dispatch({
               type: "SET_ACTIVE_ACCOUNT",
               payload: {
                 address: item.address,
@@ -105,7 +98,7 @@ const Main = () => {
           }}
         />
       </Panel> : null}
-      {state.deployments.isDeployed && state?.transactions?.list?.network?.length ? <Panel
+      {state?.deployments.isDeployed && state?.transactions?.list?.network?.length ? <Panel
         type="list"
         title="Network Transactions"
       >
@@ -118,7 +111,7 @@ const Main = () => {
                 searchCol: "title",
                 entity: "transaction",
                 entityKey: "hash",
-                onClick: (item) => dispatch({
+                onClick: (item: TTransaction) => dispatch({
                   type: "SET_ACTIVE_TRANSACTION",
                   payload: {
                     hash: item.hash,
@@ -136,7 +129,7 @@ const Main = () => {
           ) : null
         }
       </Panel> : null}
-      {state.deployments.isDeployed && state.graph.active.transaction ? (
+      {state?.deployments.isDeployed && state?.graph.active.transaction ? (
           <Panel
             type="list"
             title="Transaction Details"
@@ -149,16 +142,12 @@ const Main = () => {
               data={[
                 {
                   title: state.graph.active.transaction.title,
-                  list: state.graph.active?.transaction && Object.keys(state.graph.active.transaction).reduce((res, key) => {
-                    const value = state.graph.active.transaction?.[key]
-                    return [
-                      ...res,
-                      {
-                        title: key,
-                        value: (typeof value === "string") ? value : JSON.stringify(value),
-                      }
-                    ]
-                  }, []).sort((a, b) => a.title.localeCompare(b.title))
+                  list: state.graph.active?.transaction && Object.entries(state.graph.active.transaction || {})
+                    .map(([key, value]) => ({
+                      title: key,
+                      value: typeof value === "string" ? value : JSON.stringify(value),
+                    }))
+                    .sort((a, b) => a.title.localeCompare(b.title))
                 }
               ]}
               cols={[
@@ -169,7 +158,7 @@ const Main = () => {
           </Panel>
         ) : null
         }
-        { state.graph.active.transaction?.logs?.length ? (
+        { state?.graph.active.transaction?.logs?.length ? (
             <Panel
               type="list"
               title="Transaction Logs"
@@ -183,24 +172,17 @@ const Main = () => {
                 data={[
                   {
                     title: state.graph.active.transaction.title,
-                    list: state.graph.active?.transaction.logs.reduce((res, value, index) => {
+                    list: (state.graph.active?.transaction.logs || []).flatMap((log, index) => {
+                      const entries = Object.entries(log).map(([key, value]) => ({
+                        title: `${key} [${index}]`,
+                        value: value
+                      }));
+                    
                       return [
-                        ...res,
-                        {
-                          title: `---`,
-                          value: "---",
-                        },
-                        ...Object.keys(value).reduce((acc, key) => { 
-                          return [
-                            ...acc,
-                            {
-                              title: `${key} [${index}]`,
-                              value: value[key]
-                            }
-                          ]
-                        }, []),
-                      ]
-                    }, [])/* .sort((a, b) => a.value.localeCompare(b.value)) */
+                        { title: "---", value: "---" },
+                        ...entries,
+                      ];
+                    })
                   }
                 ]}
                 cols={[

@@ -1,11 +1,13 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import React from "react";
+import { TAccount, TContext, TList, TTransaction } from "./context.type";
 
-const Context = React.createContext(null);
-const ContextDispatch = React.createContext(null);
+const Context = React.createContext<TContext | null>(null);
+const ContextDispatch = React.createContext(null) as unknown as React.Context<React.Dispatch<{ payload?: any; type: string; }>>;
 
-const ContextProvider = ({ children }) => {
+const ContextProvider = ({ children }: { children: React.ReactNode }) => {
   const [state, dispatch] = React.useReducer(
     stateReducer,
     initialState,
@@ -29,8 +31,12 @@ export function useContextDispatch() {
 }
 
 
-function groupByStep(list, step) {
-  const grouped: Record<string, any[]> = {};
+function groupByStep(list: TGroupTransactions | undefined, step: number) {
+  if (!list) {
+    return {};
+  }
+
+  const grouped: Record<string, TTransaction[]> = {};
   const keys = Object.keys(list).map(parseFloat);
 
   const minKey = Math.floor(Math.min(...keys) / step) * step;
@@ -48,15 +54,16 @@ function groupByStep(list, step) {
   return grouped
 }
 
-function groupTransactions(transactions, stepSize) {
+type TGroupTransactions = Record<string, TTransaction[]>;
+function groupTransactions(transactions: TTransaction[], stepSize: number): TGroupTransactions | undefined {
   if (transactions) {
-    const minBlockNumber = transactions.reduce((acc, d) => Math.min(acc, d.blockNumber), Infinity);
-    const lastBlockNumber = transactions.reduce((acc, d) => Math.max(acc, d.blockNumber), 0);
+    const minBlockNumber = transactions.reduce((acc, d) => Math.min(acc, d?.blockNumber ?? 0), Infinity);
+    const lastBlockNumber = transactions.reduce((acc, d) => Math.max(acc, d?.blockNumber ?? 0), 0);
     const duration = lastBlockNumber - minBlockNumber;
     const steps = 100 / duration;
 
-    const transactionsByPercentage = transactions.reduce((acc, d) => {
-      const percentage = ((d.blockNumber - minBlockNumber) / duration) * 100;
+    const transactionsByPercentage = transactions.reduce<TGroupTransactions>((acc, d) => {
+      const percentage = (((d?.blockNumber ?? 0) - minBlockNumber) / duration) * 100;
       const step = Math.floor(percentage * steps);
       
       return {
@@ -69,13 +76,13 @@ function groupTransactions(transactions, stepSize) {
   }
 }
 
-function networks(transactions) {
+function networks(transactions: TContext['transactions']['data']): string[] {
   if (!transactions) {
     return [];
   }
 
-  return transactions.reduce((acc, d) => {
-    if (!acc.includes(d.network)) {
+  return transactions.reduce<string[]>((acc, d) => {
+    if (d.network && !acc.includes(d.network)) {
       return [...acc, d.network];
     }
 
@@ -83,89 +90,77 @@ function networks(transactions) {
   }, []);
 }
 
-function maxSize(data) {
-  if (!data) {
-    return 0;
-  }
+function maxSize(data: TGroupTransactions | undefined): number {
+  if (!data) return 0;
 
-  return Object.values(data).reduce((count: number, arr) => {
-    if (arr.length > count) {
-      return arr.length;
-    }
-
-    return count
-  }, 0);
+  return Math.max(0, ...Object.values(data).map(arr => arr.length));
 }
 
-function getTransactionsList (state, graphData) {
+function getTransactionsList (state: TContext, graphData?: TContext['graph']['data'] | null): TTransaction[] {
   const { progress } = state.graph.options;
 
   if (graphData) {
     return graphData[progress] ?? [];
   }
   
-  return state.graph.data[progress] ?? [];
+  return state.graph.data?.[progress] ?? [];
 }
 
-function getTransactionsListByNetwork (state, networkList, graphData) {
+function getTransactionsListByNetwork (state: TContext, networkList?: TContext['networks']['list'], graphData?: TContext['graph']['data']) {
   const { progress } = state.graph.options;
-  let data = state.graph.data[progress] ?? [];
+  let data = state.graph.data?.[progress] ?? [];
   
   if (graphData) {
     data = graphData[progress] ?? [];
   }
 
-  if (data && (networkList || state.networks.list)) {
-    return (networkList || state.networks.list).reduce((list, networkId) => {
-      return [
-        ...list,
-        {
-          title: networkId,
-          list: data.filter(d => d.network === networkId),
-        },
-      ]
-    }, []);
-  }
+  if (!data) return [];
 
-  return [];
-}
+  const networks = networkList || state.networks.list;
 
-function getAccountsList(accounts) {
-  return Object.keys(accounts).reduce((accChain, keyChain) => {
-    return [
-      ...accChain,
-      ...Object.keys(accounts[keyChain]).reduce((accAccounts, keyName) => {
-        return [
-          ...accAccounts,
-          {
-            chain: keyChain,
-            name: keyName,
-            ...accounts[keyChain][keyName],
-          },
-        ]
-      }, [])
-    ]
+  if (!networks) return [];
+
+  return networks.reduce<TList<TTransaction>[]>((list, networkId) => {
+    const filteredData = data.filter(d => d.network === networkId);
+
+    if (filteredData.length > 0) {
+      list.push({
+        title: networkId,
+        list: filteredData,
+      });
+    }
+
+    return list;
   }, []);
 }
 
-function filterListByAccount(list, account) {
-  if (list && account) {
-    return Object.values(list).reduce((acc, d) => {
-      return [
-        ...acc,
-        {
-          ...d,
-          list: d.list.filter((d) =>
-            d.from === account?.address || d.to === account?.address),
-        },
-      ];
-    }, []);
-  }
-
-  return list
+function getAccountsList(accounts: TContext['accounts']['data']): TContext['accounts']['list'] {
+  return Object.entries(accounts).flatMap(([chainKey, account]) =>
+    Object.entries(account).map(([accountName, accountData]) => ({
+      ...accountData,
+      chain: chainKey,
+      name: accountName,
+    })) as TAccount[]
+  );
 }
 
-function stateReducer(state, action) {
+function filterListByAccount(list: TList<TTransaction>[] | null, account: TAccount | null) {
+  if (!list || !account) return list;
+
+  return Object.values(list).reduce<TList<TTransaction>[]>((acc, item) => {
+    const filteredList = item.list.filter(entry =>
+      entry.from === account.address || entry.to === account.address
+    );
+
+    if (filteredList.length > 0) {
+      acc.push({ ...item, list: filteredList });
+    }
+
+    return acc;
+  }, []);
+}
+
+function stateReducer(state: TContext, action: { payload?: any; type: string; }) {
   switch (action.type) {
     case "UPDATE_DATA":
       {
@@ -175,7 +170,7 @@ function stateReducer(state, action) {
         return {
           ...state,
           networks: {
-            ...state.networkds,
+            ...state.networks,
             list: networkData,
           },
           accounts: {
@@ -193,7 +188,7 @@ function stateReducer(state, action) {
           },
           graph: {
             ...state.graph,
-            data: graphData,
+            data: graphData || null,
             options: {
               ...state.graph.options,
               maxStepCount: maxSize(graphData),
@@ -206,6 +201,7 @@ function stateReducer(state, action) {
       return {
         ...state,
         accounts: {
+          ...state.accounts,
           data: action.payload.accounts,
           list: [],/* accounts(action.payload.transactions) */
         },
@@ -285,7 +281,7 @@ function stateReducer(state, action) {
     }
 
     case "SET_ACTIVE_TRANSACTION": {
-      let transaction = state.transactions.data.find((d) => d.hash === action.payload.hash) || null;
+      let transaction = state?.transactions?.data?.find((d) => d.hash === action.payload.hash) || null;
 
       if (state.graph.active.transaction?.hash === action.payload.hash) {
         transaction = null;
@@ -367,6 +363,15 @@ function stateReducer(state, action) {
           playlists: [],
         },
       }
+    
+    case "CHECK_DEPLOYMENT":
+      return {
+        ...state,
+        deployments: {
+          ...state.deployments,
+          isDeployed: !!state.transactions.data?.length,
+        },
+      }
 
     case "DEPLOYED_PLAYLISTS":
       return {
@@ -394,7 +399,7 @@ function stateReducer(state, action) {
   }
 }
 
-const initialState = {
+export const initialState = {
   isLoading: true,
   deployments: {
     isDeployed: false,
@@ -420,26 +425,29 @@ const initialState = {
   },
   accounts: {
     isLoading: false,
-    list: {
-      filtered: {},
-    },
+    list: [],
     data: {},
   },
   transactions: {
     isLoading: false,
     list: {
-      filtered: {},
+      block: null,
+      network: null,
+      filtered: {
+        network: null,
+      },
     },
-    data: {},
+    data: null,
   },
   graph: {
-    data: {},
+    data: null,
     active: {
       transaction: null,
       account: null,
       playlist: null,
     },
     options: {
+      isPlaying: false,
       progress: 0,
       stepSize: 10,
       maxStepCount: 0,

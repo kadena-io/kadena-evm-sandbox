@@ -1,10 +1,22 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
 "use client";
 
 import React from "react";
 import styles from "./list.module.css"
 import ListItem from "./item";
+import { TList } from "@app/context/context.type";
 
-const List: React.FC<any> = ({ data, hasSearch, cols, config={} }) => {
+const List: React.FC<{
+  data: TList<any>[],
+  hasSearch?: boolean,
+  cols: {
+    key: string;
+    style?: Record<string, any>;
+    formatter?: (data: any) => any;
+  }[],
+  config?: Record<string, any>,
+}> = ({ data, hasSearch=false, cols, config={} }) => {
   const ref = React.useRef<HTMLDivElement>(null);
 
   React.useEffect(() => {

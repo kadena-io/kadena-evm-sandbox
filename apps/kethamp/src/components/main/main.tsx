@@ -65,7 +65,7 @@ const Main = () => {
         title="Playlists"
       >
         <List
-          data={[{list: state.playlists.data}]}
+          data={[{title: 'Available deployment playlists', list: state.playlists.data}]}
           cols={[
             { key: "title", style: { flex: 1 } },
             { key: "id" }
@@ -105,7 +105,7 @@ const Main = () => {
           }}
         />
       </Panel> : null}
-      {state?.transactions?.list?.network?.length ? <Panel
+      {state.deployments.isDeployed && state?.transactions?.list?.network?.length ? <Panel
         type="list"
         title="Network Transactions"
       >
@@ -136,7 +136,7 @@ const Main = () => {
           ) : null
         }
       </Panel> : null}
-      {state.graph.active.transaction ? (
+      {state.deployments.isDeployed && state.graph.active.transaction ? (
           <Panel
             type="list"
             title="Transaction Details"

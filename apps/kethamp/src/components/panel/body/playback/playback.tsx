@@ -23,6 +23,7 @@ const Playback: React.FC = () => {
       },
     },
     transactions,
+    deployments,
   } = useContext();
   
   const timerRef = React.useRef<any>(null);
@@ -30,7 +31,8 @@ const Playback: React.FC = () => {
   const rangeRef = React.useRef<HTMLInputElement>(null);
   const graphContainerRef = React.useRef<HTMLDivElement>(null);
 
-  const [blockNrs, setBlockNrs] = React.useState([0,0]);
+  const [blockNrs, setBlockNrs] = React.useState<[string|number, string|number]>([0,0]);
+  const [timerLabel, setTimerLabel] = React.useState<string>('N/A');
   const [activeTitle, setActiveTitle] = React.useState("Select account or transaction");
   const [activeMetaData, setActiveMetaData] = React.useState<Record<string, string|number>>({
     a: '-',
@@ -198,9 +200,11 @@ const Playback: React.FC = () => {
   }, [activeGraph, setActiveTitle]);
 
   React.useEffect(() => {
-    if (transactions.list?.block?.length && blockNrs.length) {
+    if (deployments.isDeployed && transactions.list?.block?.length && blockNrs.length) {
       const [startBlockNr, endBlockNr] = blockNrs
-      setActiveTitle("Blocks between " + startBlockNr + " and " + endBlockNr + " containing " + transactions.list.block.length + " transactions are displayed -");
+      setActiveTitle("Blocks between " + startBlockNr + " and " + endBlockNr + " containing " + transactions.list.block.length + " transactions are displayed");
+    } else {
+      setActiveTitle("No deployments found, please deploy a contract");
     }
 
     return () => {
@@ -208,18 +212,43 @@ const Playback: React.FC = () => {
         stopPlayer();
       }
     };
-  }, [blockNrs, progress, stepSize, stopPlayer, transactions]);
+  }, [blockNrs, deployments.isDeployed, progress, stepSize, stopPlayer, transactions]);
 
   React.useEffect(() => {
-    if (transactions.list?.block?.length) {
-      const blockNrs = transactions.list.block.map(item => item.blockNumber)
-      const minBlockNr = Math.min(...blockNrs);
-      const maxBlockNr = Math.max(...blockNrs);
-      setBlockNrs([minBlockNr,maxBlockNr]);
-    } else {
+    if (!deployments.isDeployed) {
       setBlockNrs([0,0]);
+      setActiveTitle("No deployments found, please deploy a contract");
     }
-  }, [transactions.list, setBlockNrs]);
+  }, [deployments.isDeployed, setBlockNrs, setActiveTitle]);
+
+  React.useEffect(() => {
+    if (deployments.isDeployed) {
+      if (transactions.list?.block?.length) {
+        const blockNrs = transactions.list.block.map(item => item.blockNumber)
+        const minBlockNr = Math.min(...blockNrs);
+        const maxBlockNr = Math.max(...blockNrs);
+        setBlockNrs([minBlockNr,maxBlockNr]);
+      } else {
+        setBlockNrs([0,0]);
+      }
+    }
+  }, [transactions.list, setBlockNrs, deployments.isDeployed]);
+
+  React.useEffect(() => {
+    if (deployments.isDeployed && blockNrs.length) {
+      const [startBlockNr, endBlockNr] = blockNrs
+      
+      if (startBlockNr === endBlockNr) {
+        setTimerLabel(String(startBlockNr));
+      } else if (startBlockNr === 0) {
+        setTimerLabel("N/A");
+      } else {
+        setTimerLabel(startBlockNr + "-" + endBlockNr);
+      }
+    } else {
+      setTimerLabel("N/A");
+    }
+  }, [setTimerLabel, blockNrs, deployments.isDeployed]);
 
   if (!graphData) {
     return null;
@@ -229,7 +258,7 @@ const Playback: React.FC = () => {
     <section className={styles.container}>
       <div className={styles.main}>
         <span className={[styles.uiDisplayText, styles.i1].join(" ")}>
-          <span className="text-lg opacity-50">#</span>{blockNrs[0]}-{blockNrs[1]}
+          <span className="text-lg opacity-50">#</span>{timerLabel}
         </span>
 
         <div className={styles.indicators}>
@@ -241,7 +270,7 @@ const Playback: React.FC = () => {
         </div>
 
         <div className={styles.graphWrapper}>
-          <div ref={graphContainerRef} className={styles.graphContainer}>
+          {deployments.isDeployed ? <><div ref={graphContainerRef} className={styles.graphContainer}>
             {Object.values(graphData)
               .map((d) => d.filter((d) => d.network === topGraphId))
               .map((d, i) => (
@@ -268,12 +297,12 @@ const Playback: React.FC = () => {
                   style={{ height: getBarHeight(d) }}
                 />
               ))}
-          </div>
+          </div></> : null}
         </div>
       </div>
       <div className={[styles.uiDisplayText, styles.i2].join(" ")}>
         <span>{activeTitle}</span>
-        <span>{activeTitle}</span>
+        <span>- {activeTitle}</span>
       </div>
       <div className={[styles.uiDisplayText, styles.i3i4wrapper].join(" ")}>
         <span className={styles.i3}>{activeMetaData.a}</span>
@@ -292,6 +321,7 @@ const Playback: React.FC = () => {
           max={100}
           step={stepSize}
           defaultValue={progress}
+          disabled={!deployments.isDeployed}
         />
       </div>
       <div className={styles.buttons}>

@@ -1,6 +1,6 @@
 const { switchNetwork, chainweb } = require("hardhat");
 
-const { chainwebNetwork } = chainweb;
+const { chainwebNetwork, utils } = chainweb;
 
 // hash of CrossChainInitialized(uint32,address,uint64,bytes)
 const EVENT_SIG_HASH =
@@ -97,10 +97,7 @@ async function crossChainTransfer(
     receiver,
     amount
   );
-  const proof = await chainwebNetwork.requestSpvProof(
-    targetTokenInfo.chain,
-    origin
-  );
+  const proof = await utils.requestSpvProof(targetTokenInfo.chain, origin);
   await redeemCrossChain(targetToken, targetTokenInfo, receiver, amount, proof);
 }
 

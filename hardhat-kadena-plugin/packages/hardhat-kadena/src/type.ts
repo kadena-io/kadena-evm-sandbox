@@ -1,8 +1,25 @@
 import "hardhat/types";
-import { ChainwebNetwork } from "./utils/chainweb";
+import type { ChainwebNetwork, Origin } from "./utils/chainweb";
+import type { JsonRpcProvider } from "ethers";
+import type { DeployContractOnChains } from "./utils";
 
 export interface ChainwebConfig {
-  graph: { [key: number]: number[] };
+  networkStem?: string;
+  accounts?: string[];
+  chains?: number;
+  graph?: { [key: number]: number[] };
+}
+
+export interface ChainwebPluginApi {
+  isReady: () => Promise<boolean>;
+  network: ChainwebNetwork;
+  getProvider: (cid: number) => JsonRpcProvider;
+  requestSpvProof: (targetChain: number, origin: Origin) => Promise<string>;
+  switchChain: (cid: number) => Promise<void>;
+  getChainIds: () => number[];
+  callChainIdContract: () => Promise<number>;
+  deployContractOnChains: DeployContractOnChains;
+  createTamperedProof: (targetChain: number, origin: Origin) => Promise<string>;
 }
 
 declare module "hardhat/types" {
@@ -21,10 +38,6 @@ declare module "hardhat/types" {
     chainwebChainId: number;
   }
   interface HardhatRuntimeEnvironment {
-    chainweb: {
-      startHardhatNetwork: () => Promise<void>;
-      stopHardhatNetwork: () => Promise<void>;
-      chainwebNetwork: ChainwebNetwork;
-    };
+    chainweb: ChainwebPluginApi;
   }
 }

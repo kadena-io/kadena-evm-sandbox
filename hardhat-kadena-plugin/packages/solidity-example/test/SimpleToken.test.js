@@ -6,16 +6,16 @@ const {
   initCrossChain,
   CrossChainOperation,
   redeemCrossChain,
+  getSigners,
 } = require("./utils/utils");
 const {
-  getSigners,
-  deployContracts,
+  deployContractOnChains,
   computeOriginHash,
   requestSpvProof,
   createTamperedProof,
   deployMocks,
-  withChainweb,
-} = chainweb.utils;
+  switchChain,
+} = chainweb;
 
 describe("SimpleToken Unit Tests", async function () {
   let signers;
@@ -26,11 +26,11 @@ describe("SimpleToken Unit Tests", async function () {
   let receiver;
   let amount;
 
-  withChainweb();
-
   beforeEach(async function () {
+    await switchChain(0);
     signers = await getSigners();
-    const deployed = await deployContracts();
+
+    const deployed = await deployContractOnChains("SimpleToken");
 
     // Store contract instances for direct calls
     token0 = deployed.tokens[0].contract;

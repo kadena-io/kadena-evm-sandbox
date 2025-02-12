@@ -16,7 +16,7 @@
     "types": "./lib/esm/index.d.ts"
   },
   "scripts": {
-    "build": "tsc && tsc -p tsconfig.cjs.json && cp ./package.cjs.json ./lib/cjs/package.json",
+    "build": "eslint && tsc && tsc -p tsconfig.cjs.json && cp ./package.cjs.json ./lib/cjs/package.json",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {

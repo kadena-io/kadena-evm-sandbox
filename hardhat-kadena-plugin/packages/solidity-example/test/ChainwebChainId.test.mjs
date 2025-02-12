@@ -1,19 +1,14 @@
 import { expect } from "chai";
-// import { callChainIdContract, getNetworks } from "./utils/utils.js";
 
 import pkg from "hardhat";
-const { ethers, network, chainweb } = pkg;
-
-const { callChainIdContract, withChainweb, getNetworks } = chainweb.utils;
+const { network, chainweb } = pkg;
 
 describe("ChainwebChainId Tests", async function () {
-  withChainweb();
-
   it("Should return the chainweb chain id", async function () {
-    for (const netname of getNetworks()) {
-      await switchNetwork(netname);
+    for (const chainId of chainweb.getChainIds()) {
+      await chainweb.switchChain(chainId);
       const cid = network.config.chainwebChainId;
-      const a = await callChainIdContract();
+      const a = await chainweb.callChainIdContract();
       expect(a).to.equal(cid);
     }
   });

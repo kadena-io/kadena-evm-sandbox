@@ -8,7 +8,7 @@ import { KadenaNetworkConfig, NetworksConfig } from "hardhat/types";
 import { Chain } from "./chain.js";
 
 interface INetworkOptions {
-  chainweb: ChainwebConfig;
+  chainweb: Required<ChainwebConfig>;
   networks: NetworksConfig;
 }
 
@@ -151,7 +151,7 @@ export class ChainwebNetwork {
 function makeChainweb(
   logger: Logger,
   config: {
-    chainweb: ChainwebConfig;
+    chainweb: Required<ChainwebConfig>;
     networks: NetworksConfig;
   }
 ) {

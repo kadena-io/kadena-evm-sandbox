@@ -1,7 +1,6 @@
 import globals from "globals";
 import pluginJs from "@eslint/js";
 import tseslint from "typescript-eslint";
-import { Linter } from "eslint";
 
 const checkFiles = (files) => (config) => config.map((c) => ({ ...c, files }));
 

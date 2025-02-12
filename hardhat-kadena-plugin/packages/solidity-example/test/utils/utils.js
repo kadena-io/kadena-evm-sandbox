@@ -1,6 +1,6 @@
 const { switchNetwork, chainweb } = require("hardhat");
 
-const { requestSpvProof } = chainweb;
+const { requestSpvProof, switchChain } = chainweb;
 
 // hash of CrossChainInitialized(uint32,address,uint64,bytes)
 const EVENT_SIG_HASH =
@@ -108,6 +108,7 @@ const CrossChainOperation = {
 };
 
 async function getSigners() {
+  await switchChain(0);
   const [deployer, alice, bob, carol] = await ethers.getSigners();
   return {
     deployer,

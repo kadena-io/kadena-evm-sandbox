@@ -6,27 +6,27 @@ const {
   crossChainTransfer,
   initCrossChain,
   redeemCrossChain,
-  // getSigners,
+  getSigners,
   // deployContracts,
   // requestSpvProof,
   // withChainweb,
 } = require("./utils/utils");
 
-const { withChainweb, requestSpvProof, getSigners, deployContracts } =
-  chainweb.utils;
+const { requestSpvProof, deployContractOnChains } = chainweb;
 
 describe("SimpleToken Integration Tests", async function () {
+  chainweb.withChainweb();
+
   let signers;
   let token0;
   let token1;
   let token0Info;
   let token1Info;
 
-  withChainweb();
-
   beforeEach(async function () {
+    await chainweb.switchChain(0);
     signers = await getSigners();
-    const deployed = await deployContracts();
+    const deployed = await deployContractOnChains("SimpleToken");
 
     // Store contract instances for direct calls
     token0 = deployed.tokens[0].contract;

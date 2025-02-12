@@ -1,6 +1,6 @@
 const { switchNetwork, chainweb } = require("hardhat");
 
-const { chainwebNetwork, utils } = chainweb;
+const { requestSpvProof } = chainweb;
 
 // hash of CrossChainInitialized(uint32,address,uint64,bytes)
 const EVENT_SIG_HASH =
@@ -97,7 +97,7 @@ async function crossChainTransfer(
     receiver,
     amount
   );
-  const proof = await utils.requestSpvProof(targetTokenInfo.chain, origin);
+  const proof = await requestSpvProof(targetTokenInfo.chain, origin);
   await redeemCrossChain(targetToken, targetTokenInfo, receiver, amount, proof);
 }
 
@@ -107,10 +107,21 @@ const CrossChainOperation = {
   Erc20TransferFrom: 2,
 };
 
+async function getSigners() {
+  const [deployer, alice, bob, carol] = await ethers.getSigners();
+  return {
+    deployer,
+    alice,
+    bob,
+    carol,
+  };
+}
+
 module.exports = {
   authorizeContracts,
   crossChainTransfer,
   initCrossChain,
   redeemCrossChain,
   CrossChainOperation,
+  getSigners,
 };

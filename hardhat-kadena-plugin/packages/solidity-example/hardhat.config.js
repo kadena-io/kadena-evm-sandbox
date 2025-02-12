@@ -65,66 +65,64 @@ module.exports = {
         };
       }),
     },
-    kadena_devnet0: {
-      url: "http://localhost:8545",
-      chainId: 1789,
-      accounts: devnetAccounts.accounts.map((account) => account.privateKey),
-      chainwebChainId: 0,
-    },
-    kadena_devnet1: {
-      url: "http://localhost:8555",
-      chainId: 1790,
-      accounts: devnetAccounts.accounts.map((account) => account.privateKey),
-      chainwebChainId: 1,
-    },
+    // kadena_devnet0: {
+    //   url: "http://localhost:8545",
+    //   chainId: 1789,
+    //   accounts: devnetAccounts.accounts.map((account) => account.privateKey),
+    //   chainwebChainId: 0,
+    // },
+    // kadena_devnet1: {
+    //   url: "http://localhost:8555",
+    //   chainId: 1790,
+    //   accounts: devnetAccounts.accounts.map((account) => account.privateKey),
+    //   chainwebChainId: 1,
+    // },
 
-    // hardhat networks (one for each chainweb chain)
-    kadena_hardhat0: {
-      url: "http://localhost:9545",
-      // chainId: 1789,
-      accounts: devnetAccounts.accounts.map((account) => account.privateKey),
-      chainwebChainId: 0,
-    },
-    kadena_hardhat1: {
-      url: "http://localhost:9555",
-      // chainId: 1790,
-      accounts: devnetAccounts.accounts.map((account) => account.privateKey),
-      chainwebChainId: 1,
-    },
+    // // hardhat networks (one for each chainweb chain)
+    // kadena_hardhat0: {
+    //   url: "http://localhost:9545",
+    //   // chainId: 1789,
+    //   accounts: devnetAccounts.accounts.map((account) => account.privateKey),
+    //   chainwebChainId: 0,
+    // },
+    // kadena_hardhat1: {
+    //   url: "http://localhost:9555",
+    //   // chainId: 1790,
+    //   accounts: devnetAccounts.accounts.map((account) => account.privateKey),
+    //   chainwebChainId: 1,
+    // },
   },
   chainweb: {
-    graph: {
-      0: [1],
-      1: [0],
-    },
+    chains: 2,
+    accounts: devnetAccounts.accounts.map((account) => account.privateKey),
   },
   sourcify: {
     enabled: false,
   },
-  etherscan: {
-    apiKey: {
-      kadena_devnet0: "empty",
-      kadena_devnet1: "empty",
-    },
-    customChains: [
-      {
-        network: "kadena_devnet0",
-        chainId: 1789,
-        urls: {
-          apiURL: "http://localhost:8000/api",
-          browserURL: "http://localhost:8000",
-        },
-      },
-      {
-        network: "kadena_devnet1",
-        chainId: 1790,
-        urls: {
-          apiURL: "http://localhost:8001/api",
-          browserURL: "http://localhost:8001",
-        },
-      },
-    ],
-  },
+  // etherscan: {
+  //   apiKey: {
+  //     kadena_devnet0: "empty",
+  //     kadena_devnet1: "empty",
+  //   },
+  //   customChains: [
+  //     {
+  //       network: "kadena_devnet0",
+  //       chainId: 1789,
+  //       urls: {
+  //         apiURL: "http://localhost:8000/api",
+  //         browserURL: "http://localhost:8000",
+  //       },
+  //     },
+  //     {
+  //       network: "kadena_devnet1",
+  //       chainId: 1790,
+  //       urls: {
+  //         apiURL: "http://localhost:8001/api",
+  //         browserURL: "http://localhost:8001",
+  //       },
+  //     },
+  //   ],
+  // },
   mocha: {
     timeout: 300000,
   },

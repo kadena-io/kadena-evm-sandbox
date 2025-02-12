@@ -30,3 +30,13 @@ export function distance(
   }
   throw new Error("Chain not found in Chainweb");
 }
+
+export function createGraph(chains: number = 2) {
+  if (chains !== 2) {
+    throw new Error("Only 2 chains supported for now");
+  }
+  return {
+    0: [1],
+    1: [0],
+  };
+}

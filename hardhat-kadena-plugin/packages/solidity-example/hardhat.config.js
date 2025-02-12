@@ -77,20 +77,6 @@ module.exports = {
     //   accounts: devnetAccounts.accounts.map((account) => account.privateKey),
     //   chainwebChainId: 1,
     // },
-
-    // // hardhat networks (one for each chainweb chain)
-    // kadena_hardhat0: {
-    //   url: "http://localhost:9545",
-    //   // chainId: 1789,
-    //   accounts: devnetAccounts.accounts.map((account) => account.privateKey),
-    //   chainwebChainId: 0,
-    // },
-    // kadena_hardhat1: {
-    //   url: "http://localhost:9555",
-    //   // chainId: 1790,
-    //   accounts: devnetAccounts.accounts.map((account) => account.privateKey),
-    //   chainwebChainId: 1,
-    // },
   },
   chainweb: {
     chains: 2,

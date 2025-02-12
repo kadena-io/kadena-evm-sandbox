@@ -235,9 +235,9 @@ async function runHardhatNetwork(port: number, logger: Logger) {
   });
 
   let isClosed = false;
-  const kill = () => {
+  const kill = (signal?: NodeJS.Signals | number) => {
     if (!isClosed) {
-      isClosed = child.kill();
+      isClosed = child.kill(signal);
     }
   };
 
@@ -265,9 +265,9 @@ async function runHardhatNetwork(port: number, logger: Logger) {
   });
 
   // kill child on exit
-  process.on("exit", kill);
-  process.on("SIGINT", kill);
-  process.on("uncaughtException", kill);
+  process.on("exit", () => kill(0));
+  process.on("SIGINT", () => kill("SIGINT"));
+  process.on("uncaughtException", () => kill("SIGABRT"));
 
   // FIXME wait for proper messages and return an event if this triggered
   // actually, we may just block runHardHatNetwork until it's ready...

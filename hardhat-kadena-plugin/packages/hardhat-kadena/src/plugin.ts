@@ -71,27 +71,24 @@ extendEnvironment((hre) => {
   process.on("uncaughtException", () => stopHardhatNetwork(true));
 
   console.log("Kadena plugin initialized chains", hre.config.chainweb.chains);
-  const startNetwork = startHardhatNetwork()
-    .then(() => true)
-    .catch(() => {
-      process.exit(1);
-    });
+  const startNetwork = startHardhatNetwork().catch(() => {
+    process.exit(1);
+  });
 
   const utils = getUtils(hre);
 
   const api: ChainwebPluginApi = {
-    isReady: () => startNetwork,
-    withChainweb: () => {
-      before(startHardhatNetwork);
-      after(stopHardhatNetwork);
-    },
     network: chainwebNetwork,
     deployContractOnChains: utils.deployContractOnChains,
     getProvider: (cid: number) => chainwebNetwork.getProvider(cid),
     requestSpvProof: utils.requestSpvProof,
-    switchChain: async (cid: number) => {
+    switchChain: async (cid: number | string) => {
       await startNetwork;
-      await hre.switchNetwork(`${hre.config.chainweb.networkStem}${cid}`);
+      if (typeof cid === "string") {
+        await hre.switchNetwork(cid);
+      } else {
+        await hre.switchNetwork(`${hre.config.chainweb.networkStem}${cid}`);
+      }
     },
     getChainIds: () =>
       new Array(hre.config.chainweb.chains).fill(0).map((_, i) => i),

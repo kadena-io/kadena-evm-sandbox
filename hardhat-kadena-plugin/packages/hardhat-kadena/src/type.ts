@@ -11,8 +11,6 @@ export interface ChainwebConfig {
 }
 
 export interface ChainwebPluginApi {
-  isReady: () => Promise<boolean>;
-  withChainweb: () => void;
   network: ChainwebNetwork;
   getProvider: (cid: number) => JsonRpcProvider;
   requestSpvProof: (targetChain: number, origin: Origin) => Promise<string>;

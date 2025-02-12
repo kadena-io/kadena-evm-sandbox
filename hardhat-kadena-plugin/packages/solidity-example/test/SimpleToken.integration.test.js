@@ -9,14 +9,11 @@ const {
   getSigners,
   // deployContracts,
   // requestSpvProof,
-  // withChainweb,
 } = require("./utils/utils");
 
 const { requestSpvProof, deployContractOnChains } = chainweb;
 
 describe("SimpleToken Integration Tests", async function () {
-  chainweb.withChainweb();
-
   let signers;
   let token0;
   let token1;

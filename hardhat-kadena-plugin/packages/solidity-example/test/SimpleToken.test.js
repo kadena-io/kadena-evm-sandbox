@@ -18,6 +18,8 @@ const {
 } = chainweb;
 
 describe("SimpleToken Unit Tests", async function () {
+  chainweb.withChainweb();
+
   let signers;
   let token0;
   let token1;

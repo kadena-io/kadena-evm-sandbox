@@ -12,6 +12,7 @@ export interface ChainwebConfig {
 
 export interface ChainwebPluginApi {
   isReady: () => Promise<boolean>;
+  withChainweb: () => void;
   network: ChainwebNetwork;
   getProvider: (cid: number) => JsonRpcProvider;
   requestSpvProof: (targetChain: number, origin: Origin) => Promise<string>;
@@ -20,10 +21,16 @@ export interface ChainwebPluginApi {
   callChainIdContract: () => Promise<number>;
   deployContractOnChains: DeployContractOnChains;
   createTamperedProof: (targetChain: number, origin: Origin) => Promise<string>;
+  computeOriginHash: (origin: Origin) => string;
+  deployMocks: () => ReturnType<DeployContractOnChains>;
 }
 
 declare module "hardhat/types" {
   interface HardhatConfig {
+    chainweb: Required<ChainwebConfig>;
+  }
+
+  interface HardhatUserConfig {
     chainweb: ChainwebConfig;
   }
   interface HardhatNetworkConfig {

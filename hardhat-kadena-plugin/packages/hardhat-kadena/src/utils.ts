@@ -24,7 +24,7 @@ export const getUtils = (hre: HardhatRuntimeEnvironment) => {
   }
 
   function usesHardhatNetwork() {
-    return NETWORK_STEM == "kadena_hardhat";
+    return true;
   }
 
   // export function withChainweb() {
@@ -103,58 +103,6 @@ export const getUtils = (hre: HardhatRuntimeEnvironment) => {
     };
   }
 
-  async function deployMocks() {
-    const chains = hre.chainweb.getChainIds();
-    console.log(
-      `Found ${chains.length} Kadena devnet networks while deploying mocks: ${chains.join(", ")}`
-    );
-    // const deployments = {};
-    const tokens = [];
-    // const signers = await getSigners();
-
-    for (const chainId of chains) {
-      try {
-        await hre.chainweb.switchChain(chainId);
-        const cid = network.config.chainwebChainId;
-        const [deployer] = await ethers.getSigners();
-        console.log(
-          `Deploying with signer: ${deployer.address} on network ${chainId}`
-        );
-
-        /* Deploy the mock token contract */
-        const factory = await ethers.getContractFactory(
-          "WrongOperationTypeToken"
-        );
-        const contract = await factory.deploy(ethers.parseEther("1000000"));
-        const deploymentTx = contract.deploymentTransaction();
-        if (!deploymentTx) {
-          throw new Error("Deployment transaction failed");
-        }
-        await deploymentTx.wait();
-        const tokenAddress = await contract.getAddress();
-
-        // Store deployment info in both formats
-        const deploymentInfo = {
-          contract,
-          address: tokenAddress,
-          chain: cid,
-          network: {
-            chainId,
-            name: `${hre.config.chainweb.networkStem}${chainId}`,
-          },
-        };
-
-        tokens.push(deploymentInfo);
-      } catch (error) {
-        console.error(`Failed to deploy to network ${chainId}:`, error);
-      }
-    }
-
-    return {
-      tokens,
-    };
-  }
-
   function computeOriginHash(origin: Origin) {
     // Create a proper ABI encoding matching Solidity struct layout
     const abiEncoded = ethers.AbiCoder.defaultAbiCoder().encode(
@@ -203,8 +151,8 @@ export const getUtils = (hre: HardhatRuntimeEnvironment) => {
   }
 
   async function createTamperedProof(targetChain: number, origin: Origin) {
-    const spvCall = await getProof(targetChain, origin);
-    const proofBytes = await spvCall.arrayBuffer();
+    const spvString = await requestSpvProof(targetChain, origin);
+    const proofBytes = Buffer.from(spvString.replace(/^0x/, ""), "hex").buffer;
     const bytes = new Uint8Array(proofBytes);
 
     // Corrupt middle of proof
@@ -218,7 +166,10 @@ export const getUtils = (hre: HardhatRuntimeEnvironment) => {
     getChainIdContract,
     callChainIdContract,
     deployContractOnChains,
-    deployMocks,
+    deployMocks: () => {
+      console.log(`Found Kadena devnet networks while deploying mocks`);
+      return deployContractOnChains("WrongOperationTypeToken");
+    },
     computeOriginHash,
     requestSpvProof,
     createTamperedProof,

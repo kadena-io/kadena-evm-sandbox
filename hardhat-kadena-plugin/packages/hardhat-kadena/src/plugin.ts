@@ -1,49 +1,47 @@
-import { extendEnvironment } from "hardhat/config";
+import { extendEnvironment, extendConfig } from "hardhat/config";
 import { ChainwebNetwork } from "./utils/chainweb.js";
-import { ChainwebPluginApi } from "./type.js";
+import { ChainwebConfig, ChainwebPluginApi } from "./type.js";
 import { getKadenaNetworks } from "./utils/configure.js";
 import { createGraph } from "./utils/chainweb-graph.js";
 import { getUtils } from "./utils.js";
 
-/* *************************************************************************** */
-/* Network Interface */
-
-extendEnvironment((hre) => {
-  // TODO: create the graph based on the number of chains
-  if (hre.config.chainweb.graph) {
+extendConfig((config, userConfig) => {
+  if (userConfig.chainweb.graph) {
     if (
-      hre.config.chainweb.chains &&
-      Object.keys(hre.config.chainweb.graph).length !=
-        hre.config.chainweb.chains
+      userConfig.chainweb.chains &&
+      Object.keys(userConfig.chainweb.graph).length !=
+        userConfig.chainweb.chains
     ) {
       throw new Error(
         "Number of chains in graph does not match the graph configuration"
       );
     }
-    hre.config.chainweb.chains = Object.keys(hre.config.chainweb.graph).length;
+    userConfig.chainweb.chains = Object.keys(userConfig.chainweb.graph).length;
   }
-  const chainwebConfig = {
+
+  const chainwebConfig: Required<ChainwebConfig> = {
     networkStem: "kadena_hardhat_",
     accounts: [],
     chains: 2,
-    graph: hre.config.chainweb.graph ?? createGraph(hre.config.chainweb.chains),
-    ...hre.config.chainweb,
+    graph: userConfig.chainweb.graph ?? createGraph(userConfig.chainweb.chains),
+    ...userConfig.chainweb,
   };
-
-  hre.config.chainweb = chainwebConfig;
+  config.chainweb = chainwebConfig;
 
   // add networks to hardhat
-  hre.config.networks = {
-    ...hre.config.networks,
+  config.networks = {
+    ...config.networks,
     ...getKadenaNetworks({
       networkStem: chainwebConfig.networkStem,
       numberOfChains: chainwebConfig.chains,
       accounts: chainwebConfig.accounts,
     }),
   };
+});
 
+extendEnvironment((hre) => {
   const chainwebNetwork = new ChainwebNetwork({
-    chainweb: chainwebConfig,
+    chainweb: hre.config.chainweb,
     networks: hre.config.networks,
   });
 
@@ -83,18 +81,24 @@ extendEnvironment((hre) => {
 
   const api: ChainwebPluginApi = {
     isReady: () => startNetwork,
+    withChainweb: () => {
+      before(startHardhatNetwork);
+      after(stopHardhatNetwork);
+    },
     network: chainwebNetwork,
     deployContractOnChains: utils.deployContractOnChains,
     getProvider: (cid: number) => chainwebNetwork.getProvider(cid),
     requestSpvProof: utils.requestSpvProof,
     switchChain: async (cid: number) => {
       await startNetwork;
-      await hre.switchNetwork(`${chainwebConfig.networkStem}${cid}`);
+      await hre.switchNetwork(`${hre.config.chainweb.networkStem}${cid}`);
     },
     getChainIds: () =>
-      new Array(chainwebConfig.chains).fill(0).map((_, i) => i),
+      new Array(hre.config.chainweb.chains).fill(0).map((_, i) => i),
     callChainIdContract: utils.callChainIdContract,
     createTamperedProof: utils.createTamperedProof,
+    computeOriginHash: utils.computeOriginHash,
+    deployMocks: utils.deployMocks,
   };
 
   hre.chainweb = api;

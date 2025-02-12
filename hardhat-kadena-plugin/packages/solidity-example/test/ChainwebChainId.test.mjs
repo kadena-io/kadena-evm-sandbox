@@ -1,11 +1,12 @@
 import { expect } from "chai";
-import { callChainIdContract, getChainIdContract, getNetworks, withChainweb } from "./utils/utils.js";
+// import { callChainIdContract, getNetworks } from "./utils/utils.js";
 
-import pkg from 'hardhat';
-const { ethers, network } = pkg;
+import pkg from "hardhat";
+const { ethers, network, chainweb } = pkg;
+
+const { callChainIdContract, withChainweb, getNetworks } = chainweb.utils;
 
 describe("ChainwebChainId Tests", async function () {
-
   withChainweb();
 
   it("Should return the chainweb chain id", async function () {

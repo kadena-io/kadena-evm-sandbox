@@ -1,10 +1,173 @@
-const { switchNetwork, chainweb } = require("hardhat");
-
-const { chainwebNetwork } = chainweb;
+const { ethers, network, switchNetwork } = require("hardhat");
+const { getSpvProof, startHardhatNetwork, stopHardhatNetwork, CHAIN_ID_ADDRESS, CHAIN_ID_ABI  } = require('./chainweb.mjs');
 
 // hash of CrossChainInitialized(uint32,address,uint64,bytes)
 const EVENT_SIG_HASH =
-  "0x9d2528c24edd576da7816ca2bdaa28765177c54b32fb18e2ca18567fbc2a9550";
+  "0x9d2528c24edd576da7816ca2bdaa28765177c54b32fb18e2ca18567fbc2a9550"
+
+const NETWORK_STEM = process.env.NETWORK_STEM || "kadena_hardhat";
+
+function getNetworks() {
+  return Object
+    .keys(hre.config.networks)
+    .filter(net => net.includes(NETWORK_STEM));
+}
+
+function usesHardhatNetwork () {
+  return (NETWORK_STEM == "kadena_hardhat");
+}
+
+function withChainweb() {
+  if (usesHardhatNetwork()) {
+    before(async function () {
+      await startHardhatNetwork()
+    });
+
+    after(async function () {
+      await stopHardhatNetwork()
+    });
+  }
+}
+
+function getChainIdContract () {
+  return new ethers.Contract(CHAIN_ID_ADDRESS, CHAIN_ID_ABI, ethers.provider);
+}
+
+async function callChainIdContract () {
+  const hex = await ethers.provider.send("eth_call", [
+    { to: CHAIN_ID_ADDRESS },
+    'latest',
+    {},
+  ]);
+  return parseInt(hex, 16);
+}
+
+async function getSigners() {
+  await switchNetwork(`${NETWORK_STEM}0`);
+  const [deployer, alice, bob, carol] = await ethers.getSigners();
+  return {
+    deployer,
+    alice,
+    bob,
+    carol,
+  };
+}
+
+async function deployContracts() {
+  const networks = getNetworks();
+  console.log(
+    `Found ${networks.length} Kadena devnet networks: ${networks.join(", ")}`
+  );
+
+  const deployments = {};
+  const tokens = []; // Array for individual token access
+
+  for (const netname of networks) {
+    try {
+      await switchNetwork(netname);
+      const cid = network.config.chainwebChainId;
+      const [deployer] = await ethers.getSigners();
+      console.log(
+        `Deploying with signer: ${deployer.address} on network ${netname}`
+      );
+
+      /* Deploy the SimpleToken contract */
+      const factory = await ethers.getContractFactory("SimpleToken");
+      const contract = await factory.deploy(ethers.parseEther("1000000"));
+      let deploymentTx = contract.deploymentTransaction();
+      await deploymentTx.wait();
+      const tokenAddress = await contract.getAddress();
+
+      // Store deployment info in both formats
+      const deploymentInfo = {
+        contract,
+        address: tokenAddress,
+        chain: cid,
+        network: {
+          name: netname,
+        },
+      };
+
+      tokens.push(deploymentInfo);
+    } catch (error) {
+      console.error(`Failed to deploy to network ${netname}:`, error);
+    }
+  }
+
+  // Return both formats
+  return {
+    tokens, // Access like: deployments.tokens[0]
+  };
+}
+
+async function deployMocks() {
+  const networks = getNetworks();
+  console.log(
+    `Found ${
+      networks.length
+    } Kadena devnet networks while deploying mocks: ${networks.join(", ")}`
+  );
+  const deployments = {};
+  const tokens = [];
+  const signers = await getSigners();
+
+  for (const netname of networks) {
+    try {
+      await switchNetwork(netname);
+      const cid = network.config.chainwebChainId;
+      const [deployer] = await ethers.getSigners();
+      console.log(
+        `Deploying with signer: ${deployer.address} on network ${netname}`
+      );
+
+      /* Deploy the mock token contract */
+      const factory = await ethers.getContractFactory(
+        "WrongOperationTypeToken"
+      );
+      const contract = await factory.deploy(ethers.parseEther("1000000"));
+      let deploymentTx = contract.deploymentTransaction();
+      await deploymentTx.wait();
+      const tokenAddress = await contract.getAddress();
+
+      // Store deployment info in both formats
+      const deploymentInfo = {
+        contract,
+        address: tokenAddress,
+        chain: cid,
+        network: {
+          name: netname,
+        },
+      };
+
+      tokens.push(deploymentInfo);
+    } catch (error) {
+      console.error(`Failed to deploy to network ${netname}:`, error);
+    }
+  }
+
+  return {
+    tokens,
+  };
+}
+
+function computeOriginHash(origin) {
+  // Create a proper ABI encoding matching Solidity struct layout
+  const abiEncoded = ethers.AbiCoder.defaultAbiCoder().encode(
+    ["tuple(uint32,address,uint64,uint64,uint64)"],
+    [
+      [
+        origin.chain, // uint32 originChainId
+        origin.originContractAddress, // address originContractAddress
+        origin.height, // uint64 originBlockHeight
+        origin.txIdx, // uint64 originTransactionIndex
+        origin.eventIdx, // uint64 originEventIndex
+      ],
+    ]
+  );
+
+  // Hash it using keccak256
+  return ethers.keccak256(abiEncoded);
+}
 
 // Authorize contracts for cross-chain transfers to and from the token
 async function authorizeContracts(token, tokenInfo, authorizedTokenInfos) {
@@ -30,7 +193,7 @@ async function initCrossChain(
   amount
 ) {
   console.log(
-    `Initiating cross-chain transfer from ${sourceTokenInfo.network.name} to ${targetTokenInfo.network.name}`
+    `Initiating cross-chain transfer from ${sourceTokenInfo.network.name} to ${targetTokenInfo.network.name} : ${targetTokenInfo.chain}`
   );
   await switchNetwork(sourceTokenInfo.network.name);
   let response1 = await sourceToken
@@ -53,6 +216,43 @@ async function initCrossChain(
     txIdx: BigInt(receipt1.index),
     eventIdx: BigInt(logIndex),
   };
+}
+
+/* *************************************************************************** */
+/* Off-Chain: SPV Proof Creation */
+
+// Call our chainweb SPV api with the necesasry proof parameters
+async function getProof(trgChain, origin) {
+  return fetch(
+    `http://localhost:1848/chainweb/0.0/evm-development/chain/${trgChain}/spv/chain/${origin.chain}/height/${origin.height}/transaction/${origin.txIdx}/event/${origin.eventIdx}`
+  );
+}
+
+// Request cross-chain transfer SPV proof
+async function requestSpvProof(targetChain, origin) {
+  if (usesHardhatNetwork()) {
+    const hexProof = await getSpvProof(targetChain, origin);
+    console.log(`Hex proof: ${hexProof}`);
+    return hexProof;
+  } else {
+    const spvCall = await getProof(targetChain, origin);
+    const proof = await spvCall.json();
+    const proofStr = JSON.stringify(proof);
+    const hexProof = "0x" + Buffer.from(proofStr, "utf8").toString("hex");
+    return hexProof
+  }
+}
+
+async function createTamperedProof(targetChain, origin) {
+  const spvCall = await getProof(targetChain, origin);
+  const proofBytes = await spvCall.arrayBuffer();
+  let bytes = new Uint8Array(proofBytes);
+
+  // Corrupt middle of proof
+  const midPoint = Math.floor(bytes.length / 2);
+  bytes[midPoint] = 0xff; // Change single byte to invalid value
+
+  return "0x" + Buffer.from(bytes).toString("hex");
 }
 
 // Redeem cross-chain transfer tokens
@@ -97,10 +297,7 @@ async function crossChainTransfer(
     receiver,
     amount
   );
-  const proof = await chainwebNetwork.requestSpvProof(
-    targetTokenInfo.chain,
-    origin
-  );
+  const proof = await requestSpvProof(targetTokenInfo.chain, origin);
   await redeemCrossChain(targetToken, targetTokenInfo, receiver, amount, proof);
 }
 
@@ -111,9 +308,19 @@ const CrossChainOperation = {
 };
 
 module.exports = {
+  getSigners,
+  deployContracts,
   authorizeContracts,
   crossChainTransfer,
   initCrossChain,
+  requestSpvProof,
   redeemCrossChain,
+  computeOriginHash,
+  createTamperedProof,
   CrossChainOperation,
+  deployMocks,
+  getChainIdContract,
+  getNetworks,
+  withChainweb,
+  callChainIdContract,
 };

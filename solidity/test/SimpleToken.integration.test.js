@@ -72,7 +72,49 @@ describe("SimpleToken Integration Tests", async function () {
 
       const senderBalanceBefore = await token1.balanceOf(sender.address);
       const receiverBalanceBefore = await token0.balanceOf(receiver.address);
+
+      //await switchNetwork(token1Info.network.name);
+
       await crossChainTransfer(token1, token1Info, token0, token0Info, sender, receiver, amount)
+
+
+      console.log("token1", token1);
+      /*
+            // Set up event listener before transfer
+            const tx = await token1.connect(sender).transferCrossChain(
+              receiver.address,
+              amount,
+              token0Info.chain
+            );
+            const receipt = await tx.wait();
+      
+            console.log("TransferCrossChain receipt:", receipt);
+      
+            // Parse events from receipt
+            const events = receipt.logs.map(log => {
+              try {
+                return token1.interface.parseLog({
+                  topics: log.topics,
+                  data: log.data
+                });
+              } catch (e) {
+                return null;
+              }
+            }).filter(Boolean);
+      
+            // Find and log CrossChainInitialized event
+            const crossChainEvent = events.find(e => e.name === "CrossChainInitialized");
+            if (crossChainEvent) {
+              console.log("CrossChainInitialized event found:");
+              console.log("- targetChainId:", crossChainEvent.args[0]);
+              console.log("- targetContractAddress:", crossChainEvent.args[1]);
+              console.log("- crossChainOperationType:", crossChainEvent.args[2]);
+              console.log("- crossChainData:", crossChainEvent.args[3]);
+            } else {
+              console.log("CrossChainInitialized event not found in receipt");
+            }
+        */
+
       const senderBalanceAfter = await token1.balanceOf(sender.address);
       const receiverBalanceAfter = await token0.balanceOf(receiver.address);
       expect(senderBalanceBefore - amount).to.equal(senderBalanceAfter);
@@ -130,28 +172,32 @@ describe("SimpleToken Integration Tests", async function () {
       expect(receiver2BalanceAfter).to.equal(receiver2BalanceBeforeTransfer2 + amount2);
     });
 
-    // This test case is skipped because it should be succeeding  but the receiver amount is not as expected after the redeem
-    it.skip("Should allow third party to redeem on behalf of receiver", async function () {
+    it("Should allow third party to redeem on behalf of receiver", async function () {
+      // Switch to chain 1 and get signer carol on chain 1.
+      // Not needed in other test cases because the contract is by default called by the first signer on the chain where the contract is deployed.
+      await switchNetwork(token1Info.network.name);
+      const [, , , carol] = await ethers.getSigners();
       const sender = signers.alice;
       const receiver = signers.bob;
-      const redeemer = signers.carol;
+      const redeemer = carol;
       const amount = ethers.parseEther("100");
 
       const senderBalanceBefore = await token0.balanceOf(sender.address);
       const receiverBalanceBefore = await token1.balanceOf(receiver.address);
       const redeemerBalanceBefore = await token1.balanceOf(redeemer.address);
 
-      // Transfer 
+      // Start transfer 
       const origin = await initCrossChain(token0, token0Info, token1Info, sender, receiver, amount);
       const proof = await requestSpvProof(token1Info.chain, origin);
 
-      // Third party redeems
-      const redeemTx = await token1.connect(redeemer).redeemCrossChain(receiver, amount, proof);
-      await redeemTx.wait();
-      
+      // Redeem transfer
+      const tx = await token1.connect(redeemer).redeemCrossChain(receiver, amount, proof);
+      await tx.wait();
+     
       const senderBalanceAfter = await token0.balanceOf(sender.address);
       const receiverBalanceAfter = await token1.balanceOf(receiver.address);
       const recdeemerBalanceAfter = await token1.balanceOf(redeemer.address);
+
       expect(senderBalanceAfter).to.equals(senderBalanceBefore - amount);
       expect(receiverBalanceAfter).to.equal(receiverBalanceBefore + amount);
       expect(recdeemerBalanceAfter).to.equal(redeemerBalanceBefore);
@@ -207,7 +253,7 @@ describe("SimpleToken Integration Tests", async function () {
           fakeProof
         )
       ).to.be.revertedWithCustomError(token1, "SPVVerificationFailed");
-     
+
     });
 
   }); // End of Error Test Cases

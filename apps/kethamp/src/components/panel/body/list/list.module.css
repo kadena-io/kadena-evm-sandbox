@@ -1,6 +1,6 @@
 .wrapper {
   --max-list-items: 10;
-  --max-height: calc((var(--max-list-items) + 1) * (0.8rem + 4px) + 20px);
+  --max-height: calc((var(--max-list-items) + 1) * (0.8rem + 8px) + 20px);
 
   display: flex;
   flex-direction: row;
@@ -71,10 +71,10 @@
         gap: 12px;
         font-size: 0.8rem;
         line-height: 0.8rem;
-        height: calc(0.8rem + 4px);
+        height: calc(0.8rem + 8px);
         font-weight: bold;
         color: #00C600;
-        padding: 2px 4px;
+        padding: 4px 4px 2px;
         cursor: default;
         user-select: none;
         overflow: hidden;

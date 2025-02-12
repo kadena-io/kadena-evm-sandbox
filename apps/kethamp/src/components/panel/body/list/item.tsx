@@ -81,10 +81,9 @@ const ListItem: React.FC<{
             : listCount === list.length ? `${list.length}/${listCount}` : listCount : listCount })
         </h2> : null }
         <div className={styles.list}>
-          { list?.map((item, i) =>
+          { list?.map((item) =>
             <div
-              id={`list-${i}`}
-              key={i}
+              key={JSON.stringify(item)}
               className={[
                 styles.item,
                 item && config?.entity && config?.entityKey && 
@@ -92,13 +91,13 @@ const ListItem: React.FC<{
                   ? styles.activeItem
                   : ""
               ].join(' ')}
+              {...(config?.onClick ? { onClick: () => config.onClick(item) } : {})}
             >
-              {cols?.map((col, colIndex: number) => 
+              {cols?.map((col) => 
                 <div
                   className={styles.itemContainer}
-                  key={`col-${colIndex}`}
+                  key={`col-${item[col.key]}`}
                   {...(col.style ? { style: col.style } : {})}
-                  {...(config?.onClick ? { onClick: () => config.onClick(item) } : {})}
                 >
                   { typeof col.formatter === 'function' ? col.formatter(item[col.key]) : item[col.key] }
                 </div>
@@ -107,7 +106,7 @@ const ListItem: React.FC<{
           )}
         </div>
       </div> 
-      {hasSearch ? <div className={[styles.searchWrapper, !!searchTerm ? styles.focussed : ""].join(' ')}>
+      {hasSearch ? <div className={[styles.searchWrapper, searchTerm ? styles.focussed : ""].join(' ')}>
         <span className={styles.inner}>Search:</span>
         <input ref={inputRef} type="text" className={styles.input} defaultValue={searchTerm} />
       </div> : null}

@@ -2,3 +2,4 @@
 /* tslint:disable */
 /* eslint-disable */
 export { KDA__factory } from "./KDA__factory";
+export { SimpleToken__factory } from "./SimpleToken__factory";

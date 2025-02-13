@@ -57,30 +57,23 @@ extendEnvironment((hre) => {
     networks: hre.config.networks,
   });
 
-  let userCount = 0;
-
   async function startHardhatNetwork() {
-    userCount += 1;
-    if (userCount == 1) {
-      await chainwebNetwork.start();
-    }
+    await chainwebNetwork.start();
   }
 
   let stopped = false;
-  async function stopHardhatNetwork(force = false) {
+  async function stopHardhatNetwork() {
     if (stopped) return;
-    userCount -= 1;
-    if (userCount == 0 || force) {
-      const r = await chainwebNetwork.stop();
-      stopped = true;
-      return r;
-    }
+
+    await chainwebNetwork.stop();
+    stopped = true;
+    process.exit(0);
   }
 
-  process.on("exit", () => stopHardhatNetwork(true));
-  process.on("SIGINT", () => stopHardhatNetwork(true));
-  process.on("SIGTERM", () => stopHardhatNetwork(true));
-  process.on("uncaughtException", () => stopHardhatNetwork(true));
+  process.on("exit", stopHardhatNetwork);
+  process.on("SIGINT", stopHardhatNetwork);
+  process.on("SIGTERM", stopHardhatNetwork);
+  process.on("uncaughtException", stopHardhatNetwork);
 
   console.log("Kadena plugin initialized chains", hre.config.chainweb.chains);
   const startNetwork = startHardhatNetwork().catch(() => {

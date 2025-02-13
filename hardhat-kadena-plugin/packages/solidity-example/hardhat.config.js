@@ -80,7 +80,7 @@ module.exports = {
   },
   chainweb: {
     chains: 2,
-    logging: "none",
+    logging: "info",
   },
   sourcify: {
     enabled: false,

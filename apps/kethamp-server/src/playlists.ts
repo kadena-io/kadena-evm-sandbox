@@ -252,7 +252,7 @@ const getChain1Playlist = async () => {
     },
     {
       title: "Transfer from charlie to Bob",
-      type: "transfeu",
+      type: "transfer",
       from: charlie,
       fromNetwork: "kadena_devnet2",
       to: bob,

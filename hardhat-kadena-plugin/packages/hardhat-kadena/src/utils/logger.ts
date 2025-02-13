@@ -29,7 +29,12 @@ export function logInfo(
   label: string | number,
   msg: string
 ) {
-  console.log(styleText(color, `[hardhat ${label}]`), msg);
+  const prefixedLabel = `[hardhat ${label}]`;
+  const styledLable = styleText
+    ? styleText(color, prefixedLabel)
+    : prefixedLabel;
+
+  console.log(styledLable, msg);
 }
 
 export function logError(
@@ -37,7 +42,12 @@ export function logError(
   label: string | number,
   msg: string
 ) {
-  console.error(styleText(color, `[hardhat ${label}]`), msg);
+  const prefixedLabel = `[hardhat ${label}]`;
+  const styledLable = styleText
+    ? styleText(color, prefixedLabel)
+    : prefixedLabel;
+
+  console.error(styledLable, msg);
 }
 
 export function streamLogger(stream: Readable, logFun: (msg: string) => void) {

@@ -41,14 +41,16 @@ export class Chain {
 
   constructor(
     config: KadenaNetworkConfig,
-    private networkName: string
+    private logging: "none" | "info" | "debug" = "info"
   ) {
     const cid = config.chainwebChainId;
     this.config = config;
 
     this.logger = {
-      info: (msg) => logInfo(COLOR_PALETTE[cid % 6], cid, msg),
-      error: (msg) => logError(COLOR_PALETTE[cid % 6], cid, msg),
+      info: (msg) =>
+        logging !== "none" ? logInfo(COLOR_PALETTE[cid % 6], cid, msg) : null,
+      error: (msg) =>
+        logging !== "none" ? logError(COLOR_PALETTE[cid % 6], cid, msg) : null,
     };
     // set when the chain is added to the chainweb
     this._adjacents = null;

@@ -26,6 +26,7 @@ extendConfig((config, userConfig) => {
     accounts: config.networks.hardhat.accounts,
     chains: 2,
     graph: userConfig.chainweb.graph ?? createGraph(userConfig.chainweb.chains),
+    logging: userConfig.chainweb.logging ?? "info",
     ...userConfig.chainweb,
   };
   config.chainweb = chainwebConfig;
@@ -38,6 +39,7 @@ extendConfig((config, userConfig) => {
       networkStem: chainwebConfig.networkStem,
       numberOfChains: chainwebConfig.chains,
       accounts: chainwebConfig.accounts,
+      loggingEnabled: chainwebConfig.logging === "debug",
     }),
   };
   config.defaultNetwork =

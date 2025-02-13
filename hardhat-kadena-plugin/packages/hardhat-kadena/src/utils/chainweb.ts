@@ -167,8 +167,11 @@ function makeChainweb(
   const chains: Record<number, Chain> = {};
   for (const networkName in networks) {
     if (networkName.includes(config.chainweb.networkStem)) {
-      const config = networks[networkName] as KadenaNetworkConfig;
-      chains[config.chainwebChainId!] = new Chain(config, networkName);
+      const networkConfig = networks[networkName] as KadenaNetworkConfig;
+      chains[networkConfig.chainwebChainId!] = new Chain(
+        networkConfig,
+        config.chainweb.logging
+      );
     }
   }
 

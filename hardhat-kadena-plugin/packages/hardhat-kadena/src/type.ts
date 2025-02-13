@@ -12,6 +12,7 @@ export interface ChainwebConfig {
   accounts?: HardhatNetworkAccountsConfig;
   chains?: number;
   graph?: { [key: number]: number[] };
+  logging?: "none" | "info" | "debug";
 }
 
 export interface ChainwebPluginApi {

@@ -37,6 +37,8 @@ extendConfig((config, userConfig) => {
       accounts: chainwebConfig.accounts,
     }),
   };
+  config.defaultNetwork =
+    userConfig.defaultNetwork ?? `${chainwebConfig.networkStem}0`;
 });
 
 extendEnvironment((hre) => {

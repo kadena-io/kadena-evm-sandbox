@@ -39,7 +39,8 @@
     "@types/node": "^22.13.1",
     "async-lock": "^1.4.1",
     "ethers": "^6.1.0",
-    "hardhat-switch-network": "^1.2.0"
+    "hardhat-switch-network": "^1.2.0",
+    "web3": "^4.16.0"
   },
   "devDependencies": {
     "@eslint/js": "^9.20.0",

@@ -80,7 +80,6 @@ module.exports = {
   },
   chainweb: {
     chains: 2,
-    accounts: devnetAccounts.accounts.map((account) => account.privateKey),
   },
   sourcify: {
     enabled: false,

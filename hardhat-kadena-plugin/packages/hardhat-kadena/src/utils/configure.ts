@@ -1,31 +1,39 @@
-import { KadenaNetworkConfig } from "hardhat/types";
+import {
+  HardhatNetworkAccountsConfig,
+  HardhatNetworkConfig,
+  KadenaNetworkConfig,
+} from "hardhat/types";
+
+interface INetworkOptions {
+  hardhatNetwork: HardhatNetworkConfig;
+  networkStem?: string | undefined;
+  chainIdOffset?: number | undefined;
+  numberOfChains?: number | undefined;
+  accounts?: HardhatNetworkAccountsConfig | undefined;
+}
 
 export const getKadenaNetworks = ({
+  hardhatNetwork,
   networkStem = "kadena_devnet_",
   chainIdOffset = 0,
   numberOfChains = 2,
-  host = "http://localhost",
-  portOffset = 8545,
-  accounts = [] as string[],
-}) => {
+  accounts,
+}: INetworkOptions): Record<string, KadenaNetworkConfig> => {
   const chainIds = new Array(numberOfChains)
     .fill(0)
     .map((_, i) => i + chainIdOffset);
   const networks = chainIds.reduce(
     (acc, chainId, index) => {
-      acc[`${networkStem}${index}`] = {
-        url: `${host}:${portOffset + index * 10}`,
-        accounts,
+      const networkConfig: KadenaNetworkConfig = {
+        ...hardhatNetwork,
+        chainId: 676000 + chainId,
         chainwebChainId: chainId,
-        gas: "auto",
-        gasPrice: "auto",
-        gasMultiplier: 1,
-        httpHeaders: {},
-        timeout: 20000,
-      };
+        accounts: accounts ?? hardhatNetwork.accounts,
+      } as KadenaNetworkConfig;
+      acc[`${networkStem}${index}`] = networkConfig;
       return acc;
     },
-    {} as { [key: string]: KadenaNetworkConfig }
+    {} as Record<string, KadenaNetworkConfig>
   );
 
   return networks;

@@ -6,6 +6,7 @@ import { logError, Logger, logInfo } from "./logger.js";
 import { ChainwebConfig } from "../type.js";
 import { KadenaNetworkConfig, NetworksConfig } from "hardhat/types";
 import { Chain } from "./chain.js";
+import { HardhatEthersProvider } from "@nomicfoundation/hardhat-ethers/internal/hardhat-ethers-provider.js";
 
 interface INetworkOptions {
   chainweb: Required<ChainwebConfig>;
@@ -17,7 +18,7 @@ export class ChainwebNetwork {
   public chains: Record<number, Chain>;
   public graph: Record<number, number[]>;
 
-  constructor(config: INetworkOptions) {
+  constructor(private config: INetworkOptions) {
     this.logger = {
       info: (msg) => logInfo("reset", "-", msg),
       error: (msg) => logError("reset", "-", msg),
@@ -69,7 +70,10 @@ export class ChainwebNetwork {
   //
   async getSpvProof(trgChain: number, origin: Origin) {
     // get origin chain
-    const provider = this.getProvider(Number(origin.chain));
+    const provider = new HardhatEthersProvider(
+      this.getProvider(Number(origin.chain)),
+      `${this.config.chainweb.networkStem}${origin.chain}`
+    );
 
     // Query Event information from origin chain
     const blockLogs = await provider.getLogs({
@@ -161,10 +165,10 @@ function makeChainweb(
   // Create Indiviual Chains
   logger.info("creating chains");
   const chains: Record<number, Chain> = {};
-  for (const k in networks) {
-    if (k.includes("kadena_hardhat")) {
-      const config = networks[k] as KadenaNetworkConfig;
-      chains[config.chainwebChainId!] = new Chain(config);
+  for (const networkName in networks) {
+    if (networkName.includes(config.chainweb.networkStem)) {
+      const config = networks[networkName] as KadenaNetworkConfig;
+      chains[config.chainwebChainId!] = new Chain(config, networkName);
     }
   }
 

@@ -1,18 +1,22 @@
 import "hardhat/types";
 import type { ChainwebNetwork, Origin } from "./utils/chainweb";
-import type { JsonRpcProvider } from "ethers";
 import type { DeployContractOnChains } from "./utils";
+import {
+  HardhatNetworkAccountsConfig,
+  HardhatNetworkUserConfig,
+} from "hardhat/types";
+import { HardhatEthersProvider } from "@nomicfoundation/hardhat-ethers/internal/hardhat-ethers-provider";
 
 export interface ChainwebConfig {
   networkStem?: string;
-  accounts?: string[];
+  accounts?: HardhatNetworkAccountsConfig;
   chains?: number;
   graph?: { [key: number]: number[] };
 }
 
 export interface ChainwebPluginApi {
   network: ChainwebNetwork;
-  getProvider: (cid: number) => JsonRpcProvider;
+  getProvider: (cid: number) => HardhatEthersProvider;
   requestSpvProof: (targetChain: number, origin: Origin) => Promise<string>;
   switchChain: (cid: number) => Promise<void>;
   getChainIds: () => number[];
@@ -39,7 +43,11 @@ declare module "hardhat/types" {
     chainwebChainId?: number;
   }
 
-  interface KadenaNetworkConfig extends HttpNetworkConfig {
+  interface KadenaNetworkConfig extends HardhatNetworkConfig {
+    chainwebChainId: number;
+  }
+
+  interface KadenaHardhatNetworkUserConfig extends HardhatNetworkUserConfig {
     chainwebChainId: number;
   }
   interface HardhatRuntimeEnvironment {

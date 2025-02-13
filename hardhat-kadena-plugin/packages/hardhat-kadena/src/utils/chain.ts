@@ -2,24 +2,15 @@
 /* Chain */
 
 import AsyncLock from "async-lock";
-import { getProvider, isValidProvider } from "./ethers-helpers.js";
 import {
   CHAIN_ID_ADDRESS,
   CHAIN_ID_BYTE_CODE,
   VERIFY_ADDRESS,
   VERIFY_BYTE_CODE,
 } from "./network-contracts.js";
-import { KadenaNetworkConfig } from "hardhat/types";
-import {
-  COLOR_PALETTE,
-  logError,
-  Logger,
-  logInfo,
-  streamLogger,
-} from "./logger.js";
-import { JsonRpcProvider } from "ethers";
-import { sleep } from "./sleep.js";
-import { spawn } from "child_process";
+import { EthereumProvider, KadenaNetworkConfig } from "hardhat/types";
+import { COLOR_PALETTE, logError, Logger, logInfo } from "./logger.js";
+import { createHardhatProvider } from "./create-hardhat-provider.js";
 
 const lock = new AsyncLock();
 
@@ -27,12 +18,11 @@ export class Chain {
   private config: KadenaNetworkConfig;
   private logger: Logger;
   private _adjacents: null | Chain[];
-  private process: null | { kill: () => void };
-  private _provider: null | JsonRpcProvider;
+  private _provider: null | EthereumProvider;
   private autominer: null | NodeJS.Timeout;
 
-  public get provider(): JsonRpcProvider {
-    if (!isValidProvider(this._provider)) {
+  public get provider(): EthereumProvider {
+    if (!this._provider) {
       throw new Error("Provider is not initialized");
     }
     return this._provider;
@@ -49,7 +39,10 @@ export class Chain {
     return this._adjacents;
   }
 
-  constructor(config: KadenaNetworkConfig) {
+  constructor(
+    config: KadenaNetworkConfig,
+    private networkName: string
+  ) {
     const cid = config.chainwebChainId;
     this.config = config;
 
@@ -57,12 +50,8 @@ export class Chain {
       info: (msg) => logInfo(COLOR_PALETTE[cid % 6], cid, msg),
       error: (msg) => logError(COLOR_PALETTE[cid % 6], cid, msg),
     };
-
     // set when the chain is added to the chainweb
     this._adjacents = null;
-
-    // set when the hardhat network process is started
-    this.process = null;
 
     // set when the ethers provider is created
     this._provider = null;
@@ -76,7 +65,7 @@ export class Chain {
   }
 
   get url() {
-    return this.config.url;
+    return "";
   }
 
   get port() {
@@ -171,33 +160,20 @@ export class Chain {
     }
   }
 
-  async startHardhatNetwork() {
-    if (this.process) {
-      this.logger.error("Hardhat network is already running");
-    } else {
-      this.logger.info(`starting chain network at port ${this.port}`);
-      this.process = await runHardhatNetwork(this.port, this.logger);
-      this.logger.info(`started network at port ${this.port}`);
-    }
-  }
-
-  async stopHardhatNetwork() {
-    this.logger.info("stopping hardhat network");
-    if (this.process) {
-      await this.process.kill();
-      this.logger.info("stopped hardhat network");
-      this.process = null;
-    } else {
-      this.logger.error("no hardhat network process found");
-    }
-  }
-
   async start() {
     // start hardhat network
-    await this.startHardhatNetwork();
+    // await this.startHardhatNetwork();
 
     // create provider
-    this._provider = await getProvider(this.url);
+    try {
+      this._provider = await createHardhatProvider(this.config, this.logger);
+      console.log(
+        "TEST_PROVIDER",
+        await this._provider.send("eth_accounts", [])
+      );
+    } catch (e) {
+      console.error(e);
+    }
 
     // initialize system contracts
     await this.initializeCidContract();
@@ -211,67 +187,5 @@ export class Chain {
   async stop() {
     this.disableAutomine();
     this._provider = null;
-    this.stopHardhatNetwork();
   }
-}
-
-/* *************************************************************************** */
-/* TODO */
-
-// * support graphs that include non-evm chains (by just skipping over them)
-// * Consider deploying the spv precompile at an hash address that won't colide
-//   with future Ethereum extensions.
-// * Use mocha root hooks to manage hardhat network
-// * move all of this into a hardhat-plugin
-// * Make logging verbosity configurable
-// * Manage hardhat ports internally
-
-/* *************************************************************************** */
-/* Run Hardhat Network */
-
-async function runHardhatNetwork(port: number, logger: Logger) {
-  const child = spawn("npx", ["hardhat", "node", "--port", port.toString()], {
-    detached: false, // FIXME not sure why this does not work as it should ...
-  });
-
-  let isClosed = false;
-  const kill = (signal?: NodeJS.Signals | number) => {
-    if (!isClosed) {
-      isClosed = child.kill(signal);
-    }
-  };
-
-  const stdoutBuffer = streamLogger(child.stdout, logger.info);
-  const stderrBuffer = streamLogger(child.stderr, logger.error);
-
-  child.on("close", (exitCode) => {
-    isClosed = true;
-    if (stdoutBuffer.length > 0) {
-      logger.info(stdoutBuffer);
-    }
-    if (stderrBuffer.length > 0) {
-      logger.error(stderrBuffer);
-    }
-    if (exitCode === null) {
-      logger.info(`terminated with code ${exitCode}`);
-    } else if (exitCode != 0) {
-      logger.error(`failed with code ${exitCode}`);
-      throw new Error(`hardhat ${port} failed with code ${exitCode}`);
-    }
-  });
-
-  await new Promise((resolve) => {
-    child.on("spawn", resolve);
-  });
-
-  // kill child on exit
-  process.on("exit", () => kill(0));
-  process.on("SIGINT", () => kill("SIGINT"));
-  process.on("uncaughtException", () => kill("SIGABRT"));
-
-  // FIXME wait for proper messages and return an event if this triggered
-  // actually, we may just block runHardHatNetwork until it's ready...
-  logger.info(`wait 2 second for hardhat network to start`);
-  await sleep(2000);
-  return { kill, pid: child.pid };
 }

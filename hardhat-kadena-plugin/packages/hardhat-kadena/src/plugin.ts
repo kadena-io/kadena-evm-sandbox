@@ -4,6 +4,8 @@ import { ChainwebConfig, ChainwebPluginApi } from "./type.js";
 import { getKadenaNetworks } from "./utils/configure.js";
 import { createGraph } from "./utils/chainweb-graph.js";
 import { getUtils } from "./utils.js";
+import { HardhatEthersProvider } from "@nomicfoundation/hardhat-ethers/internal/hardhat-ethers-provider.js";
+import Web3 from "web3";
 
 extendConfig((config, userConfig) => {
   if (userConfig.chainweb.graph) {
@@ -21,7 +23,7 @@ extendConfig((config, userConfig) => {
 
   const chainwebConfig: Required<ChainwebConfig> = {
     networkStem: "kadena_hardhat_",
-    accounts: [],
+    accounts: config.networks.hardhat.accounts,
     chains: 2,
     graph: userConfig.chainweb.graph ?? createGraph(userConfig.chainweb.chains),
     ...userConfig.chainweb,
@@ -32,6 +34,7 @@ extendConfig((config, userConfig) => {
   config.networks = {
     ...config.networks,
     ...getKadenaNetworks({
+      hardhatNetwork: config.networks.hardhat,
       networkStem: chainwebConfig.networkStem,
       numberOfChains: chainwebConfig.chains,
       accounts: chainwebConfig.accounts,
@@ -40,6 +43,11 @@ extendConfig((config, userConfig) => {
   config.defaultNetwork =
     userConfig.defaultNetwork ?? `${chainwebConfig.networkStem}0`;
 });
+
+// extendEnvironment((hre) => {
+//   console.log(hre.config.networks.hardhat.accounts);
+//   process.exit(0);
+// });
 
 extendEnvironment((hre) => {
   const chainwebNetwork = new ChainwebNetwork({
@@ -79,10 +87,37 @@ extendEnvironment((hre) => {
 
   const utils = getUtils(hre);
 
+  const originalSwitchNetwork = hre.switchNetwork;
+  hre.switchNetwork = async (networkName: string) => {
+    if (networkName.startsWith(hre.config.chainweb.networkStem)) {
+      const cid = parseInt(
+        networkName.slice(hre.config.chainweb.networkStem.length)
+      );
+      const provider = chainwebNetwork.getProvider(cid);
+      hre.network.name = networkName;
+      hre.network.config = hre.config.networks[networkName];
+      hre.network.provider = provider;
+      // update underlying library's provider data
+      if ("ethers" in hre) {
+        hre.ethers.provider = new HardhatEthersProvider(provider, networkName);
+      }
+      if ("web3" in hre) {
+        hre.web3 = new Web3(provider);
+      }
+      console.log(`Switched to chain ${cid}`);
+      return;
+    }
+    originalSwitchNetwork(networkName);
+  };
+
   const api: ChainwebPluginApi = {
     network: chainwebNetwork,
     deployContractOnChains: utils.deployContractOnChains,
-    getProvider: (cid: number) => chainwebNetwork.getProvider(cid),
+    getProvider: (cid: number) => {
+      const provider = chainwebNetwork.getProvider(cid);
+      const networkName = `${hre.config.chainweb.networkStem}${cid}`;
+      return new HardhatEthersProvider(provider, networkName);
+    },
     requestSpvProof: utils.requestSpvProof,
     switchChain: async (cid: number | string) => {
       await startNetwork;

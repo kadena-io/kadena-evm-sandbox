@@ -65,6 +65,7 @@ export const getUtils = (hre: HardhatRuntimeEnvironment) => {
       try {
         await hre.chainweb.switchChain(chainId);
         const cid = network.config.chainwebChainId;
+        console.log(`Switched to network ${cid}`);
         const [deployer] = await ethers.getSigners();
         console.log(
           `Deploying with signer: ${deployer.address} on network ${chainId}`

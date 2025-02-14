@@ -11,13 +11,14 @@ tags: [pact, chainweb, network, node operator]
 This repository presents a preview of the support for the Ethereum Virtual Machine (EVM) execution environment running on [Chainweb nodes]((https://kadena.io/chainweb)) in the
 [Kadena](https://kadena.io) blockchain.
 This preview demonstrates how to set up EVM-compatible nodes and execute cross-chain transactions to transfer assets from one chain to another.
+In the preview, thee are two EVM-compatible chains and a Solidity contract that demonstrates transferring tokens between the two EVM chains.
 The preview is the first step toward an integrated and feature-rich multi-chain proof-of-work consensus network for Solidity and Pact developers to deploy smart contracts.
 
 ## What's included in the preview
 
 With the preview, you can set up a local Kadena **development network** that runs a single **Chainweb node** and a single **mining client**.
 The development network consists of twenty (20) chains with two chains that use EVM as the payload provider for processing transactions.
-Because the development network is intended for demonstration purposes, proof-of-work consensus is disabled and blocks are produced at a constant rate of two seconds per per chain, or ten blocks per second across the whole network.
+Because the development network is intended for demonstration purposes, proof-of-work consensus is disabled and blocks are produced at a constant rate of two seconds per chain, or ten blocks per second across the whole network.
 
 The repository for the preview includes the following directories and components:
 
@@ -161,7 +162,7 @@ To test the simple token contract:
    ./network solidity test
    ```
    
-   This command executes a set of tests that deploy the ERC-20 token contract and check that token transfer operations succeed or revert as  expected when tokens are transferred between addresses on the two Chainweb EVM chains.
+   This command executes a set of tests that deploy the ERC-20 token contract and check that token transfer operations succeed or revert as expected when tokens are transferred between addresses on the two Chainweb EVM chains.
    For example, you should see output similar to the following excerpt:
 
    ```sh
@@ -218,7 +219,7 @@ In the `kadena-evm-sandbox` directory, the `solidity` directory provides an exam
 The `solidity` project includes the following files to configure the Chainweb EVM development network:
 
 - The `solidity/devnet-accounts.json` file contains all of the account information generated from a test BIP-44 wallet using a seed entropy value of `0x0000 0000 0000 0000 0000 0000 0000 0000` (16 zero bytes).
-- The `solidity/hardhat.config.js` file reads the account information from the `solidity/devnet-accounts.json` file, sets the properties that describe the Chainweb EVM nodes, and configures the `kadena_devent` network as default Hardhat network for the `solidity` project. 
+- The `solidity/hardhat.config.js` file reads the account information from the `solidity/devnet-accounts.json` file, sets the properties that describe the Chainweb EVM nodes, and configures the `kadena_devnet0` network as the default Hardhat network for the `solidity` project. 
 
 After a project is configured to use the Chainweb EVM development network settings and accounts, you can run unit tests for the project using the standard `hardhat test` command.
 For example:
@@ -261,7 +262,7 @@ To integrate with the Chainweb EVM development network:
    For example:
 
    ```javascript
-     // defaultNetwork: "kadena_devnet0",
+     defaultNetwork: "kadena_devnet0",
      networks: {
        kadena_devnet0: {
          url: 'http://localhost:8545',
@@ -284,7 +285,7 @@ To integrate with the Chainweb EVM development network:
    For example:
 
    ```javascript
-     // defaultNetwork: "kadena_devnet0",
+     defaultNetwork: "kadena_devnet0",
      etherscan: {
        apiKey: {
          'kadena_devnet0': 'empty',
@@ -336,7 +337,7 @@ npx hardhat run scripts/deploy.js
 
 ### Changing the default network
 
-If you prefer to keep the `hardhat` network as the default network for your Hardhat project, you can configure `kadena_devnet` as a separate network.
+If you prefer to keep the `hardhat` network as the default network for your Hardhat project, you can configure `kadena_devnet0` as a separate network.
 
 To change the default network:
 
@@ -345,25 +346,64 @@ To change the default network:
 2. Remove or comment out the following line from the network settings:
 
    ```sh
-   defaultNetwork: "kadena_devnet",
+   defaultNetwork: "kadena_devnet0",
    ```
 
-1. Run hardhat command using the --network kadena_devnet command-line option.
+1. Run hardhat command using the --network kadena_devnet0 command-line option.
    
    For example, run unit tests on the Chainweb EVM development network like this:
 
    ```sh
-   npx hardhat test --network kadena_devnet
+   npx hardhat test --network kadena_devnet0
    ```
    
-   Similarly, you can run scripts on the Chainweb EVM development networklike this:
+   Similarly, you can run scripts on the Chainweb EVM development network like this:
 
    ```sh
-   npx hardhat run scripts/deploy.js --network kadena_devnet
+   npx hardhat run scripts/deploy.js --network kadena_devnet0
    ```
 
-   Running the same commands without the `--network` command-line option then run them against a Hardhat instance. 
-   If your smart contract uses any Kadena-specific pre-compiles or other features, running against the Hardhat network might not work.
+   You can then run the same commands without the `--network` command-line option to execute them on the default Hardhat network instance. 
+   If your smart contract uses any Kadena-specific precompile functions or other Kadena-specific or Chainweb-specific features, you might be unable to run the contract on the Hardhat network.
+   If you have a smar contract that requires Hardhat-specific features, you might be unable to run the contract on the Kadena development network.
+
+## Signing transactions and switching chains
+ 
+By default, when you call a Solidity smart contract from a test file or a script using `ethers`, the transaction is executed by the first signer address and private key for the local development environment. 
+This is the true whether the local development environment is the default Hardhat network or the Kadena development network. 
+For example, the following `transferCrossChain` transaction is signed by the account that corresponds to the first address in the list of addresses for the current network context:
+
+```javascript
+const tx = await token0.transferCrossChain(receiver.address, amount, token1Info.chain);
+```
+
+This address is the `msg.sender` for the transaction. 
+
+In the test files in the `solidity/test` directory, this address is to the **deploying signer** you see displayed when you execute the tests: 
+
+```sh
+Found 2 Kadena devnet networks: kadena_devnet0, kadena_devnet1
+Deploying with signer: 0x8849BAbdDcfC1327Ad199877861B577cEBd8A7b6 on network kadena_devnet0
+Deploying with signer: 0x8849BAbdDcfC1327Ad199877861B577cEBd8A7b6 on network kadena_devnet1
+```
+
+This deploying signer is simply the first signer retrieved by the `getSigners` function in the `solidity/test/utils/utils.js` file.
+
+Typically, if you wanted to call a smart contract function using a different signer—for example, `alice`—you could call the function like this:
+  
+```javascript
+const tx = await token0.connect(alice).transferCrossChain(receiver.address, amount, token1Info.chain);
+```
+
+If you call this function in the default Hardhat network, the call creates a new contract instance using the new signer `alice` in the background.
+However, if you want to call a contract in the Kadena development network, you must be aware of the network context to get the correct signing address.
+
+For example, if `kadena_devnet0` is the default network and you want to call a contract that is on `kadena_devnet1` instead of `kadena_devnet0`, you must first switch to `kadena_devnet1` and then get the signer address. 
+This difference in behavior is because signers in Hardhat have a specific network context. 
+In the Kadena development network, the `alice` signer retrieved on `kadena_devnet0` has the same address as the `alice` signer on `kadena_devnet1` but is not the same signer object. 
+Therefore, you must specifically switch to the `kadena_devnet1` network context to get the `alice` signer for that network before you execute the transaction using that account address. 
+
+For an example of how to switch the network context, see the "Should transfer tokens to different address from chain 1 to chain 0" test the in the `solidity/test/SimpleToken.integration.test.js` file.  
 
 ## Blockscout
 

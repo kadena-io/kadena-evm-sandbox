@@ -5,6 +5,7 @@ import {
   HardhatNetworkAccountsConfig,
   HardhatNetworkUserConfig,
 } from "hardhat/types";
+import "hardhat/types/runtime";
 import { HardhatEthersProvider } from "@nomicfoundation/hardhat-ethers/internal/hardhat-ethers-provider";
 
 export interface ChainwebConfig {
@@ -51,6 +52,8 @@ declare module "hardhat/types" {
   interface KadenaHardhatNetworkUserConfig extends HardhatNetworkUserConfig {
     chainwebChainId: number;
   }
+}
+declare module "hardhat/types/runtime" {
   interface HardhatRuntimeEnvironment {
     chainweb: ChainwebPluginApi;
   }

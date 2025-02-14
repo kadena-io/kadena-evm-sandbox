@@ -8,6 +8,11 @@ import { HardhatEthersProvider } from "@nomicfoundation/hardhat-ethers/internal/
 import Web3 from "web3";
 
 extendConfig((config, userConfig) => {
+  if (!userConfig.chainweb) {
+    throw new Error(
+      "hardhat_kadena plugins is imported but chainweb configuration is not presented in hardhat.config.js"
+    );
+  }
   if (userConfig.chainweb.graph) {
     if (
       userConfig.chainweb.chains &&

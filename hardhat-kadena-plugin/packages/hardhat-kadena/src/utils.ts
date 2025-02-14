@@ -1,11 +1,11 @@
 import { Contract } from "ethers";
 import "./type.js";
 import { CHAIN_ID_ABI, CHAIN_ID_ADDRESS } from "./utils/network-contracts.js";
-import { HardhatRuntimeEnvironment } from "hardhat/types";
+import { HardhatRuntimeEnvironment, KadenaNetworkConfig } from "hardhat/types";
 import { BaseContract } from "ethers";
 import { ContractTransactionResponse } from "ethers";
 
-interface Origin {
+export interface Origin {
   chain: bigint;
   originContractAddress: string;
   height: bigint;
@@ -64,7 +64,7 @@ export const getUtils = (hre: HardhatRuntimeEnvironment) => {
     for (const chainId of chains) {
       try {
         await hre.chainweb.switchChain(chainId);
-        const cid = network.config.chainwebChainId;
+        const cid = (network.config as KadenaNetworkConfig).chainwebChainId;
         console.log(`Switched to network ${cid}`);
         const [deployer] = await ethers.getSigners();
         console.log(
@@ -176,15 +176,18 @@ export const getUtils = (hre: HardhatRuntimeEnvironment) => {
     createTamperedProof,
   };
 };
+
+export type DeployedContractsOnChains = {
+  contract: BaseContract & {
+    deploymentTransaction(): ContractTransactionResponse;
+  } & Omit<Contract, keyof BaseContract>;
+  address: string;
+  chain: number;
+  network: {
+    name: string;
+  };
+};
+
 export type DeployContractOnChains = (name: string) => Promise<{
-  tokens: {
-    contract: BaseContract & {
-      deploymentTransaction(): ContractTransactionResponse;
-    } & Omit<Contract, keyof BaseContract>;
-    address: string;
-    chain: number | undefined;
-    network: {
-      name: string;
-    };
-  }[];
+  tokens: DeployedContractsOnChains[];
 }>;

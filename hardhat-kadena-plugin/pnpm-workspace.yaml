@@ -1,0 +1,4 @@
+packages:   
+ - 'packages/hardhat-kadena-plugin'
+ - 'packages/solidity-example'  
+ - 'packages/ts-example'  

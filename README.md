@@ -200,7 +200,7 @@ Hardhat project with a simple solidity smart contract and a test file. The
 `solidity/hardhat.config.js` file is an example of how to configure the devnet
 as the default hardhat network. It reads in the account details from
 `solidity/devnet-accounts.json`. This file contains the accounts used by the
-devnet. It was generated using the `solidity/generate-accounts.mjs` script. It
+devnet. It was generated using the `solidity/scripts/generate-accounts.mjs` script. It
 also configures the `kadena_devent` network and sets it as default. The unit
 tests can then be run with the standard hardhat command:
 

@@ -133,6 +133,7 @@ This plugin overrides `switchNetwork` from `hardhat-switch-network` to load the 
 
 - Support external Chainweb configuration.
 - Support multiple Chianweb
+- Expose PRC Server
 
 ## License
 

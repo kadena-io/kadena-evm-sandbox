@@ -90,7 +90,7 @@ importers:
         specifier: '>=4.5.0'
         version: 5.7.3
 
-  packages/ts-test:
+  packages/ts-example:
     dependencies:
       '@openzeppelin/contracts':
         specifier: ^5.2.0

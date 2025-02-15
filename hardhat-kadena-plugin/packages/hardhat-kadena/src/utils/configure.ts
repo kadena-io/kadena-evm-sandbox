@@ -2,9 +2,11 @@ import {
   HardhatNetworkAccountsConfig,
   HardhatNetworkConfig,
   KadenaNetworkConfig,
+  NetworksUserConfig,
 } from "hardhat/types";
 
 interface INetworkOptions {
+  availableNetworks: undefined | NetworksUserConfig;
   hardhatNetwork: HardhatNetworkConfig;
   networkStem?: string | undefined;
   chainIdOffset?: number | undefined;
@@ -14,13 +16,14 @@ interface INetworkOptions {
 }
 
 export const getKadenaNetworks = ({
+  availableNetworks = {},
   hardhatNetwork,
   networkStem = "kadena_devnet_",
   chainIdOffset = 0,
   numberOfChains = 2,
   accounts,
   loggingEnabled = false,
-}: INetworkOptions): Record<string, KadenaNetworkConfig> => {
+}: INetworkOptions): Record<string, HardhatNetworkConfig> => {
   const chainIds = new Array(numberOfChains)
     .fill(0)
     .map((_, i) => i + chainIdOffset);
@@ -32,6 +35,7 @@ export const getKadenaNetworks = ({
         chainwebChainId: chainId,
         accounts: accounts ?? hardhatNetwork.accounts,
         loggingEnabled,
+        ...availableNetworks[`${networkStem}${index}`],
       } as KadenaNetworkConfig;
       acc[`${networkStem}${index}`] = networkConfig;
       return acc;

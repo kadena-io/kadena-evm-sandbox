@@ -13,6 +13,7 @@ extendConfig((config, userConfig) => {
       "hardhat_kadena plugins is imported but chainweb configuration is not presented in hardhat.config.js"
     );
   }
+  let chains = 2;
   if (userConfig.chainweb.graph) {
     if (
       userConfig.chainweb.chains &&
@@ -23,13 +24,13 @@ extendConfig((config, userConfig) => {
         "Number of chains in graph does not match the graph configuration"
       );
     }
-    userConfig.chainweb.chains = Object.keys(userConfig.chainweb.graph).length;
+    chains = Object.keys(userConfig.chainweb.graph).length;
   }
 
   const chainwebConfig: Required<ChainwebConfig> = {
     networkStem: "kadena_hardhat_",
     accounts: config.networks.hardhat.accounts,
-    chains: 2,
+    chains,
     graph: userConfig.chainweb.graph ?? createGraph(userConfig.chainweb.chains),
     logging: userConfig.chainweb.logging ?? "info",
     ...userConfig.chainweb,
@@ -40,6 +41,7 @@ extendConfig((config, userConfig) => {
   config.networks = {
     ...config.networks,
     ...getKadenaNetworks({
+      availableNetworks: userConfig.networks,
       hardhatNetwork: config.networks.hardhat,
       networkStem: chainwebConfig.networkStem,
       numberOfChains: chainwebConfig.chains,
@@ -88,7 +90,11 @@ extendEnvironment((hre) => {
   const utils = getUtils(hre);
 
   const originalSwitchNetwork = hre.switchNetwork;
-  hre.switchNetwork = async (networkName: string) => {
+  hre.switchNetwork = async (networkNameOrIndex: string | number) => {
+    const networkName =
+      typeof networkNameOrIndex === "number"
+        ? `${hre.config.chainweb.networkStem}${networkNameOrIndex}`
+        : networkNameOrIndex;
     if (networkName.startsWith(hre.config.chainweb.networkStem)) {
       const cid = parseInt(
         networkName.slice(hre.config.chainweb.networkStem.length)

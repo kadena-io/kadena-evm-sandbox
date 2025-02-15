@@ -117,6 +117,14 @@ export interface ChainwebPluginApi {
 | `deployMocks` | None | `ReturnType<DeployContractOnChains>` | Deploys mock contracts for testing. |
 | `network` | None | `ChainwebNetwork` | Provides access to the Chainweb network object. |
 
+### Example
+```TS
+import { chainweb } from "hardhat"
+
+await chainweb.deployContractOnChains("SimpleToken") // deploy contract on all chains
+await chainweb.switchChain(0); // configure hardhat to use chain 0
+```
+
 ### Overloading `hardhat-switch-network`
 
 This plugin overrides `switchNetwork` from `hardhat-switch-network` to load the correct Chainweb provider while also supporting switching by chain index. For example, `switchNetwork(1)` switches to chain 1 of Chainweb.

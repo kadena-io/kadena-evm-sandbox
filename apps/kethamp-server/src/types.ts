@@ -28,6 +28,7 @@ export type TransferTrack = {
   to: HardhatEthersSigner;
   toNetwork: NetworkId;
   amount: bigint;
+  steps: string[];
 };
 export type Track =
   | DeployTrack

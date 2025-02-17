@@ -20,6 +20,10 @@ export type FundTrack = {
 export type HardhatEthersSigner = Awaited<
   ReturnType<typeof hre.ethers.getSigners>
 >[number];
+export type Step = {
+  id: string;
+  title: string;
+};
 export type TransferTrack = {
   title: string;
   type: "transfer";
@@ -28,6 +32,7 @@ export type TransferTrack = {
   to: HardhatEthersSigner;
   toNetwork: NetworkId;
   amount: bigint;
+  steps: Step[];
 };
 export type Track =
   | DeployTrack

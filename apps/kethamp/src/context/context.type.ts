@@ -1,6 +1,12 @@
 export type TPlaylist = {
   id: string;
   title: string;
+  tracks: TTrack[];
+}
+
+export type TTrack = {
+  id: string;
+  title: string;
 }
 
 type TChainId = `chain${number}`;
@@ -50,6 +56,7 @@ export type TContext = {
   playlists: {
     isLoading: boolean,
     list: TPlaylist[],
+    tracks: TTrack[],
     data: TPlaylist[],
   },
   accounts: {
@@ -80,6 +87,7 @@ export type TContext = {
       transaction: TTransaction | null,
       account: TAccount | null,
       playlist: TPlaylist | null,
+      tracks: TTrack[] | null,
     },
     options: {
       isPlaying: boolean,

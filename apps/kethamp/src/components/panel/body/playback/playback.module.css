@@ -386,9 +386,3 @@
   }
 }
 
-@media screen and (max-width: 640px) {
-  .container {
-    transform: scale(0.5);
-    transform-origin: top left;
-  }
-}

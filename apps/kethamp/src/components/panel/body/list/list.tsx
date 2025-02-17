@@ -4,7 +4,7 @@
 
 import React from "react";
 import styles from "./list.module.css"
-import ListItem from "./item";
+import ListItem, { TConfig } from "./item";
 import { TList } from "@app/context/context.type";
 
 const List: React.FC<{
@@ -15,8 +15,8 @@ const List: React.FC<{
     style?: Record<string, any>;
     formatter?: (data: any) => any;
   }[],
-  config?: Record<string, any>,
-}> = ({ data, hasSearch=false, cols, config={} }) => {
+  config?: TConfig,
+}> = ({ data, hasSearch=false, cols, config }) => {
   const ref = React.useRef<HTMLDivElement>(null);
 
   React.useEffect(() => {
@@ -33,7 +33,7 @@ const List: React.FC<{
 
   return <article ref={ref} className={styles.wrapper}>
     {data.map((item: any, index: number) => (
-      <div key={`list-${index}`} className={styles.col}>
+      <div key={`list-${index}`} className={styles.col} style={{ maxWidth: `${100 / data.length}%` }}>
         <ListItem item={item} hasSearch={hasSearch} cols={cols} config={config} />
       </div>
     ))}

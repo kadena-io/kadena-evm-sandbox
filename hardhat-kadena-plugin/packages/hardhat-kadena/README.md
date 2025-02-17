@@ -1,13 +1,13 @@
 # Hardhat Kadena Plugin
 
-`hardhat_kedena` is a Hardhat plugin that allows developers to create a Chainweb network, switch between chains, and request SPV proofs.
+`hardhat_kadena` is a Hardhat plugin that allows developers to create a Chainweb network, switch between chains, and request SPV proofs.
 
 ## Installation
 
 To install the plugin, run the following command: **NOT PUBLISHED YET**
 
 ```sh
-npm install hardhat_kedena
+npm install hardhat_kadena
 ```
 
 ## Usage
@@ -15,7 +15,7 @@ npm install hardhat_kedena
 To use the plugin in your Hardhat project, import it in your Hardhat configuration file (`hardhat.config.ts` or `hardhat.config.js`):
 
 ```ts
-import "hardhat_kedena";
+import "hardhat_kadena";
 ```
 
 Then, configure the plugin in the `hardhat.config.ts` file:

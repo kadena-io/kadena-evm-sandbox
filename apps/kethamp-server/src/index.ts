@@ -249,6 +249,9 @@ const getBalance = async (address: any, network: NetworkId) => {
   }
 };
 
+const toJSON = (o: any) => {
+  return o.map((p: any) => ({ ...p, amount: p.amount.toString() }));
+};
 export const app = new Elysia()
   .use(cors())
   .use(swagger())
@@ -289,6 +292,17 @@ export const app = new Elysia()
       };
 
       return { chain0, chain1 };
+    },
+    {}
+  )
+  .get(
+    "/playlist",
+    async () => {
+      return {
+        chain0: toJSON(await getPlaylist("chain0")),
+        chain1: toJSON(await getPlaylist("chain1")),
+        crossChain: toJSON(await getPlaylist("crosschain")),
+      };
     },
     {}
   )

@@ -357,11 +357,12 @@
   position: absolute;
   bottom: 20px;
   right: 124px;
-  width: 48px;
+  width: 168px;
   height: 48px;
   background-image: url("/assets/images/logo-kadena.png");
-  background-size: cover;
+  background-size: 90%;
   background-position: center center;
+  background-repeat: no-repeat;
   z-index: 2;
 }
 
@@ -386,9 +387,3 @@
   }
 }
 
-@media screen and (max-width: 640px) {
-  .container {
-    transform: scale(0.5);
-    transform-origin: top left;
-  }
-}

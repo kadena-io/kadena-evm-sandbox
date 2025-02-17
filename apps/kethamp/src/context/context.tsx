@@ -9,8 +9,12 @@ const ContextDispatch = React.createContext(null) as unknown as React.Context<
   React.Dispatch<{ payload?: any; type: string }>
 >;
 
+const localStorageKey = "kethamp";
+const localStorage = window.localStorage;
+
 const ContextProvider = ({ children }: { children: React.ReactNode }) => {
-  const [state, dispatch] = React.useReducer(stateReducer, initialState);
+  const localState = localStorage.getItem(localStorageKey) ?? "{}";
+  const [state, dispatch] = React.useReducer(stateReducer, {...initialState, ...JSON.parse(localState)});
 
   return (
     <Context.Provider value={state}>
@@ -180,6 +184,12 @@ function filterListByAccount(
   }, []);
 }
 
+function stateHook(state: TContext) {
+  localStorage.setItem(localStorageKey, JSON.stringify(state));
+
+  return state;
+}
+
 function stateReducer(
   state: TContext,
   action: { payload?: any; type: string }
@@ -192,7 +202,7 @@ function stateReducer(
       );
       const networkData = networks(action.payload.transactions);
 
-      return {
+      return stateHook({
         ...state,
         networks: {
           ...state.networks,
@@ -223,27 +233,27 @@ function stateReducer(
             maxStepCount: maxSize(graphData),
           },
         },
-      };
+      });
     }
 
     case "UPDATE_ACCOUNTS":
-      return {
+      return stateHook({
         ...state,
         accounts: {
           ...state.accounts,
           data: action.payload.accounts,
           list: [] /* accounts(action.payload.transactions) */,
         },
-      };
+      });
 
     case "UPDATE_TRANSCATIONS":
-      return {
+      return stateHook({
         ...state,
         transactions: action.payload.transactions,
-      };
+      });
 
     case "RESET_PROGRESS": {
-      return {
+      return stateHook({
         ...state,
         graph: {
           ...state.graph,
@@ -253,11 +263,11 @@ function stateReducer(
             isPlaying: false,
           },
         },
-      };
+      });
     }
 
     case "STOP_PROGRESS": {
-      return {
+      return stateHook({
         ...state,
         graph: {
           ...state.graph,
@@ -266,7 +276,7 @@ function stateReducer(
             isPlaying: false,
           },
         },
-      };
+      });
     }
 
     case "SET_PROGRESS": {
@@ -286,7 +296,7 @@ function stateReducer(
       const nextState = { ...state };
       nextState.graph.options.progress = next;
 
-      return {
+      return stateHook({
         ...state,
         transactions: {
           ...state.transactions,
@@ -306,7 +316,7 @@ function stateReducer(
             progress: action.payload.progress ?? next,
           },
         },
-      };
+      });
     }
 
     case "SET_ACTIVE_TRANSACTION": {
@@ -319,7 +329,7 @@ function stateReducer(
         transaction = null;
       }
 
-      return {
+      return stateHook({
         ...state,
         graph: {
           ...state.graph,
@@ -328,7 +338,7 @@ function stateReducer(
             transaction,
           },
         },
-      };
+      });
     }
 
     case "SET_ACTIVE_ACCOUNT": {
@@ -346,7 +356,7 @@ function stateReducer(
         account = null;
       }
 
-      return {
+      return stateHook({
         ...state,
         graph: {
           ...state.graph,
@@ -369,7 +379,7 @@ function stateReducer(
             },
           },
         },
-      };
+      });
     }
 
     case "SET_ACTIVE_PLAYLIST": {
@@ -381,39 +391,61 @@ function stateReducer(
         playlist = null;
       }
 
-      return {
+      // @TODO: find tracks of playlist
+      const tracks = playlist ? [
+        {
+          id: "track-1",
+          title: "Track 1",
+        },
+        {
+          id: "track-2",
+          title: "Track 2",
+        },
+        {
+          id: "track-3",
+          title: "Track 3",
+        },
+      ] : []
+      const activeTracks = action.payload.tracks ?? null
+
+      return stateHook({
         ...state,
         graph: {
           ...state.graph,
           active: {
             ...state.graph.active,
             playlist,
+            tracks: activeTracks,
           },
         },
-      };
+        playlists: {
+          ...state.playlists,
+          tracks,
+        }
+      });
     }
 
     case "SET_DEPLOYMENT":
-      return {
+      return stateHook({
         ...state,
         deployments: {
           ...state.deployments,
           isDeployed: action.payload,
           playlists: [],
         },
-      };
+      });
 
     case "CHECK_DEPLOYMENT":
-      return {
+      return stateHook({
         ...state,
         deployments: {
           ...state.deployments,
           isDeployed: !!state.transactions.data?.length,
         },
-      };
+      });
 
     case "DEPLOYED_PLAYLISTS":
-      return {
+      return stateHook({
         ...state,
         deployments: {
           ...state.deployments,
@@ -424,22 +456,22 @@ function stateReducer(
             ]),
           ],
         },
-      };
+      });
 
     case "LOADING":
-      return {
+      return stateHook({
         ...state,
         isLoading: action.payload,
-      };
+      });
 
     case "RESET_STATE": {
-      return {
+      return stateHook({
         ...initialState,
-      };
+      });
     }
 
     default:
-      return state;
+      return stateHook(state);
   }
 }
 
@@ -456,16 +488,39 @@ export const initialState = {
       {
         id: "chain0",
         title: "Play on chain 0",
+        tracks: [
+          {
+            id: "track-1",
+            title: "Track 1",
+          },
+          {
+            id: "track-2",
+            title: "Track 2",
+          }
+        ]
       },
       {
         id: "chain1",
         title: "Play on chain 1",
+        tracks: [
+          {
+            id: "track-2",
+            title: "Track 2",
+          }
+        ]
       },
       {
         id: "crosschain",
         title: "Play crosschain transfers",
+        tracks: [
+          {
+            id: "track-3",
+            title: "Track 3",
+          }
+        ]
       },
     ],
+    tracks: [],
   },
   accounts: {
     isLoading: false,
@@ -489,6 +544,7 @@ export const initialState = {
       transaction: null,
       account: null,
       playlist: null,
+      tracks: null,
     },
     options: {
       isPlaying: false,

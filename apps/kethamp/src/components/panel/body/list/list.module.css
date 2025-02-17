@@ -87,6 +87,11 @@
           background-color: #fff;
           color: black;
         }
+
+        &.highlightItem {
+          background-color: #0000bda8;
+          color: yellow;
+        }
   
         .number {
           min-width: 26px;

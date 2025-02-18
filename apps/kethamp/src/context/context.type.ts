@@ -1,20 +1,30 @@
+import type { TransferTrack } from "../../../kethamp-server/src/types"
+
+export type TTransferTrack = TransferTrack
+
 export type TPlaylist = {
   id: string;
   title: string;
-  tracks: TTrack[];
-}
-
-export type TTrack = {
-  id: string;
-  title: string;
+  tracks: TransferTrack[];
 }
 
 type TChainId = `chain${number}`;
 
 export type TList<T> = {
   title: string | null;
-  list: T[];
+  list?: T[];
 }
+
+export type TGroup<T> = {
+  id: string;
+  title: string | null;
+  list?: T[];
+}
+
+export type TAsideList<T> = {
+  title: string;
+  groups: TGroup<T>[] | null;
+};
 
 export type TAccount = {
   name: string;
@@ -51,13 +61,14 @@ export type TContext = {
   isLoading: boolean,
   deployments: {
     isDeployed: boolean,
-    playlists: TPlaylist['id'][],
+    playlists: string[] | null,
   },
   playlists: {
-    isLoading: boolean,
-    list: TPlaylist[],
-    tracks: TTrack[],
-    data: TPlaylist[],
+    isLoading: boolean;
+    data: {
+      [key: string]: TPlaylist,
+    } | null;
+    list: TAsideList<TPlaylist> | null;
   },
   accounts: {
     isLoading: boolean,
@@ -86,14 +97,21 @@ export type TContext = {
     active: {
       transaction: TTransaction | null,
       account: TAccount | null,
-      playlist: TPlaylist | null,
-      tracks: TTrack[] | null,
+      playlist: {
+        item: TGroup<TPlaylist> | null,
+        track: {
+          active: TransferTrack | null,
+          list: TList<TransferTrack['steps'][0]>[] | null,
+          completed: TransferTrack['steps'][0]['id'][] | null,
+        }
+      }
     },
     options: {
       isPlaying: boolean,
       progress: number,
       stepSize: number,
       maxStepCount: number,
+      volume: number,
     },
   },
   networks: {

@@ -2,16 +2,19 @@ import hre from "hardhat";
 
 export type NetworkId = "kadena_devnet1" | "kadena_devnet2";
 export type DeployTrack = {
+  id: string;
   title: string;
   type: "deploy";
   network: NetworkId;
 };
 export type RegisterCrossChainTrack = {
+  id: string;
   title: string;
   type: "register-cross-chain";
   networks: NetworkId[];
 };
 export type FundTrack = {
+  id: string;
   title: string;
   type: "fund";
   network: NetworkId;
@@ -25,6 +28,7 @@ export type Step = {
   title: string;
 };
 export type TransferTrack = {
+  id: string;
   title: string;
   type: "transfer";
   from: HardhatEthersSigner;

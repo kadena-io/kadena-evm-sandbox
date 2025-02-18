@@ -22,27 +22,32 @@ const getDeployPlaylist = async () => {
   const [, , bob] = await hre.ethers.getSigners();
   const playlist: Track[] = [
     {
+      id: "deploy-1",
       title: "Deploy KEWX on devnet1",
       type: "deploy",
       network: "kadena_devnet1",
     },
     {
+      id: "deploy-2",
       title: "Deploy KEWX on devnet2",
       type: "deploy",
       network: "kadena_devnet2",
     },
     {
+      id: "register-cross-chain-1",
       title: "Register cross-chain address",
       type: "register-cross-chain",
       networks: ["kadena_devnet1", "kadena_devnet2"],
     },
     {
+      id: "fund-1",
       title: "Fund Alice on devnet1",
       type: "fund",
       network: "kadena_devnet1",
       address: alice.address,
     },
     {
+      id: "fund-2",
       title: "Fund Bob on devnet2",
       type: "fund",
       network: "kadena_devnet2",

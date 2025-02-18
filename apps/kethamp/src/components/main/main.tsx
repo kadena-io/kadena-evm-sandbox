@@ -8,9 +8,9 @@ import Panel from "@app/components/panel/panel";
 import UseAccounts from "@app/hooks/accounts";
 import UseTransactions from "@app/hooks/transactions";
 
-import { useContext, useContextDispatch } from "../../context/context";
+import { useContext, useContextDispatch } from "@app/context/context";
 import styles from "./main.module.css";
-import { TContext, TTransaction } from "../../context/context.type";
+import type { TContext, TPlaylist, TTransaction, TTransferTrack } from "@app/context/context.type";
 
 const Main = () => {
   const state = useContext();
@@ -52,35 +52,48 @@ const Main = () => {
           {listAccounts?.length ? (
             <Panel type="list" title="Playlists">
               <List
-                data={[
-                  {
-                    title: "Available deployment playlists",
-                    list: state?.playlists.data || [],
-                  },
+                sidebar={true}
+                groupedData={{
+                  title: `${state?.graph.active.playlist.item?.title} -> Transactions steps`,
+                  groups: state?.playlists.list?.groups ?? null,
+                }}
+                cols={[
+                  { key: "id" },
+                  // { key: "type" },
+                  { key: "title", style: { flex: 1 } },
                 ]}
-                cols={[{ key: "title", style: { flex: 1 } }, { key: "id" }]}
-                config={{
-                  entity: "playlist",
-                  entityKeys: ["id"],
-                  onClick: (item: TContext["playlists"]["data"][0]) =>
+                groupConfig={{
+                  onClick: (item: TPlaylist) =>
                     dispatch({
                       type: "SET_ACTIVE_PLAYLIST",
                       payload: {
-                        playlistId: item.id,
-                        tracks: item.tracks,
+                        playlist: item,
+                      },
+                    }),
+                }}
+                config={{
+                  entity: "playlist.track.active",
+                  list: state?.graph.active.playlist.item?.list || null,
+                  entityKeys: ["id"],
+                  onClick: (item: TTransferTrack) =>
+                    dispatch({
+                      type: "SET_ACTIVE_PLAYLIST_TRACK",
+                      payload: {
+                        playlist: item,
                       },
                     }),
                 }}
               />
             </Panel>
           ) : null}
-          {state?.playlists.tracks?.length ? (
+          {state?.deployments.isDeployed &&
+          state?.graph.active?.playlist?.track.list?.length ? (
             <Panel type="list" title="Tracks">
               <List
                 data={[
                   {
-                    title: `Track records for playlist "${state?.graph.active?.playlist?.title}"`,
-                    list: state?.playlists.tracks || [],
+                    title: `Track records for playlist "${state.graph.active.playlist.track.active?.title}"`,
+                    list: state.graph.active.playlist.track.list || [],
                   },
                 ]}
                 cols={[{ key: "title", style: { flex: 1 } }, { key: "id" }]}
@@ -121,8 +134,7 @@ const Main = () => {
               />
             </Panel>
           ) : null}
-          {state?.deployments.isDeployed &&
-          state?.transactions?.list?.network?.length ? (
+          {state?.deployments.isDeployed && (
             <Panel type="list" title="Network Transactions">
               {state?.transactions?.list?.network ? (
                 <List
@@ -158,7 +170,7 @@ const Main = () => {
                 />
               ) : null}
             </Panel>
-          ) : null}
+          )}
           {state?.deployments.isDeployed && state?.graph.active.transaction ? (
             <Panel type="list" title="Transaction Details">
               <List

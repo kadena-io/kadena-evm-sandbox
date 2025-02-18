@@ -52,31 +52,23 @@ module.exports = {
       },
     ],
   },
-  // defaultNetwork: "kadena_devnet0",
+  defaultNetwork: "hardhat",
   networks: {
-    // This is a "fake" network. It is used only as configuration for
-    // externally managed hardhat nodes.
+    // The internal hardhat network
     hardhat: {
       chainId: 1789,
       accounts: devnetAccounts.accounts.map((account) => {
         return {
           privateKey: account.privateKey,
-          balance: "1000000000000000000000",
+          balance: "1000000000000000000000000",
         };
       }),
     },
-    // kadena_devnet0: {
-    //   url: "http://localhost:8545",
-    //   chainId: 1789,
-    //   accounts: devnetAccounts.accounts.map((account) => account.privateKey),
-    //   chainwebChainId: 0,
-    // },
-    // kadena_devnet1: {
-    //   url: "http://localhost:8555",
-    //   chainId: 1790,
-    //   accounts: devnetAccounts.accounts.map((account) => account.privateKey),
-    //   chainwebChainId: 1,
-    // },
+    // For running an external hardhat node using `npx hardhat node`
+    localhost: {
+      url: "http://localhost:8545",
+      chainId: 1789,
+    },
   },
   chainweb: {
     chains: 2,
@@ -85,30 +77,6 @@ module.exports = {
   sourcify: {
     enabled: false,
   },
-  // etherscan: {
-  //   apiKey: {
-  //     kadena_devnet0: "empty",
-  //     kadena_devnet1: "empty",
-  //   },
-  //   customChains: [
-  //     {
-  //       network: "kadena_devnet0",
-  //       chainId: 1789,
-  //       urls: {
-  //         apiURL: "http://localhost:8000/api",
-  //         browserURL: "http://localhost:8000",
-  //       },
-  //     },
-  //     {
-  //       network: "kadena_devnet1",
-  //       chainId: 1790,
-  //       urls: {
-  //         apiURL: "http://localhost:8001/api",
-  //         browserURL: "http://localhost:8001",
-  //       },
-  //     },
-  //   ],
-  // },
   mocha: {
     timeout: 300000,
   },

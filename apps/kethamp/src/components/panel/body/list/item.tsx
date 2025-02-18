@@ -9,6 +9,7 @@ import type { TList } from "@app/context/context.type";
 
 export type TConfig = {
   entity?: string;
+  list?: TList<any>['list'] | null;
   operator?: "contains" | "equals";
   activeType?: "highlight" | "active";
   entityKeys?: string[];
@@ -18,7 +19,7 @@ export type TConfig = {
 }
 
 const ListItem: React.FC<{
-  item: TList<any>,
+  item: TList<any> | null,
   hasSearch: boolean,
   cols: {
     key: string;
@@ -31,30 +32,38 @@ const ListItem: React.FC<{
   const inputRef = React.useRef<HTMLInputElement>(null);
   
   const [searchTerm, setSearchTerm] = React.useState('');
-  const [list, setList] = React.useState(item.list);
-  const [listCount, setListCount] = React.useState(config?.customCount ?? item.list.length);
+  const [list, setList] = React.useState(item?.list);
+  const [listCount, setListCount] = React.useState(config?.customCount ?? item?.list?.length);
 
   const isActive = React.useCallback((item: any, config: TConfig) => {
     const checkCounts = config.entityKeys?.length
     const entity = state?.graph.active;
 
+    const getEntityValue = (entity: any, path: string) => {
+      return path.split('.').reduce((acc, part) => {
+        return acc?.[part];
+      }, entity);
+    };
+
     if (config.operator && config.operator === 'contains') {
       return config.entityKeys?.some(
-        (key: string) =>
-          entity && item[key] && config.entity &&
-          (entity[config.entity as keyof typeof entity] as any)
-            ?.some((entityItem: { [x: string]: string | any[]; }) => {
-              const isTrue = entityItem?.[key]?.includes(item[key])
-              if (isTrue) {
-                return isTrue;
-              }
-              
-              return false;
+        (key: string) => {
+          const entityValue = config.entity ? getEntityValue(entity, config.entity) : null;
+          return entity && item[key] && entityValue?.some((entityItem: { [x: string]: string | any[]; }) => {
+            const isTrue = entityItem?.[key]?.includes(item[key]);
+            if (isTrue) {
+              return isTrue;
             }
-          ))
+            return false;
+          });
+        }
+      );
     }
     
-    return config.entityKeys?.filter((key: string) => entity && item[key] === (entity[config.entity as keyof typeof entity] as any)?.[key]).length === checkCounts
+    return config.entityKeys?.filter((key: string) => {
+      const entityValue = config.entity ? getEntityValue(entity, config.entity) : null;
+      return entity && item[key] === entityValue?.[key]
+    }).length === checkCounts
   }, [state?.graph.active]);
 
   const checkActive = React.useCallback((item: any, config: TConfig) => {
@@ -76,7 +85,6 @@ const ListItem: React.FC<{
 
   const countLabel = React.useCallback((listLength: number) => {
     if (searchTerm) {
-      debugger
       if (listCount === listLength) {
         return listLength
       } else {
@@ -108,23 +116,23 @@ const ListItem: React.FC<{
   React.useEffect(() => {
     const list = hasSearch && !!searchTerm && !!config?.searchCol
       ? item?.list?.filter((d) => config.searchCol && String(d[config.searchCol])?.toLowerCase()?.includes(searchTerm.toLowerCase()))
-      : item.list;
+      : item?.list;
     
     setList(list);
-  }, [config?.searchCol, hasSearch, item, item.list, searchTerm]);
+  }, [config?.searchCol, hasSearch, item, item?.list, searchTerm]);
 
   React.useEffect(() => {
     if (config?.customCount) {
       setListCount(config.customCount);
     } else {
-      setListCount(item.list.length);
+      setListCount(item?.list?.length);
     }
-  }, [config?.customCount, item.list.length, listCount]);
+  }, [config?.customCount, item?.list?.length, listCount]);
   
   return (
     <div>
       <div className={styles.container}>
-        {item.title ? <h2 className={styles.title}>{item.title}{' '}({ countLabel(list.length) })</h2> : null }
+        {item?.title ? <h2 className={styles.title}>{item.title}{' '}({ countLabel(list?.length ?? 0) })</h2> : null }
         <div className={styles.list}>
           { list?.map((item, itemIndex) =>
             <div

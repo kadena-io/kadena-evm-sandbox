@@ -8,7 +8,14 @@ import { TTransaction } from "@app/context/context.type";
 
 const Playback: React.FC = () => {
   const dispatch = useContextDispatch();
-  const { playlist, deploy, reset } = UseActions();
+  const { 
+    playlist: {
+      run: runPlaylist,
+      // get: getPlaylist,
+    },
+    deploy,
+    reset
+  } = UseActions();
   const state = useContext();
 
   const {
@@ -29,16 +36,22 @@ const Playback: React.FC = () => {
     stepSize = 10,
     maxStepCount = 10,
     progress = 0,
+    volume = 0,
   } = options || {};
   
   const timerRef = React.useRef(null);
   const trackRef = React.useRef<HTMLDivElement>(null);
   const rangeRef = React.useRef<HTMLInputElement>(null);
+  const audioRef = React.useRef<HTMLAudioElement>(null);
+  const audioTrackRef = React.useRef<HTMLDivElement>(null);
+  const audioRangeRef = React.useRef<HTMLInputElement>(null);
   const graphContainerRef = React.useRef<HTMLDivElement>(null);
 
   const [blockNrs, setBlockNrs] = React.useState<[string|number, string|number]>([0,0]);
   const [timerLabel, setTimerLabel] = React.useState<string>('N/A');
   const [activeTitle, setActiveTitle] = React.useState("Select account or transaction");
+  const [isInteracting, setIsInteracting] = React.useState(false);
+  const [interactionTitle, setInteractionTitle] = React.useState("");
   const [activeMetaData, setActiveMetaData] = React.useState<Record<string, string|number>>({
     a: '-',
     b: '-',
@@ -101,30 +114,83 @@ const Playback: React.FC = () => {
     stopPlayer();
   }, [dispatch, progress, stepSize, stopPlayer]);
 
+  const play = React.useCallback(() => {
+    const audio = audioRef.current;
+
+    if (audio) {
+      audio.play();
+    }
+
+    runPlaylist();
+  }, [audioRef.current, runPlaylist]);
+
   React.useEffect(() => {
     const range = rangeRef.current;
+    const audioRange = audioRangeRef.current;
 
     if (range) {
       range.addEventListener("input", (e: Event) => {
+        const next = parseInt((e.target as HTMLInputElement).value, 10);
         dispatch({
           type: "SET_PROGRESS",
           payload: {
             direction: "forwards",
             isPlaying: false,
-            next: parseInt((e.target as HTMLInputElement).value, 10),
+            next,
           },
         });
+
+        setIsInteracting(true);
+        setInteractionTitle(`Progress: ${next}%`);
         
         stopPlayer();
+      });
+
+      range.addEventListener("change", () => {
+        setIsInteracting(false)
+        setInteractionTitle("")
+      });
+    }
+
+    if (audioRange) {
+      audioRange.addEventListener("input", (e: Event) => {
+        const volume = Number((e.target as HTMLInputElement).value);
+
+        if (audioRef.current) {
+          audioRef.current.volume = volume;
+        }
+
+        if (audioRef.current) {
+          dispatch({
+            type: "SET_VOLUME",
+            payload: {
+              volume,
+            },
+          });
+        }
+
+        setIsInteracting(true);
+        setInteractionTitle(`Volume: ${parseInt((String(volume*100)), 10)}%`);
+      });
+
+      audioRange.addEventListener("change", () => {
+        setIsInteracting(false)
+        setInteractionTitle("")
       });
     }
 
     return () => {
       if (range) {
         range.removeEventListener("input", () => {});
+        range.removeEventListener("change", () => {});
+      }
+
+      if (audioRange) {
+        audioRange.removeEventListener("input", () => {});
+        audioRange.removeEventListener("change", () => {});
       }
     };
-  }, [dispatch, stopPlayer, rangeRef.current]);
+  }, [dispatch, stopPlayer, rangeRef.current, audioRangeRef.current, audioRef.current]);
 
   React.useEffect(() => {
     if (activeGraph?.account) {
@@ -157,7 +223,13 @@ const Playback: React.FC = () => {
   React.useEffect(() => {
     if (deployments?.isDeployed && transactions?.list?.block?.length && blockNrs.length) {
       const [startBlockNr, endBlockNr] = blockNrs
-      setActiveTitle("Blocks between " + startBlockNr + " and " + endBlockNr + " containing " + transactions.list.block.length + " transactions are displayed");
+      let title = `Blocks between ${startBlockNr} and ${endBlockNr} contains ${transactions.list.block.length} transactions`;
+
+      if (startBlockNr === endBlockNr) {
+        title = `Block ${startBlockNr} with a single transactions`;
+      }
+
+      setActiveTitle(title);
     } else {
       setActiveTitle("No deployments found, please deploy a contract");
     }
@@ -204,6 +276,17 @@ const Playback: React.FC = () => {
       setTimerLabel("N/A");
     }
   }, [setTimerLabel, blockNrs, deployments?.isDeployed]);
+
+  React.useEffect(() => {
+    if (audioRef.current && state?.graph.options.volume) {
+      if (audioRangeRef.current) {
+        audioRangeRef.current.value = String(state.graph.options.volume);
+      }
+      audioRef.current.volume = state.graph.options.volume;
+    } else if (audioRef.current?.volume) {
+      audioRef.current.volume = 0;
+    }
+  }, [audioRef.current, state?.graph.options.volume, audioRangeRef.current]);
 
   if (!graphData) {
     return null;
@@ -255,9 +338,19 @@ const Playback: React.FC = () => {
           </div></> : null}
         </div>
       </div>
-      <div className={[styles.uiDisplayText, styles.i2].join(" ")}>
-        <span className={styles.i2text}>{activeTitle}</span>
-        <span className={styles.i2text}>- {activeTitle}</span>
+      <div className={[styles.uiDisplayText, styles.i2, (isInteracting ? styles.noTransition : null)].join(" ")}>
+        {
+          isInteracting ? 
+            <>
+              <span className={styles.i2text}>{interactionTitle}</span>
+              <span className={styles.i2text}>{interactionTitle}</span>
+            </>
+           : 
+            <>
+              <span className={styles.i2text}>{activeTitle}</span>
+              <span className={styles.i2text}>{activeTitle}</span>
+            </>
+        }
       </div>
       <div className={[styles.uiDisplayText, styles.i3i4wrapper].join(" ")}>
         <span className={styles.i3text}>{activeMetaData.a}</span>
@@ -275,21 +368,36 @@ const Playback: React.FC = () => {
           min="0"
           max={100}
           step={stepSize}
-          // defaultValue={progress}
           disabled={!deployments?.isDeployed}
         />
       </div>
+      <div
+        ref={audioTrackRef}
+        className={styles.audioTrack}
+        style={{ backgroundPositionY: `${(volume * -420)+(volume > 0 ? 15 : 0)}px` }}
+      >
+        <div className={styles.audioTrackHandle} style={{ backgroundPositionX: `${volume * 100}%` }} />
+        <input
+          ref={audioRangeRef}
+          className={styles.audioProgress}
+          type="range"
+          min={0}
+          max={1}
+          step={1/28}
+          disabled={!deployments?.isDeployed}
+        />
+      </div>
+      <audio ref={audioRef} controls className={styles.audioInput}>
+        <source src="/assets/audio/winamp.mp3" type="audio/mpeg" />
+        Your browser does not support the audio element.
+      </audio>
       <div className={styles.buttons}>
         <button
           className={[styles.button, styles.prev].join(" ")}
           onClick={() => backwards()}
           disabled={progress === 0}
         />
-        <button className={[styles.button, styles.play].join(" ")} onClick={() => playlist()} />
-        {/* <button
-          className={[styles.button, styles.pause].join(" ")}
-          onClick={() => playlist()}
-        /> */}
+        <button className={[styles.button, styles.play].join(" ")} onClick={() => play()} />
         <button className={[styles.button, styles.stop].join(" ")} onClick={reset} />
         <button
           className={[styles.button, styles.next].join(" ")}

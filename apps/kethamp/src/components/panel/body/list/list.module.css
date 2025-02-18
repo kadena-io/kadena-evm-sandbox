@@ -6,6 +6,11 @@
   flex-direction: row;
   overflow: hidden;
 
+  .aside {
+    border-right: 2px solid #31314d;
+    min-width: 10rem;
+  }
+
   .col {
     flex: 1;
     display: flex;
@@ -104,6 +109,24 @@
           text-overflow: ellipsis;
         }
       }
+    }
+
+    .groupButton {
+      display: inline-block;
+      text-align: left;
+      width: 100%;
+
+      gap: 12px;
+      font-size: 0.8rem;
+      line-height: 0.8rem;
+      height: calc(0.8rem + 8px);
+      font-weight: bold;
+      color: #00C600;
+      padding: 4px 4px 2px;
+      cursor: default;
+      user-select: none;
+      overflow: hidden;
+
     }
 
   }

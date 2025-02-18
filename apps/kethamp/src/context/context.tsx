@@ -1,8 +1,10 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
 import React from "react";
-import { TAccount, TContext, TList, TTransaction } from "./context.type";
+import type { TAccount, TAsideList, TContext, TGroup, TList, TPlaylist, TTransaction, TTransferTrack } from "./context.type";
+import useLocalStorage from "@app/hooks/localStorage";
 
 const Context = React.createContext<TContext | null>(null);
 const ContextDispatch = React.createContext(null) as unknown as React.Context<
@@ -10,11 +12,10 @@ const ContextDispatch = React.createContext(null) as unknown as React.Context<
 >;
 
 const localStorageKey = "kethamp";
-const localStorage = window.localStorage;
 
 const ContextProvider = ({ children }: { children: React.ReactNode }) => {
-  const localState = localStorage.getItem(localStorageKey) ?? "{}";
-  const [state, dispatch] = React.useReducer(stateReducer, {...initialState, ...JSON.parse(localState)});
+  const [localState,] = useLocalStorage<typeof initialState>(localStorageKey, initialState);
+  const [state, dispatch] = React.useReducer(stateReducer, {...initialState, ...localState});
 
   return (
     <Context.Provider value={state}>
@@ -176,7 +177,7 @@ function filterListByAccount(
   if (!list || !account) return list;
 
   return Object.values(list).reduce<TList<TTransaction>[]>((acc, item) => {
-    acc.push({ ...item, list: item.list.filter(
+    acc.push({ ...item, list: item.list?.filter(
       (entry) => entry.from === account.address || entry.to === account.address
     ) });
 
@@ -184,8 +185,23 @@ function filterListByAccount(
   }, []);
 }
 
+function getPlaylists(data: TContext["playlists"]["data"]): TAsideList<TPlaylist> | null {
+  if (!data) return null;
+
+  const playlists = {
+    title: "Playlists",
+    groups: Object.entries(data).map(([id, { title, tracks }]) => ({
+      id,
+      title,
+      list: tracks,
+    })) as unknown as TAsideList<TPlaylist>["groups"],
+  };
+
+  return playlists
+}
+
 function stateHook(state: TContext) {
-  localStorage.setItem(localStorageKey, JSON.stringify(state));
+  localStorage?.setItem(localStorageKey, JSON.stringify(state));
 
   return state;
 }
@@ -383,30 +399,11 @@ function stateReducer(
     }
 
     case "SET_ACTIVE_PLAYLIST": {
-      let playlist =
-        state.playlists.data.find((d) => d.id === action.payload.playlistId) ||
-        null;
+      const playlist: TGroup<TPlaylist> | null = action.payload.playlist ?? null;
 
-      if (playlist === state.graph.active.playlist) {
-        playlist = null;
+      if (playlist?.id === state.graph.active.playlist.item?.id) {
+        return state;
       }
-
-      // @TODO: find tracks of playlist
-      const tracks = playlist ? [
-        {
-          id: "track-1",
-          title: "Track 1",
-        },
-        {
-          id: "track-2",
-          title: "Track 2",
-        },
-        {
-          id: "track-3",
-          title: "Track 3",
-        },
-      ] : []
-      const activeTracks = action.payload.tracks ?? null
 
       return stateHook({
         ...state,
@@ -414,13 +411,43 @@ function stateReducer(
           ...state.graph,
           active: {
             ...state.graph.active,
-            playlist,
-            tracks: activeTracks,
+            playlist: {
+              ...state.graph.active.playlist,
+              item: action.payload.playlist ?? null,
+              track: {
+                ...state.graph.active.playlist.track,
+                active: null,
+                list: null,
+                completed: null,
+              },
+            },
           },
-        },
-        playlists: {
-          ...state.playlists,
-          tracks,
+        }
+      });
+    }
+
+    case "SET_ACTIVE_PLAYLIST_TRACK": {
+      let playlist: TTransferTrack | null = action.payload.playlist ?? null;
+
+      if (playlist?.id === state.graph.active.playlist.item?.id) {
+        playlist = null;
+      }
+
+      return stateHook({
+        ...state,
+        graph: {
+          ...state.graph,
+          active: {
+            ...state.graph.active,
+            playlist: {
+              ...state.graph.active.playlist,
+              track: {
+                active: playlist,
+                list: playlist?.steps ?? null,
+                completed: null,
+              },
+            },
+          },
         }
       });
     }
@@ -444,6 +471,53 @@ function stateReducer(
         },
       });
 
+    case "RESET_PLAYLISTS": {
+      const {
+        playlists: data,
+      } = action.payload || { playlists: null };
+      let list = null
+
+      if (data) {
+        list = getPlaylists(data)
+      }
+
+      if (!state.graph.active.playlist.item || !state.graph.active.playlist.track.list?.length) {
+        const [firstGroup] = list?.groups ?? []
+
+        return stateHook({
+          ...state,
+          graph: {
+            ...state.graph,
+            active: {
+              ...state.graph.active,
+              playlist: {
+                item: firstGroup ?? null,
+                track: {
+                  ...state.graph.active.playlist.track,
+                  list: firstGroup.list ?? null,
+                  completed: null,
+                },
+              },
+            },
+          },
+          playlists: {
+            ...state.playlists,
+            data,
+            list,
+          },
+        });
+      }
+
+      return stateHook({
+        ...state,
+        playlists: {
+          ...state.playlists,
+          data,
+          list,
+        },
+      });
+    }
+
     case "DEPLOYED_PLAYLISTS":
       return stateHook({
         ...state,
@@ -451,10 +525,22 @@ function stateReducer(
           ...state.deployments,
           playlists: [
             ...new Set([
-              ...state.deployments.playlists,
-              action.payload.playlist,
+              ...(state.deployments.playlists || []),
+              action.payload.playlistId,
             ]),
-          ],
+          ].filter(d=>d),
+        },
+      });
+
+    case "SET_VOLUME":
+      return stateHook({
+        ...state,
+        graph: {
+          ...state.graph,
+          options: {
+            ...state.graph.options,
+            volume: action.payload.volume,
+          },
         },
       });
 
@@ -479,48 +565,12 @@ export const initialState = {
   isLoading: true,
   deployments: {
     isDeployed: false,
-    playlists: [],
+    playlists: null,
   },
   playlists: {
     isLoading: false,
-    list: [],
-    data: [
-      {
-        id: "chain0",
-        title: "Play on chain 0",
-        tracks: [
-          {
-            id: "track-1",
-            title: "Track 1",
-          },
-          {
-            id: "track-2",
-            title: "Track 2",
-          }
-        ]
-      },
-      {
-        id: "chain1",
-        title: "Play on chain 1",
-        tracks: [
-          {
-            id: "track-2",
-            title: "Track 2",
-          }
-        ]
-      },
-      {
-        id: "crosschain",
-        title: "Play crosschain transfers",
-        tracks: [
-          {
-            id: "track-3",
-            title: "Track 3",
-          }
-        ]
-      },
-    ],
-    tracks: [],
+    data: null,
+    list: null,
   },
   accounts: {
     isLoading: false,
@@ -543,14 +593,21 @@ export const initialState = {
     active: {
       transaction: null,
       account: null,
-      playlist: null,
-      tracks: null,
+      playlist: {
+        item: null,
+        track: {
+          active: null,
+          list: null,
+          completed: null,
+        },
+      },
     },
     options: {
       isPlaying: false,
       progress: 0,
       stepSize: 10,
       maxStepCount: 0,
+      volume: 1,
     },
   },
   networks: {

@@ -20,6 +20,7 @@ const getCrosschainPlaylist = async () => {
   const [, , bob, charlie1] = await hre.ethers.getSigners();
   const playlist: Track[] = [
     {
+      id: "crt-000",
       title: "Crosschain Transfer from Alice to Bob",
       type: "transfer",
       from: alice,
@@ -45,6 +46,7 @@ const getCrosschainPlaylist = async () => {
       ],
     },
     {
+      id: "crt-001",
       title: "Crosschain Transfer from Alice to Charlie",
       type: "transfer",
       from: alice,
@@ -70,6 +72,7 @@ const getCrosschainPlaylist = async () => {
       ],
     },
     {
+      id: "crt-002",
       title: "Crosschain Transfer from Bob to Charlie",
       type: "transfer",
       from: bob,
@@ -95,6 +98,7 @@ const getCrosschainPlaylist = async () => {
       ],
     },
     {
+      id: "crt-003",
       title: "Crosschain Transfer from charlie to charlie",
       type: "transfer",
       from: charlie1,
@@ -121,6 +125,7 @@ const getCrosschainPlaylist = async () => {
       ],
     },
     {
+      id: "crt-004",
       title: "Crosschain Transfer from charlie to Bob",
       type: "transfer",
       from: charlie,
@@ -146,6 +151,7 @@ const getCrosschainPlaylist = async () => {
       ],
     },
     {
+      id: "crt-005",
       title: "Crosschain Transfer from Bob to Alice",
       type: "transfer",
       from: bob,
@@ -178,6 +184,7 @@ const getChain0Playlist = async () => {
   const [, alice, bob, charlie] = await hre.ethers.getSigners();
   const playlist: Track[] = [
     {
+      id: "c0-000",
       title: "Transfer from Alice to Bob",
       type: "transfer",
       from: alice,
@@ -188,6 +195,7 @@ const getChain0Playlist = async () => {
       steps: [{ id: "c01", title: "Alice transfers to Bob on chain 0" }],
     },
     {
+      id: "c0-001",
       title: "Transfer from Alice to Bob",
       type: "transfer",
       from: alice,
@@ -198,6 +206,7 @@ const getChain0Playlist = async () => {
       steps: [{ id: "c02", title: "Alice transfers to Bob on chain 0" }],
     },
     {
+      id: "c0-002",
       title: "Transfer from Bob to Alice",
       type: "transfer",
       from: bob,
@@ -208,6 +217,7 @@ const getChain0Playlist = async () => {
       steps: [{ id: "c03", title: "Bob transfers to Alice on chain 0" }],
     },
     {
+      id: "c0-003",
       title: "Transfer from Bob to charlie",
       type: "transfer",
       from: bob,
@@ -218,6 +228,7 @@ const getChain0Playlist = async () => {
       steps: [{ id: "c04", title: "Bob transfers to Charlie on chain 0" }],
     },
     {
+      id: "c0-004",
       title: "Transfer from Alice to charlie",
       type: "transfer",
       from: charlie,
@@ -228,6 +239,7 @@ const getChain0Playlist = async () => {
       steps: [{ id: "c05", title: "Charlie transfers to Alice on chain 0" }],
     },
     {
+      id: "c0-005",
       title: "Transfer from Alice to charlie",
       type: "transfer",
       from: alice,
@@ -238,6 +250,7 @@ const getChain0Playlist = async () => {
       steps: [{ id: "c06", title: "Alice transfers to Charlie on chain 0" }],
     },
     {
+      id: "c0-006",
       title: "Transfer from charlie to Bob",
       type: "transfer",
       from: charlie,
@@ -248,6 +261,7 @@ const getChain0Playlist = async () => {
       steps: [{ id: "c07", title: "Charlie transfers to Bob on chain 0" }],
     },
     {
+      id: "c0-007",
       title: "Transfer from Bob to Alice",
       type: "transfer",
       from: bob,
@@ -258,6 +272,7 @@ const getChain0Playlist = async () => {
       steps: [{ id: "c08", title: "Bob transfers to Alice on chain 0" }],
     },
     {
+      id: "c0-008",
       title: "Transfer from charlie to Alice",
       type: "transfer",
       from: charlie,
@@ -268,6 +283,7 @@ const getChain0Playlist = async () => {
       steps: [{ id: "c09", title: "Charlie transfers to Alice on chain 0" }],
     },
     {
+      id: "c0-009",
       title: "Transfer from Bob to Alice",
       type: "transfer",
       from: bob,
@@ -286,6 +302,7 @@ const getChain1Playlist = async () => {
   const [, alice, bob, charlie] = await hre.ethers.getSigners();
   const playlist: Track[] = [
     {
+      id: "c1-000",
       title: "Transfer from Bob to Alice",
       type: "transfer",
       from: bob,
@@ -296,6 +313,7 @@ const getChain1Playlist = async () => {
       steps: [{ id: "c11", title: "Bob transfers to Alice on chain 1" }],
     },
     {
+      id: "c1-001",
       title: "Transfer from Bob to Alice",
       type: "transfer",
       from: bob,
@@ -306,6 +324,7 @@ const getChain1Playlist = async () => {
       steps: [{ id: "c12", title: "Bob transfers to Alice on chain 1" }],
     },
     {
+      id: "c1-002",
       title: "Transfer from Alice to Bob",
       type: "transfer",
       from: alice,
@@ -316,6 +335,7 @@ const getChain1Playlist = async () => {
       steps: [{ id: "c13", title: "Alice transfers to Bob on chain 1" }],
     },
     {
+      id: "c1-003",
       title: "Transfer from Alice to charlie",
       type: "transfer",
       from: alice,
@@ -326,6 +346,7 @@ const getChain1Playlist = async () => {
       steps: [{ id: "c14", title: "Alice transfers to Charlie on chain 1" }],
     },
     {
+      id: "c1-004",
       title: "Transfer from charlie to Bob",
       type: "transfer",
       from: charlie,
@@ -336,6 +357,7 @@ const getChain1Playlist = async () => {
       steps: [{ id: "c15", title: "Charlie transfers to Bob on chain 1" }],
     },
     {
+      id: "c1-005",
       title: "Transfer from charlie to Bob",
       type: "transfer",
       from: bob,
@@ -346,6 +368,7 @@ const getChain1Playlist = async () => {
       steps: [{ id: "c16", title: "Bob transfers to Charlie on chain 1" }],
     },
     {
+      id: "c1-006",
       title: "Transfer from charlie to Alice",
       type: "transfer",
       from: charlie,
@@ -356,6 +379,7 @@ const getChain1Playlist = async () => {
       steps: [{ id: "c17", title: "Charlie transfers to Alice on chain 1" }],
     },
     {
+      id: "c1-007",
       title: "Transfer from Alice to Bob",
       type: "transfer",
       from: alice,
@@ -366,6 +390,7 @@ const getChain1Playlist = async () => {
       steps: [{ id: "c18", title: "Alice transfers to Bob on chain 1" }],
     },
     {
+      id: "c1-008",
       title: "Transfer from charlie to Bob",
       type: "transfer",
       from: charlie,
@@ -376,6 +401,7 @@ const getChain1Playlist = async () => {
       steps: [{ id: "c19", title: "Charlie transfers to Bob on chain 1" }],
     },
     {
+      id: "c1-009",
       title: "Transfer from Alice to Bob",
       type: "transfer",
       from: alice,

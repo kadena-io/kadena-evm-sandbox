@@ -19,7 +19,7 @@ describe("SimpleToken Integration Tests", async function () {
   let token1Info;
 
   beforeEach(async function () {
-    await chainweb.switchChain(0);
+    // chainweb.switchChain(0) or switchNetwork("chain name") can be used to switch to a different chain
     signers = await getSigners();
     const deployed = await deployContractOnChains("SimpleToken");
 

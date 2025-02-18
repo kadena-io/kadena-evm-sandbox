@@ -27,6 +27,7 @@ describe("SimpleToken Unit Tests", async function () {
   let amount;
 
   beforeEach(async function () {
+    // switchChain(0) or switchNetwork("chain name") can be used to switch to a different chain
     await switchChain(0);
     signers = await getSigners();
 

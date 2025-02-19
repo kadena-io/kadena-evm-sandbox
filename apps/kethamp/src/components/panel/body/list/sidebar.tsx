@@ -22,22 +22,6 @@ const Aside: React.FC<{
 }> = ({ hasSearch, cols, config, groupConfig, className, data }) => {
   const state = useContext();
 
-  // const isActive = React.useCallback(() => {
-
-  // }, []);
-
-  React.useEffect(() => {
-    console.log({ state });
-  }, [state]);
-
-  React.useEffect(() => {
-    console.log({ data });
-  }, [data]);
-
-  React.useEffect(() => {
-    console.log({ config });
-  }, [config]);
-
   return (
     <>
       {data?.groups ? (

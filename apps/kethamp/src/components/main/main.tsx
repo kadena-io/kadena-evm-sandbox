@@ -58,6 +58,7 @@ const Main = () => {
             <Panel type="list" title="Playlists">
               <List
                 sidebar={true}
+                hasSearch
                 groupedData={{
                   title: `${state?.graph?.active?.playlist?.item?.title} -> Transactions steps`,
                   groups: state?.playlists?.list?.groups ?? null,
@@ -80,6 +81,7 @@ const Main = () => {
                   entity: 'playlist.track.active',
                   list: state?.graph?.active?.playlist?.item?.list || null,
                   entityKeys: ['id'],
+                  searchCols: ['title', 'id'],
                   onClick: (item: TTransferTrack) =>
                     dispatch({
                       type: 'SET_ACTIVE_PLAYLIST_TRACK',
@@ -150,7 +152,7 @@ const Main = () => {
                   }
                   hasSearch
                   config={{
-                    searchCol: 'title',
+                    searchCols: ['title'],
                     entity: 'transaction',
                     entityKeys: ['hash'],
                     onClick: (item: TTransaction) =>
@@ -185,7 +187,7 @@ const Main = () => {
               <List
                 hasSearch
                 config={{
-                  searchCol: 'value',
+                  searchCols: ['value'],
                 }}
                 data={[
                   {
@@ -219,7 +221,7 @@ const Main = () => {
               <List
                 hasSearch
                 config={{
-                  searchCol: 'value',
+                  searchCols: ['value'],
                   customCount: state.graph.active?.transaction.logs.length,
                 }}
                 data={[

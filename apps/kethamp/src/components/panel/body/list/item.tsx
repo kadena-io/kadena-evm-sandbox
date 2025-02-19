@@ -13,7 +13,7 @@ export type TConfig = {
   operator?: 'contains' | 'equals';
   activeType?: 'highlight' | 'active';
   entityKeys?: string[];
-  searchCol?: string;
+  searchCols?: string[];
   customCount?: number;
   onClick?: (item: any) => void;
 };
@@ -30,8 +30,10 @@ const ListItem: React.FC<{
 }> = ({ item, hasSearch, cols, config }) => {
   const state = useContext();
   const inputRef = React.useRef<HTMLInputElement>(null);
+  const searchColRef = React.useRef<HTMLSelectElement>(null);
 
   const [searchTerm, setSearchTerm] = React.useState('');
+  const [searchCol, setSearchCol] = React.useState((config?.searchCols?.[0] ?? ''));
   const [list, setList] = React.useState(item?.list);
   const [listCount, setListCount] = React.useState(
     config?.customCount ?? item?.list?.length,
@@ -136,21 +138,33 @@ const ListItem: React.FC<{
       }
     };
   }, [inputRef]);
+  
+  React.useEffect(() => {
+    const select = searchColRef.current;
+
+    if (select) {
+      select.addEventListener('change', (e) => {
+        setSearchCol((e.target as HTMLSelectElement).value);
+      });
+    }
+
+    return () => {
+      if (select) {
+        select.removeEventListener('change', (e) => {
+          setSearchCol((e.target as HTMLSelectElement).value);
+        });
+      }
+    };
+  }, [searchColRef, setSearchCol]);
 
   React.useEffect(() => {
     const list =
-      hasSearch && !!searchTerm && !!config?.searchCol
-        ? item?.list?.filter(
-            (d) =>
-              config.searchCol &&
-              String(d[config.searchCol])
-                ?.toLowerCase()
-                ?.includes(searchTerm.toLowerCase()),
-          )
+      hasSearch && !!searchTerm && !!searchCol
+        ? item?.list?.filter((d) => String(d[searchCol])?.toLowerCase()?.includes(searchTerm.toLowerCase()))
         : item?.list;
 
     setList(list);
-  }, [config?.searchCol, hasSearch, item, item?.list, searchTerm]);
+  }, [config?.searchCols, hasSearch, item, item?.list, searchCol, searchTerm]);
 
   React.useEffect(() => {
     if (config?.customCount) {
@@ -212,6 +226,11 @@ const ListItem: React.FC<{
             className={styles.input}
             defaultValue={searchTerm}
           />
+          {(config?.searchCols?.length ?? 0) > 1 ? (
+            <select ref={searchColRef} className={styles.select}>
+              {config?.searchCols?.map(searchCol => <option key={`option--${searchCol}`} value={searchCol}>{searchCol}</option>)}
+            </select>
+          ) : null}
         </div>
       ) : null}
     </div>

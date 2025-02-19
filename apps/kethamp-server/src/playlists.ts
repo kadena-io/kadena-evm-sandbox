@@ -9,6 +9,9 @@ export const getPlaylist = async (list: string) => {
       return await getChain0Playlist();
     case "chain1":
       return await getChain1Playlist();
+    case "single":
+      const [single] = await getCrosschainPlaylist();
+      return [single];
     default:
       return [];
   }

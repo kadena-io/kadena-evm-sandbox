@@ -20,7 +20,7 @@
       border-left: 2px solid #31314d;
     }
   }
-  
+
   .container {
     padding: 6px 6px;
     box-sizing: border-box;
@@ -34,14 +34,14 @@
     .title {
       position: relative;
       background-color: #525288;
-      color: rgba(255,255,255, 0.8);
+      color: rgba(255, 255, 255, 0.8);
       font-weight: 600;
       padding: 0 4px;
       margin: 0 0 4px 0;
       user-select: none;
 
       &::before {
-        --border-color: #6D6E99;
+        --border-color: #6d6e99;
         content: '';
         position: absolute;
         top: 0px;
@@ -54,7 +54,7 @@
       }
 
       &::after {
-        --border-color: #2C304C;
+        --border-color: #2c304c;
         content: '';
         position: absolute;
         bottom: 0px;
@@ -69,7 +69,7 @@
 
     .list {
       overflow: auto;
-      
+
       .item {
         display: flex;
         flex-direction: row;
@@ -78,14 +78,14 @@
         line-height: 0.8rem;
         height: calc(0.8rem + 8px);
         font-weight: bold;
-        color: #00C600;
+        color: #00c600;
         padding: 4px 4px 2px;
         cursor: default;
         user-select: none;
         overflow: hidden;
-  
+
         &:hover {
-          background-color: #0000BD;
+          background-color: #0000bd;
         }
 
         &.activeItem {
@@ -97,12 +97,12 @@
           background-color: #0000bda8;
           color: yellow;
         }
-  
+
         .number {
           min-width: 26px;
           text-align: right;
         }
-  
+
         .itemContainer {
           white-space: nowrap;
           overflow: hidden;
@@ -121,14 +121,12 @@
       line-height: 0.8rem;
       height: calc(0.8rem + 8px);
       font-weight: bold;
-      color: #00C600;
+      color: #00c600;
       padding: 4px 4px 2px;
       cursor: default;
       user-select: none;
       overflow: hidden;
-
     }
-
   }
 
   .searchWrapper {
@@ -144,18 +142,18 @@
     .inner {
       display: inline-block;
       margin-top: 3px;
-      color: rgba(255,255,255, 0.6);
+      color: rgba(255, 255, 255, 0.6);
     }
 
     &.focussed {
       .inner {
-        color: rgba(255,255,255, 1);
+        color: rgba(255, 255, 255, 1);
       }
     }
 
     &:hover {
       .inner {
-        color: rgba(255,255,255, 1);
+        color: rgba(255, 255, 255, 1);
       }
     }
 
@@ -163,7 +161,7 @@
       width: 100%;
       padding: 2px 4px;
       background-color: black;
-      color: rgba(255,255,255, 0.6);
+      color: rgba(255, 255, 255, 0.6);
       border-top: 2px solid transparent;
       border-left: 2px solid transparent;
       border-right: 2px solid #525288;

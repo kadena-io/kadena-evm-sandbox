@@ -271,7 +271,6 @@ To integrate with the Chainweb EVM development network:
          chainwebChainId: 0,
        },
        kadena_devnet1: {
-         // url: 'http://localhost:8546',
          url: 'http://localhost:8555',   
          chainId: 1790,
          accounts: devnetAccounts.accounts.map(account => account.privateKey),
@@ -325,7 +324,6 @@ npx hardhat compile
 Run unit tests using the standard `hardhat test` command:
 
 ```sh
-cd solidity 
 npx hardhat test
 ```
 
@@ -337,7 +335,7 @@ npx hardhat run scripts/deploy.js
 
 ### Changing the default network
 
-If you prefer to keep the `hardhat` network as the default network for your Hardhat project, you can configure `kadena_devnet0` as a separate network.
+If you prefer to keep the `hardhat` network as the default network for your Hardhat project, you can remove the setting that configures `kadena_devnet0` to be the default network.
 
 To change the default network:
 
@@ -349,7 +347,7 @@ To change the default network:
    defaultNetwork: "kadena_devnet0",
    ```
 
-1. Run hardhat command using the --network kadena_devnet0 command-line option.
+1. Run `hardhat` commands using the `--network kadena_devnet0` or `--network kadena_devnet1` command-line option.
    
    For example, run unit tests on the Chainweb EVM development network like this:
 
@@ -365,7 +363,7 @@ To change the default network:
 
    You can then run the same commands without the `--network` command-line option to execute them on the default Hardhat network instance. 
    If your smart contract uses any Kadena-specific precompile functions or other Kadena-specific or Chainweb-specific features, you might be unable to run the contract on the Hardhat network.
-   If you have a smar contract that requires Hardhat-specific features, you might be unable to run the contract on the Kadena development network.
+   If you have a smart contract that requires Hardhat-specific features, you might be unable to run the contract on the Kadena development network.
 
 ## Signing transactions and switching chains
  
@@ -383,8 +381,8 @@ In the test files in the `solidity/test` directory, this address is to the **dep
 
 ```sh
 Found 2 Kadena devnet networks: kadena_devnet0, kadena_devnet1
-Deploying with signer: 0x8849BAbdDcfC1327Ad199877861B577cEBd8A7b6 on network kadena_devnet0
-Deploying with signer: 0x8849BAbdDcfC1327Ad199877861B577cEBd8A7b6 on network kadena_devnet1
+Deployed to address 0x0Be392280A18d06DDC9CdD162485CB3334abf8e7 with signer: 0x8849BAbdDcfC1327Ad199877861B577cEBd8A7b6 on network kadena_devnet0
+Deployed to address 0x03C92E75C2e211E9A57B3f31e7354E9D0aF6F257 with signer: 0x8849BAbdDcfC1327Ad199877861B577cEBd8A7b6 on network kadena_devnet1
 ```
 
 This deploying signer is simply the first signer retrieved by the `getSigners` function in the `solidity/test/utils/utils.js` file.

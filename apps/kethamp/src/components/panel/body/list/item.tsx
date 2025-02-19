@@ -33,6 +33,8 @@ const ListItem: React.FC<{
   const inputRef = React.useRef<HTMLInputElement>(null);
   const searchColRef = React.useRef<HTMLSelectElement>(null);
 
+  const labelWrapperRef = React.useRef<HTMLDivElement>(null);
+
   const [searchTerm, setSearchTerm] = React.useState('');
   const [searchCol, setSearchCol] = React.useState(
     config?.searchCols?.[0] ?? '',
@@ -126,6 +128,36 @@ const ListItem: React.FC<{
     [listCount, searchTerm],
   );
 
+  const checkContent = React.useCallback(() => {
+    const labelWrapper = labelWrapperRef.current;
+    const labelItemRefs = labelWrapper?.querySelectorAll(
+      '[data-ref="data-item"]',
+    );
+
+    if (labelItemRefs) {
+      labelItemRefs.forEach((labelItemRef) => {
+        const labelItem = labelItemRef as HTMLDivElement;
+        const labelItemInner = labelItem.querySelector(
+          `.${styles.overflowingTextCopy}`,
+        ) as HTMLSpanElement;
+        const labelItemWidth = labelItem.offsetWidth;
+
+        if (labelItemInner && labelItem) {
+          const lablerInnerWidth =
+            (labelItemInner.innerText.length * 16) /* font-size */ / 2.1;
+
+          labelItemInner.dataset.width = String(lablerInnerWidth);
+
+          if (lablerInnerWidth > labelItemWidth) {
+            labelItem.classList.add(styles.isOverflowing);
+          } else {
+            labelItem.classList.remove(styles.isOverflowing);
+          }
+        }
+      });
+    }
+  }, [labelWrapperRef.current]);
+
   React.useEffect(() => {
     const input = inputRef.current;
 
@@ -183,6 +215,18 @@ const ListItem: React.FC<{
     }
   }, [config?.customCount, item?.list?.length, listCount]);
 
+  React.useEffect(() => {
+    checkContent();
+  }, [checkContent, list]);
+
+  React.useEffect(() => {
+    document.addEventListener('resize', checkContent);
+
+    return () => {
+      document.addEventListener('resize', checkContent);
+    };
+  }, []);
+
   return (
     <div>
       <div className={styles.container}>
@@ -191,7 +235,7 @@ const ListItem: React.FC<{
             {item.title} ({countLabel(list?.length ?? 0)})
           </h2>
         ) : null}
-        <div className={styles.list}>
+        <div ref={labelWrapperRef} className={styles.list}>
           {list?.map((item, itemIndex) => (
             <div
               key={`${JSON.stringify(item)}-${itemIndex}`}
@@ -206,17 +250,24 @@ const ListItem: React.FC<{
                 ? { onClick: () => config?.onClick?.(item) }
                 : {})}
             >
-              {cols?.map((col, colIndex) => (
-                <div
-                  className={styles.itemContainer}
-                  key={`col-${item[col.key]}-${colIndex}`}
-                  {...(col.style ? { style: col.style } : {})}
-                >
-                  {typeof col.formatter === 'function'
+              {cols?.map((col, colIndex) => {
+                const label =
+                  typeof col.formatter === 'function'
                     ? col.formatter(item[col.key])
-                    : item[col.key]}
-                </div>
-              ))}
+                    : item[col.key];
+
+                return (
+                  <div
+                    data-ref="data-item"
+                    className={styles.itemContainer}
+                    key={`col-${item[col.key]}-${colIndex}`}
+                    {...(col.style ? { style: col.style } : {})}
+                  >
+                    <span>{label}</span>
+                    <span className={styles.overflowingTextCopy}>{label}</span>
+                  </div>
+                );
+              })}
             </div>
           ))}
         </div>

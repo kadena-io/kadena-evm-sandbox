@@ -49,7 +49,7 @@ module.exports = {
 
     ]
   },
-  // defaultNetwork: "kadena_devnet0",
+  defaultNetwork: "kadena_devnet0",
   networks: {
     kadena_devnet0: {
       url: 'http://localhost:8545',

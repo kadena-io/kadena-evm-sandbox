@@ -83,6 +83,8 @@
         cursor: default;
         user-select: none;
         overflow: hidden;
+        white-space: nowrap;
+        text-overflow: ellipsis;
 
         &:hover {
           background-color: #0000bd;
@@ -106,7 +108,28 @@
         .itemContainer {
           white-space: nowrap;
           overflow: hidden;
-          text-overflow: ellipsis;
+
+          > span {
+            display: inline-block;
+            width: min-content;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+
+            &.overflowingTextCopy {
+              display: none;
+              width: min-content;
+              margin-left: 12px;
+            }
+          }
+
+          &.isOverflowing:hover {
+            > span {
+              display: inline-block;
+              width: min-content;
+              animation: marquee 12s steps(1000) infinite;
+            }
+          }
         }
       }
     }
@@ -187,5 +210,14 @@
       font-size: 0.7rem;
       padding: 1px 12px 1px 4px;
     }
+  }
+}
+
+@keyframes marquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-100%);
   }
 }

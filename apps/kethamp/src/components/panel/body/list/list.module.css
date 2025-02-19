@@ -89,8 +89,8 @@
         }
 
         &.activeItem {
-          background-color: #fff;
-          color: black;
+          background-color: #fff !important;
+          color: black !important;
         }
 
         &.highlightItem {

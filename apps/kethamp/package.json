@@ -6,7 +6,7 @@
     "build": "next build",
     "dev": "next dev --turbopack",
     "format": "pnpm run /^format:.*/",
-    "format:src": "prettier . --cache --write",
+    "format:src": "prettier ./src --cache --write",
     "lint": "next lint",
     "start": "next start"
   },

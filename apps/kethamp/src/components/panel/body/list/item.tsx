@@ -33,7 +33,9 @@ const ListItem: React.FC<{
   const searchColRef = React.useRef<HTMLSelectElement>(null);
 
   const [searchTerm, setSearchTerm] = React.useState('');
-  const [searchCol, setSearchCol] = React.useState((config?.searchCols?.[0] ?? ''));
+  const [searchCol, setSearchCol] = React.useState(
+    config?.searchCols?.[0] ?? '',
+  );
   const [list, setList] = React.useState(item?.list);
   const [listCount, setListCount] = React.useState(
     config?.customCount ?? item?.list?.length,
@@ -138,7 +140,7 @@ const ListItem: React.FC<{
       }
     };
   }, [inputRef]);
-  
+
   React.useEffect(() => {
     const select = searchColRef.current;
 
@@ -160,7 +162,11 @@ const ListItem: React.FC<{
   React.useEffect(() => {
     const list =
       hasSearch && !!searchTerm && !!searchCol
-        ? item?.list?.filter((d) => String(d[searchCol])?.toLowerCase()?.includes(searchTerm.toLowerCase()))
+        ? item?.list?.filter((d) =>
+            String(d[searchCol])
+              ?.toLowerCase()
+              ?.includes(searchTerm.toLowerCase()),
+          )
         : item?.list;
 
     setList(list);
@@ -228,7 +234,11 @@ const ListItem: React.FC<{
           />
           {(config?.searchCols?.length ?? 0) > 1 ? (
             <select ref={searchColRef} className={styles.select}>
-              {config?.searchCols?.map(searchCol => <option key={`option--${searchCol}`} value={searchCol}>{searchCol}</option>)}
+              {config?.searchCols?.map((searchCol) => (
+                <option key={`option--${searchCol}`} value={searchCol}>
+                  {searchCol}
+                </option>
+              ))}
             </select>
           ) : null}
         </div>

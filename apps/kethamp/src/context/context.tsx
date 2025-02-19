@@ -352,6 +352,10 @@ function stateReducer(
             isPlaying: action.payload.isPlaying || false,
             progress: action.payload.progress ?? next,
           },
+          active: {
+            ...state.graph.active,
+            transaction: null,
+          },
         },
       });
     }

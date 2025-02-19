@@ -174,5 +174,18 @@
         color: white;
       }
     }
+
+    .select {
+      background-color: black;
+      color: rgba(255, 255, 255, 0.6);
+      border-top: 2px solid transparent;
+      border-left: 2px solid transparent;
+      border-right: 2px solid #525288;
+      border-bottom: 2px solid #525288;
+      border-radius: 2px;
+      outline: none;
+      font-size: 0.7rem;
+      padding: 1px 12px 1px 4px;
+    }
   }
 }

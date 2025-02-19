@@ -24,7 +24,7 @@ const getCrosschainPlaylist = async () => {
   const playlist: Track[] = [
     {
       id: "crt-000",
-      title: "Crosschain Transfer from Alice to Bob",
+      title: "Crosschain Transfer 100 KDA Alice to Bob",
       type: "transfer",
       from: alice,
       fromNetwork: "kadena_devnet1",
@@ -50,7 +50,7 @@ const getCrosschainPlaylist = async () => {
     },
     {
       id: "crt-001",
-      title: "Crosschain Transfer from Alice to Charlie",
+      title: "Crosschain Transfer 100 KDA Alice to Charlie",
       type: "transfer",
       from: alice,
       fromNetwork: "kadena_devnet1",
@@ -76,7 +76,7 @@ const getCrosschainPlaylist = async () => {
     },
     {
       id: "crt-002",
-      title: "Crosschain Transfer from Bob to Charlie",
+      title: "Crosschain Transfer 50 KDA Bob to Charlie",
       type: "transfer",
       from: bob,
       fromNetwork: "kadena_devnet2",
@@ -102,7 +102,7 @@ const getCrosschainPlaylist = async () => {
     },
     {
       id: "crt-003",
-      title: "Crosschain Transfer from charlie to charlie",
+      title: "Crosschain Transfer 100 KDA charlie to charlie",
       type: "transfer",
       from: charlie1,
       fromNetwork: "kadena_devnet2",
@@ -129,7 +129,7 @@ const getCrosschainPlaylist = async () => {
     },
     {
       id: "crt-004",
-      title: "Crosschain Transfer from charlie to Bob",
+      title: "Crosschain Transfer 150 KDA charlie to Bob",
       type: "transfer",
       from: charlie,
       fromNetwork: "kadena_devnet1",
@@ -155,7 +155,7 @@ const getCrosschainPlaylist = async () => {
     },
     {
       id: "crt-005",
-      title: "Crosschain Transfer from Bob to Alice",
+      title: "Crosschain Transfer 200 KDA Bob to Alice",
       type: "transfer",
       from: bob,
       fromNetwork: "kadena_devnet2",
@@ -188,7 +188,7 @@ const getChain0Playlist = async () => {
   const playlist: Track[] = [
     {
       id: "c0-000",
-      title: "Transfer from Alice to Bob",
+      title: "Transfer 100 KDA Alice to Bob",
       type: "transfer",
       from: alice,
       fromNetwork: "kadena_devnet1",
@@ -199,7 +199,7 @@ const getChain0Playlist = async () => {
     },
     {
       id: "c0-001",
-      title: "Transfer from Alice to Bob",
+      title: "Transfer 200 KDA Alice to Bob",
       type: "transfer",
       from: alice,
       fromNetwork: "kadena_devnet1",
@@ -210,7 +210,7 @@ const getChain0Playlist = async () => {
     },
     {
       id: "c0-002",
-      title: "Transfer from Bob to Alice",
+      title: "Transfer 50 KDA Bob to Alice",
       type: "transfer",
       from: bob,
       fromNetwork: "kadena_devnet1",
@@ -221,7 +221,7 @@ const getChain0Playlist = async () => {
     },
     {
       id: "c0-003",
-      title: "Transfer from Bob to charlie",
+      title: "Transfer 50 KDA Bob to charlie",
       type: "transfer",
       from: bob,
       fromNetwork: "kadena_devnet1",
@@ -232,7 +232,7 @@ const getChain0Playlist = async () => {
     },
     {
       id: "c0-004",
-      title: "Transfer from Alice to charlie",
+      title: "Transfer 50 KDA Alice to charlie",
       type: "transfer",
       from: charlie,
       fromNetwork: "kadena_devnet1",
@@ -243,7 +243,7 @@ const getChain0Playlist = async () => {
     },
     {
       id: "c0-005",
-      title: "Transfer from Alice to charlie",
+      title: "Transfer 100 KDA Alice to charlie",
       type: "transfer",
       from: alice,
       fromNetwork: "kadena_devnet1",
@@ -254,7 +254,7 @@ const getChain0Playlist = async () => {
     },
     {
       id: "c0-006",
-      title: "Transfer from charlie to Bob",
+      title: "Transfer 50 KDA charlie to Bob",
       type: "transfer",
       from: charlie,
       fromNetwork: "kadena_devnet1",
@@ -265,7 +265,7 @@ const getChain0Playlist = async () => {
     },
     {
       id: "c0-007",
-      title: "Transfer from Bob to Alice",
+      title: "Transfer 150 KDA Bob to Alice",
       type: "transfer",
       from: bob,
       fromNetwork: "kadena_devnet1",
@@ -276,7 +276,7 @@ const getChain0Playlist = async () => {
     },
     {
       id: "c0-008",
-      title: "Transfer from charlie to Alice",
+      title: "Transfer 50 KDA charlie to Alice",
       type: "transfer",
       from: charlie,
       fromNetwork: "kadena_devnet1",
@@ -287,7 +287,7 @@ const getChain0Playlist = async () => {
     },
     {
       id: "c0-009",
-      title: "Transfer from Bob to Alice",
+      title: "Transfer 100 KDA Bob to Alice",
       type: "transfer",
       from: bob,
       fromNetwork: "kadena_devnet1",
@@ -306,7 +306,7 @@ const getChain1Playlist = async () => {
   const playlist: Track[] = [
     {
       id: "c1-000",
-      title: "Transfer from Bob to Alice",
+      title: "Transfer 100 KDA Bob to Alice",
       type: "transfer",
       from: bob,
       fromNetwork: "kadena_devnet2",
@@ -317,7 +317,7 @@ const getChain1Playlist = async () => {
     },
     {
       id: "c1-001",
-      title: "Transfer from Bob to Alice",
+      title: "Transfer 100 KDA Bob to Alice",
       type: "transfer",
       from: bob,
       fromNetwork: "kadena_devnet2",
@@ -328,7 +328,7 @@ const getChain1Playlist = async () => {
     },
     {
       id: "c1-002",
-      title: "Transfer from Alice to Bob",
+      title: "Transfer 50 KDA Alice to Bob",
       type: "transfer",
       from: alice,
       fromNetwork: "kadena_devnet2",
@@ -339,7 +339,7 @@ const getChain1Playlist = async () => {
     },
     {
       id: "c1-003",
-      title: "Transfer from Alice to charlie",
+      title: "Transfer 50 KDA Alice to charlie",
       type: "transfer",
       from: alice,
       fromNetwork: "kadena_devnet2",
@@ -350,7 +350,7 @@ const getChain1Playlist = async () => {
     },
     {
       id: "c1-004",
-      title: "Transfer from charlie to Bob",
+      title: "Transfer 50 KDA charlie to Bob",
       type: "transfer",
       from: charlie,
       fromNetwork: "kadena_devnet2",
@@ -361,7 +361,7 @@ const getChain1Playlist = async () => {
     },
     {
       id: "c1-005",
-      title: "Transfer from charlie to Bob",
+      title: "Transfer 100 KDA charlie to Bob",
       type: "transfer",
       from: bob,
       fromNetwork: "kadena_devnet2",
@@ -372,7 +372,7 @@ const getChain1Playlist = async () => {
     },
     {
       id: "c1-006",
-      title: "Transfer from charlie to Alice",
+      title: "Transfer 50 KDA charlie to Alice",
       type: "transfer",
       from: charlie,
       fromNetwork: "kadena_devnet2",
@@ -383,7 +383,7 @@ const getChain1Playlist = async () => {
     },
     {
       id: "c1-007",
-      title: "Transfer from Alice to Bob",
+      title: "Transfer 150 KDA Alice to Bob",
       type: "transfer",
       from: alice,
       fromNetwork: "kadena_devnet2",
@@ -394,7 +394,7 @@ const getChain1Playlist = async () => {
     },
     {
       id: "c1-008",
-      title: "Transfer from charlie to Bob",
+      title: "Transfer 50 KDA charlie to Bob",
       type: "transfer",
       from: charlie,
       fromNetwork: "kadena_devnet2",
@@ -405,7 +405,7 @@ const getChain1Playlist = async () => {
     },
     {
       id: "c1-009",
-      title: "Transfer from Alice to Bob",
+      title: "Transfer 100 KDA Alice to Bob",
       type: "transfer",
       from: alice,
       fromNetwork: "kadena_devnet2",

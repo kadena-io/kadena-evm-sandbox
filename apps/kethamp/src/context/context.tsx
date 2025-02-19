@@ -3,6 +3,19 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 import useLocalStorage from '@app/hooks/localStorage';
+import {
+  filterListByAccount,
+  getAccountsList,
+  getActivePlaylistByTrackId,
+  getPlaylists,
+  getTracksByProgressTxs,
+  getTransactionsList,
+  getTransactionsListByNetwork,
+  groupTransactions,
+  maxSize,
+  networks,
+  stateHook,
+} from '@app/utils';
 import React from 'react';
 import type {
   TContext,
@@ -10,19 +23,6 @@ import type {
   TPlaylist,
   TTransferTrack,
 } from './context.type';
-import {
-  groupTransactions,
-  getAccountsList,
-  getPlaylists,
-  getTransactionsList,
-  getTransactionsListByNetwork,
-  maxSize,
-  networks,
-  stateHook,
-  filterListByAccount,
-  getTracksByProgressTxs,
-  getActivePlaylistByTrackId,
-} from '@app/utils';
 import { initialState } from './data';
 
 const Context = React.createContext<TContext | null>(null);
@@ -190,8 +190,10 @@ function stateReducer(
             tracks: getTracksByProgressTxs(next, nextState),
             playlist: {
               ...state.graph.active.playlist,
-              item: getActivePlaylistByTrackId(next, nextState) ?? state.graph.active.playlist.item,
-            }
+              item:
+                getActivePlaylistByTrackId(next, nextState) ??
+                state.graph.active.playlist.item,
+            },
           },
         },
       });

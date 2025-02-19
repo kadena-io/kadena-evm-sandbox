@@ -47,42 +47,50 @@ const ListItem: React.FC<{
       const checkCounts = config.entityKeys?.length;
       const entity = state?.graph.active;
       let returnValue = [false, false];
-      const getEntityValue = (entity: any, path: string) => path.split('.').reduce((acc, part) => acc?.[part], entity);
-      let entityRef = config.activeType === 'highlight' ? config.highlightEntity : config.entity;
-      let entityValue = entityRef
-      ? getEntityValue(entity, entityRef)
-      : null;
+      const getEntityValue = (entity: any, path: string) =>
+        path.split('.').reduce((acc, part) => acc?.[part], entity);
+      let entityRef =
+        config.activeType === 'highlight'
+          ? config.highlightEntity
+          : config.entity;
+      let entityValue = entityRef ? getEntityValue(entity, entityRef) : null;
 
       if (Array.isArray(entityValue)) {
         const [entityValueType] = entityValue ?? [];
-        
+
         if (typeof entityValueType === 'string') {
-          const check = entityValue && config.entityKeys?.some((key: string) => {
-            return entityValue.includes(item[key])
-          });
-          
-          returnValue = [false, !!check]
+          const check =
+            entityValue &&
+            config.entityKeys?.some((key: string) => {
+              return entityValue.includes(item[key]);
+            });
+
+          returnValue = [false, !!check];
         }
       }
 
       if (config.activeType === 'highlight' && config.entity) {
         entityRef = config.entity;
-        entityValue = getEntityValue(entity, entityRef)
+        entityValue = getEntityValue(entity, entityRef);
       }
 
       if (config.operator && config.operator === 'contains') {
-        const check = config.entityKeys?.some((key: string) => (
-          entity &&
-          item[key] &&
-          entityValue?.some((entityItem: { [x: string]: string | any[] }) => entityItem?.[key]?.includes(item[key]))
-        ));
+        const check = config.entityKeys?.some(
+          (key: string) =>
+            entity &&
+            item[key] &&
+            entityValue?.some((entityItem: { [x: string]: string | any[] }) =>
+              entityItem?.[key]?.includes(item[key]),
+            ),
+        );
 
         return [!!check, returnValue[1]];
       }
 
-      const check = (
-        config.entityKeys?.filter((key: string) => entity && item[key] === entityValue?.[key]).length === checkCounts
-      );
+      const check =
+        config.entityKeys?.filter(
+          (key: string) => entity && item[key] === entityValue?.[key],
+        ).length === checkCounts;
 
       return [!!check, returnValue[1]];
     },
@@ -95,8 +103,10 @@ const ListItem: React.FC<{
 
       return [
         isActiveItem ? styles.activeItem : '',
-        isHighlightedItem ? styles.highlightItem : ''
-      ].filter(d => d).join(' ');
+        isHighlightedItem ? styles.highlightItem : '',
+      ]
+        .filter((d) => d)
+        .join(' ');
     },
     [isActive],
   );

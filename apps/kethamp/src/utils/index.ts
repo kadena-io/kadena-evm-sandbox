@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-import { localStorageKey } from "../context/context";
+import { localStorageKey } from '../context/context';
 
 import type {
   TAccount,
@@ -36,7 +36,10 @@ export function stateHook(state: TContext) {
   return state;
 }
 
-export function groupByStep(list: TGroupTransactions | undefined, step: number) {
+export function groupByStep(
+  list: TGroupTransactions | undefined,
+  step: number,
+) {
   if (!list) {
     return {};
   }
@@ -94,7 +97,9 @@ export function groupTransactions(
   }
 }
 
-export function networks(transactions: TContext['transactions']['data']): string[] {
+export function networks(
+  transactions: TContext['transactions']['data'],
+): string[] {
   if (!transactions) {
     return [];
   }
@@ -213,8 +218,7 @@ export function getTracksByProgressTxs(
   state: TContext,
 ): TTransaction['trackId'][] | null {
   const transactions = state?.graph.data?.[progress] ?? [];
-  const list = transactions
-    .map((d) => d.trackId as string);
+  const list = transactions.map((d) => d.trackId as string);
 
   if (list.length > 0) {
     return [...new Set(list)];
@@ -223,13 +227,10 @@ export function getTracksByProgressTxs(
   return null;
 }
 
-export function getActivePlaylistByTrackId(
-  progress: number,
-  state: TContext,
-) {
+export function getActivePlaylistByTrackId(progress: number, state: TContext) {
   const activeIds = getTracksByProgressTxs(progress, state);
-  
+
   return state?.playlists.list?.groups?.find((group) => {
     return group.list?.some(({ id }) => activeIds?.includes(id));
-  })
+  });
 }

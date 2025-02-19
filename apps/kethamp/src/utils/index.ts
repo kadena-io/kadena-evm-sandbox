@@ -1,10 +1,10 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 export const maskAccountAddress = (address: string) => {
-  if (!address) return "";
+  if (!address) return '';
 
-  return address.slice(0, 6) + "..." + address.slice(-4);
-}
+  return address.slice(0, 6) + '...' + address.slice(-4);
+};
 
 export const throttle = (callback: (...args: any) => any, delay: number) => {
   let timeoutId: NodeJS.Timeout | null = null;

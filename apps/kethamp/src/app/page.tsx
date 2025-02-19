@@ -1,9 +1,9 @@
-"use client";
+'use client';
 
-import React from "react";
+import React from 'react';
 
-import MainComponent from "@app/components/main/main";
-import ContextProvider from "@app/context/context";
+import MainComponent from '@app/components/main/main';
+import ContextProvider from '@app/context/context';
 
 export default function Main() {
   const [isClient, setIsClient] = React.useState(false);

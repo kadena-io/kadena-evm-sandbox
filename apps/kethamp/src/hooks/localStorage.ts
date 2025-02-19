@@ -1,16 +1,20 @@
-"use client";
+'use client';
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-import React from "react";
+import React from 'react';
 
-const useLocalStorage = <T,>(key: string, initialValue: any, overWrite = false) => {
+const useLocalStorage = <T>(
+  key: string,
+  initialValue: any,
+  overWrite = false,
+) => {
   const [value, setValue] = React.useState<T>(() => {
-    if (typeof window === "undefined") {
-      console.error("localStorage can be used only in client side");
+    if (typeof window === 'undefined') {
+      console.error('localStorage can be used only in client side');
       return initialValue;
     }
-    
+
     if (overWrite) {
       return initialValue;
     } else {
@@ -22,7 +26,7 @@ const useLocalStorage = <T,>(key: string, initialValue: any, overWrite = false) 
       } catch (error) {
         console.error(
           `Error while reading localStorage item with key=${key}:`,
-          error
+          error,
         );
 
         return initialValue;
@@ -32,7 +36,7 @@ const useLocalStorage = <T,>(key: string, initialValue: any, overWrite = false) 
     }
   });
 
-  const previousKeyRef = React.useRef<string>("");
+  const previousKeyRef = React.useRef<string>('');
 
   React.useEffect(() => {
     const previousKey = previousKeyRef.current;
@@ -43,19 +47,19 @@ const useLocalStorage = <T,>(key: string, initialValue: any, overWrite = false) 
       } catch (error) {
         console.error(
           `Error while removing localStorage item with key=${previousKey}:`,
-          error
+          error,
         );
       }
     }
 
     previousKeyRef.current = key;
-    
+
     try {
       window.localStorage.setItem(key, JSON.stringify(value));
     } catch (error) {
       console.error(
         `Error while setting localStorage item with key=${key}:`,
-        error
+        error,
       );
     }
   }, [value, key, initialValue]);

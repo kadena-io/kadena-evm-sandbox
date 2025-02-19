@@ -58,7 +58,6 @@ module.exports = {
       chainwebChainId: 0,
     },
     kadena_devnet1: {
-      // url: 'http://localhost:8546',
       url: 'http://localhost:8555',
       chainId: 1790,
       accounts: devnetAccounts.accounts.map(account => account.privateKey),

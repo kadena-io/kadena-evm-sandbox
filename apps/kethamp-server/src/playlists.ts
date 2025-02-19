@@ -39,12 +39,12 @@ const getCrosschainPlaylist = async () => {
         {
           id: "crt2",
           title:
-            "Alice polls chain 0 for the SPV proof of the initiation of the crosschain transfer",
+            "Alice polls chain 0 for SPV proof of crosschain transfer initiation",
         },
         {
           id: "crt3",
           title:
-            "Alice submits the SPV proof to chain 1 to finalize the crosschain transfer",
+            "Alice submits SPV proof to chain 1 to finalize crosschain transfer",
         },
       ],
     },
@@ -65,12 +65,12 @@ const getCrosschainPlaylist = async () => {
         {
           id: "crt5",
           title:
-            "Alice polls chain 0 for the SPV proof of the initiation of the crosschain transfer",
+            "Alice polls chain 0 for SPV proof of crosschain transfer initiation",
         },
         {
           id: "crt6",
           title:
-            "Alice submits the SPV proof to chain 1 to finalize the crosschain transfer",
+            "Alice submits SPV proof to chain 1 to finalize crosschain transfer",
         },
       ],
     },
@@ -91,12 +91,12 @@ const getCrosschainPlaylist = async () => {
         {
           id: "crt8",
           title:
-            "Bob polls chain 1 for the SPV proof of the initiation of the crosschain transfer",
+            "Bob polls chain 1 for SPV proof of crosschain transfer initiation",
         },
         {
           id: "crt9",
           title:
-            "Bob submits the SPV proof to chain 0 to finalize the crosschain transfer",
+            "Bob submits SPV proof to chain 0 to finalize crosschain transfer",
         },
       ],
     },
@@ -118,12 +118,12 @@ const getCrosschainPlaylist = async () => {
         {
           id: "crt11",
           title:
-            "Charlie polls chain 1 for the SPV proof of the initiation of the crosschain transfer",
+            "Charlie polls chain 1 for SPV proof of crosschain transfer initiation",
         },
         {
           id: "crt12",
           title:
-            "Charlie submits the SPV proof to chain 0 to finalize the crosschain transfer",
+            "Charlie submits SPV proof to chain 0 to finalize crosschain transfer",
         },
       ],
     },
@@ -144,12 +144,12 @@ const getCrosschainPlaylist = async () => {
         {
           id: "crt14",
           title:
-            "Charlie polls chain 0 for the SPV proof of the initiation of the crosschain transfer",
+            "Charlie polls chain 0 for SPV proof of crosschain transfer initiation",
         },
         {
           id: "crt15",
           title:
-            "Charlie submits the SPV proof to chain 1 to finalize the crosschain transfer",
+            "Charlie submits SPV proof to chain 1 to finalize crosschain transfer",
         },
       ],
     },
@@ -170,12 +170,12 @@ const getCrosschainPlaylist = async () => {
         {
           id: "crt17",
           title:
-            "Bob polls chain 1 for the SPV proof of the initiation of the crosschain transfer",
+            "Bob polls chain 1 for SPV proof of crosschain transfer initiation",
         },
         {
           id: "crt18",
           title:
-            "Bob submits the SPV proof to chain 0 to finalize the crosschain transfer",
+            "Bob submits SPV proof to chain 0 to finalize crosschain transfer",
         },
       ],
     },

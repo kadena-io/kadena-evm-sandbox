@@ -319,6 +319,7 @@ export const app = new Elysia()
         chain1: toJSON(await getPlaylist("chain1")),
         crosschain: toJSON(await getPlaylist("crosschain")),
         single: toJSON(await getPlaylist("single")),
+        singlebob: toJSON(await getPlaylist("singlebob")),
       };
     },
     {}

@@ -12,6 +12,10 @@ export const getPlaylist = async (list: string) => {
     case "single":
       const [single] = await getCrosschainPlaylist();
       return [single];
+    case "singlebob":
+      const crosschainPlaylist = await getCrosschainPlaylist();
+      const [lastItem] = crosschainPlaylist.slice(-1);
+      return [lastItem]
     default:
       return [];
   }
@@ -155,13 +159,13 @@ const getCrosschainPlaylist = async () => {
     },
     {
       id: "crt-005",
-      title: "Crosschain Transfer 200 KDA Bob to Alice",
+      title: "Crosschain Transfer 100 KDA Bob to Alice",
       type: "transfer",
       from: bob,
       fromNetwork: "kadena_devnet2",
       to: alice,
       toNetwork: "kadena_devnet1",
-      amount: hre.ethers.parseEther("200"),
+      amount: hre.ethers.parseEther("100"),
       steps: [
         {
           id: "crt16",
@@ -170,12 +174,38 @@ const getCrosschainPlaylist = async () => {
         {
           id: "crt17",
           title:
-            "Bob polls chain 1 for SPV proof of crosschain transfer initiation",
+              "Bob polls chain 1 for SPV proof of crosschain transfer initiation",
         },
         {
           id: "crt18",
           title:
-            "Bob submits SPV proof to chain 0 to finalize crosschain transfer",
+              "Bob submits SPV proof to chain 0 to finalize crosschain transfer",
+        },
+      ],
+    },
+    {
+      id: "crt-006",
+      title: "Crosschain Transfer 100 KDA Bob to Alice",
+      type: "transfer",
+      from: bob,
+      fromNetwork: "kadena_devnet2",
+      to: alice,
+      toNetwork: "kadena_devnet1",
+      amount: hre.ethers.parseEther("100"),
+      steps: [
+        {
+          id: "crt19",
+          title: "Bob initiates a crosschain transfer to Alice on chain 1",
+        },
+        {
+          id: "crt20",
+          title:
+              "Bob polls chain 1 for SPV proof of crosschain transfer initiation",
+        },
+        {
+          id: "crt21",
+          title:
+              "Bob submits SPV proof to chain 0 to finalize crosschain transfer",
         },
       ],
     },

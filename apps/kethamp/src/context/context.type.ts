@@ -56,6 +56,7 @@ export type TTransaction = {
   status: number;
   title: string | null;
   to: string | null;
+  trackId: string | null;
   _type: string | null;
 };
 
@@ -107,6 +108,7 @@ export type TContext = {
           completed: TransferTrack['steps'][0]['id'][] | null;
         };
       };
+      tracks: TTransaction['trackId'][] | null;
     };
     options: {
       isPlaying: boolean;

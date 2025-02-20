@@ -77,7 +77,7 @@ contract SimpleToken is ERC20("SimpleToken", "SIM"), Ownable {
      * @dev Emitted for any cross chain transaction
      */
     event CrossChainCompleted(
-        uint64 crossChainOperationType,
+        uint64 indexed crossChainOperationType,
         bytes crossChainData,
         CrossChainOrigin origin
     );
@@ -113,7 +113,7 @@ contract SimpleToken is ERC20("SimpleToken", "SIM"), Ownable {
         address originContractAddress,
         address knownOriginContractAddress
     );
-  
+
     error IncorrectReceiver(address crossChainReceiver, address receiver);
     error IncorrectAmount(uint256 crossChainValue, uint256 amount);
 

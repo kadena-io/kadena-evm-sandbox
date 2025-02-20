@@ -334,7 +334,7 @@ describe("SimpleToken Unit Tests", async function () {
           .withArgs(token1Info.chain, token0Info.chain);
       });
 
-      it("Should revert when redeeming on the wrong contrct", async function () {
+      it("Should revert when redeeming on the wrong contract", async function () {
         // Switch to chain1, where token1 is deployed
         await switchNetwork(token1Info.network.name);
 
@@ -343,7 +343,7 @@ describe("SimpleToken Unit Tests", async function () {
         const token2 = await factory.deploy(ethers.parseEther("1000000"));
         const deploymentTx = token2.deploymentTransaction()
         await deploymentTx.wait();
-     
+
         // Call setCrossChainAddress on token2
         await expect(token2.redeemCrossChain(receiver, amount, proof))
           .to.be.revertedWithCustomError(token1, "IncorrectTargetContract")
@@ -380,7 +380,7 @@ describe("SimpleToken Unit Tests", async function () {
       it("Should revert if authorized source contract does not match origin contract address", async function () {
         // Generate a random Ethereum address
         const randomAddress = ethers.Wallet.createRandom().address;
-    
+
         const tx = await token1.setCrossChainAddress(token0Info.chain, randomAddress);
         await tx.wait();
         await expect(token1.redeemCrossChain(receiver, amount, proof))

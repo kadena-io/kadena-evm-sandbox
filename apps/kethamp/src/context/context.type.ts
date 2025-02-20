@@ -1,21 +1,37 @@
+import type { TransferTrack } from '../../../kethamp-server/src/types';
+
+export type TTransferTrack = TransferTrack;
+
 export type TPlaylist = {
   id: string;
   title: string;
-}
+  tracks: TransferTrack[];
+};
 
 type TChainId = `chain${number}`;
 
 export type TList<T> = {
   title: string | null;
-  list: T[];
-}
+  list?: T[];
+};
+
+export type TGroup<T> = {
+  id: string;
+  title: string | null;
+  list?: T[];
+};
+
+export type TAsideList<T> = {
+  title: string;
+  groups: TGroup<T>[] | null;
+};
 
 export type TAccount = {
   name: string;
   chain: TChainId;
   address: string;
   balance: string;
-}
+};
 
 export type TTransaction = {
   blobGasPrice: string | null;
@@ -29,68 +45,80 @@ export type TTransaction = {
   gasUsed: string | null;
   hash: string | null;
   index: number;
-  logs: {
-    event: string;
-    args: string[];
-  }[] | null
+  logs:
+    | {
+        event: string;
+        args: string[];
+      }[]
+    | null;
   logsBloom: string | null;
   network: string | null;
   status: number;
   title: string | null;
   to: string | null;
   _type: string | null;
-}
+};
 
 export type TContext = {
-  isLoading: boolean,
+  isLoading: boolean;
   deployments: {
-    isDeployed: boolean,
-    playlists: TPlaylist['id'][],
-  },
+    isDeployed: boolean;
+    playlists: string[] | null;
+  };
   playlists: {
-    isLoading: boolean,
-    list: TPlaylist[],
-    data: TPlaylist[],
-  },
+    isLoading: boolean;
+    data: {
+      [key: string]: TPlaylist;
+    } | null;
+    list: TAsideList<TPlaylist> | null;
+  };
   accounts: {
-    isLoading: boolean,
+    isLoading: boolean;
     list: TAccount[];
     data: {
       [key: TChainId]: {
         [key: string]: TAccount;
-      }
+      };
     };
-  },
+  };
   transactions: {
-    isLoading: boolean,
+    isLoading: boolean;
     list: {
-      block: TTransaction[] | null,
-      network: TList<TTransaction>[] | null,
+      block: TTransaction[] | null;
+      network: TList<TTransaction>[] | null;
       filtered?: {
         network: TList<TTransaction>[] | null;
-      },
-    },
-    data: TTransaction[] | null,
-  },
+      };
+    };
+    data: TTransaction[] | null;
+  };
   graph: {
     data: {
       [key: number]: TTransaction[];
     } | null;
     active: {
-      transaction: TTransaction | null,
-      account: TAccount | null,
-      playlist: TPlaylist | null,
-    },
+      transaction: TTransaction | null;
+      account: TAccount | null;
+      playlist: {
+        item: TGroup<TPlaylist> | null;
+        track: {
+          active: TransferTrack | null;
+          list: TList<TransferTrack['steps'][0]>[] | null;
+          completed: TransferTrack['steps'][0]['id'][] | null;
+        };
+      };
+    };
     options: {
-      isPlaying: boolean,
-      progress: number,
-      stepSize: number,
-      maxStepCount: number,
-    },
-  },
+      isPlaying: boolean;
+      progress: number;
+      stepSize: number;
+      maxStepCount: number;
+      volume: number;
+    };
+  };
   networks: {
-    list: string[],
-  },
+    list: string[];
+  };
 };
 
 export type TContextAction<T> = {

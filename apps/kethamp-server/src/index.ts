@@ -22,27 +22,32 @@ const getDeployPlaylist = async () => {
   const [, , bob] = await hre.ethers.getSigners();
   const playlist: Track[] = [
     {
+      id: "deploy-1",
       title: "Deploy KEWX on devnet1",
       type: "deploy",
       network: "kadena_devnet1",
     },
     {
+      id: "deploy-2",
       title: "Deploy KEWX on devnet2",
       type: "deploy",
       network: "kadena_devnet2",
     },
     {
+      id: "register-cross-chain-1",
       title: "Register cross-chain address",
       type: "register-cross-chain",
       networks: ["kadena_devnet1", "kadena_devnet2"],
     },
     {
+      id: "fund-1",
       title: "Fund Alice on devnet1",
       type: "fund",
       network: "kadena_devnet1",
       address: alice.address,
     },
     {
+      id: "fund-2",
       title: "Fund Bob on devnet2",
       type: "fund",
       network: "kadena_devnet2",
@@ -249,6 +254,9 @@ const getBalance = async (address: any, network: NetworkId) => {
   }
 };
 
+const toJSON = (o: any) => {
+  return o.map((p: any) => ({ ...p, amount: p.amount.toString() }));
+};
 export const app = new Elysia()
   .use(cors())
   .use(swagger())
@@ -289,6 +297,18 @@ export const app = new Elysia()
       };
 
       return { chain0, chain1 };
+    },
+    {}
+  )
+  .get(
+    "/playlist",
+    async () => {
+      return {
+        chain0: toJSON(await getPlaylist("chain0")),
+        chain1: toJSON(await getPlaylist("chain1")),
+        crossChain: toJSON(await getPlaylist("crosschain")),
+        single: toJSON(await getPlaylist("single")),
+      };
     },
     {}
   )

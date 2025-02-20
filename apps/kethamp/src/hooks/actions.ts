@@ -1,4 +1,5 @@
-import { useContext, useContextDispatch } from "@app/context/context";
+import { useContext, useContextDispatch } from '@app/context/context';
+import type { TContext } from '@app/context/context.type';
 
 const UseActions = () => {
   const state = useContext();
@@ -6,87 +7,119 @@ const UseActions = () => {
 
   const deploy = async () => {
     dispatch({
-      type: "RESET_STATE",
+      type: 'RESET_STATE',
     });
-    
-    
-    const response = await fetch("http://localhost:1337/deploy", {
-      method: "POST",
+
+    const response = await fetch('http://localhost:1337/deploy', {
+      method: 'POST',
     });
-    
+
     await response.text();
-    
+
     dispatch({
-      type: "SET_DEPLOYMENT",
+      type: 'SET_DEPLOYMENT',
       payload: true,
     });
-    
-    if (state?.graph?.active?.playlist?.id) {
-      await playlist();
+
+    if (state?.graph?.active?.playlist?.item?.id) {
+      await runPlaylist();
 
       dispatch({
-        type: "DEPLOYED_PLAYLISTS",
+        type: 'DEPLOYED_PLAYLISTS',
         payload: {
-          playlist: state.graph.active.playlist.id
+          playlistId: state.graph.active.playlist.item.id,
         },
       });
     }
 
-    return "Deployed";
+    return 'Deployed';
   };
 
   const reset = async () => {
     dispatch({
-      type: "RESET_STATE",
+      type: 'RESET_STATE',
     });
 
-    const response = await fetch("http://localhost:1337/deploy", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
+    const response = await fetch('http://localhost:1337/deploy', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ reset: true }),
     });
-    
+
     await response.text();
 
     dispatch({
-      type: "SET_DEPLOYMENT",
+      type: 'SET_DEPLOYMENT',
       payload: true,
     });
 
-    return "Reset";
+    return 'Reset';
   };
 
-  const playlist = async () => {
-    const list = state?.graph?.active?.playlist?.id
+  const runPlaylist = async () => {
+    const list = state?.graph?.active?.playlist?.item?.id;
 
     if (!list) {
-      alert("No playlist selected");
+      alert('No playlist selected');
     }
 
-    const response = await fetch("http://localhost:1337/playlist", {
-      method: "POST",
+    const response = await fetch('http://localhost:1337/playlist', {
+      method: 'POST',
       headers: {
-        "Content-Type": "application/json",
+        'Content-Type': 'application/json',
       },
       body: JSON.stringify({ list }),
     });
     await response.text();
 
-    if (state?.graph?.active?.playlist?.id) {
+    if (state?.graph?.active?.playlist?.item?.id) {
       dispatch({
-        type: "DEPLOYED_PLAYLISTS",
+        type: 'DEPLOYED_PLAYLISTS',
         payload: {
-          playlist: state?.graph?.active.playlist.id,
+          playlistId: state?.graph?.active.playlist.item.id,
         },
       });
     }
-    
-    return "Playlist";
+
+    return 'Playlist';
+  };
+
+  const getPlaylists = async () => {
+    const response = await fetch('http://localhost:1337/playlist', {
+      method: 'GET',
+    });
+
+    const data: TContext['playlists']['data'] = await response.json();
+
+    const playlists: TContext['playlists']['data'] = data
+      ? Object.keys(data).reduce((acc, key: string) => {
+          return {
+            ...acc,
+            [key]: {
+              id: key,
+              title: `Playlist ${key}`,
+              tracks: data[key],
+            },
+          };
+        }, {})
+      : null;
+
+    if (playlists) {
+      dispatch({
+        type: 'RESET_PLAYLISTS',
+        payload: {
+          playlists,
+        },
+      });
+    }
   };
 
   return {
     deploy,
-    playlist,
+    playlist: {
+      run: runPlaylist,
+      get: getPlaylists,
+    },
     reset,
   };
 };

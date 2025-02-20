@@ -153,12 +153,10 @@ export function getTransactionsListByNetwork(
   return networks.reduce<TList<TTransaction>[]>((list, networkId) => {
     const filteredData = data.filter((d) => d.network === networkId);
 
-    if (filteredData.length > 0) {
-      list.push({
-        title: networkId,
-        list: filteredData,
-      });
-    }
+    list.push({
+      title: networkId,
+      list: filteredData,
+    });
 
     return list;
   }, []);

@@ -31,9 +31,7 @@ async function deployContracts() {
       await switchNetwork(netname);
       const cid = network.config.chainwebChainId;
       const [deployer] = await ethers.getSigners();
-      console.log(
-        `Deploying with signer: ${deployer.address} on network ${netname}`
-      );
+
 
       /* Deploy the SimpleToken contract */
       const factory = await ethers.getContractFactory("SimpleToken");
@@ -41,6 +39,10 @@ async function deployContracts() {
       let deploymentTx = contract.deploymentTransaction();
       await deploymentTx.wait();
       const tokenAddress = await contract.getAddress();
+
+      console.log(
+        `Deployed to address ${tokenAddress} with signer: ${deployer.address} on network ${netname}`
+      );
 
       // Store deployment info in both formats
       const deploymentInfo = {
@@ -69,8 +71,7 @@ async function deployMocks() {
     net.includes("kadena_devnet")
   );
   console.log(
-    `Found ${
-      networks.length
+    `Found ${networks.length
     } Kadena devnet networks while deploying mocks: ${networks.join(", ")}`
   );
   const deployments = {};

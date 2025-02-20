@@ -49,7 +49,7 @@ module.exports = {
 
     ]
   },
-  // defaultNetwork: "kadena_devnet0",
+  defaultNetwork: "kadena_devnet0",
   networks: {
     kadena_devnet0: {
       url: 'http://localhost:8545',
@@ -58,7 +58,6 @@ module.exports = {
       chainwebChainId: 0,
     },
     kadena_devnet1: {
-      // url: 'http://localhost:8546',
       url: 'http://localhost:8555',
       chainId: 1790,
       accounts: devnetAccounts.accounts.map(account => account.privateKey),

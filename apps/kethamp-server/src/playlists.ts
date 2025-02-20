@@ -9,13 +9,15 @@ export const getPlaylist = async (list: string) => {
       return await getChain0Playlist();
     case "chain1":
       return await getChain1Playlist();
-    case "single":
+    case "single": {
       const [single] = await getCrosschainPlaylist();
-      return [single];
-    case "singlebob":
+      return [single].map((d) => ({ ...d, id: 'crts-001' }));
+    }
+    case "singlebob": {
       const crosschainPlaylist = await getCrosschainPlaylist();
       const [lastItem] = crosschainPlaylist.slice(-1);
-      return [lastItem]
+      return [lastItem].map((d) => ({ ...d, id: 'crtsb-001' }));
+    }
     default:
       return [];
   }

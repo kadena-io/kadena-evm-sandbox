@@ -323,7 +323,11 @@ const Playback: React.FC = () => {
         <div className={styles.graphWrapper}>
           {deployments?.isDeployed ? (
             <>
-              <div ref={graphContainerRef} className={styles.graphContainer}>
+              <div
+                ref={graphContainerRef}
+                className={styles.graphContainer}
+                title="Chain 0 transactions"
+              >
                 {Object.values(graphData)
                   .map((d) => d.filter((d) => d.network === topGraphId))
                   .map((d, i) => (
@@ -337,7 +341,10 @@ const Playback: React.FC = () => {
                     />
                   ))}
               </div>
-              <div className={styles.graphContainer}>
+              <div
+                className={styles.graphContainer}
+                title="Chain 1 transactions"
+              >
                 {Object.values(graphData)
                   .map((d) => d.filter((d) => d.network === bottomGraphId))
                   .map((d, i) => (
@@ -423,23 +430,28 @@ const Playback: React.FC = () => {
           className={[styles.button, styles.prev].join(' ')}
           onClick={() => backwards()}
           disabled={progress === 0}
+          title="Go one step back"
         />
         <button
           className={[styles.button, styles.play].join(' ')}
           onClick={() => play()}
+          title="Run the playlist - initiate relevant transactions"
         />
         <button
           className={[styles.button, styles.stop].join(' ')}
           onClick={reset}
+          title="Reset the playlist"
         />
         <button
           className={[styles.button, styles.next].join(' ')}
           onClick={() => forwards()}
           disabled={progress === 100}
+          title="Go one step forward"
         />
         <button
           className={[styles.button, styles.eject].join(' ')}
           onClick={() => deploy()}
+          title="Deploy the initial contract"
         />
       </div>
       <div className={styles.logoKadena} />

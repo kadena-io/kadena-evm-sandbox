@@ -3,24 +3,34 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 import useLocalStorage from '@app/hooks/localStorage';
+import {
+  filterListByAccount,
+  getAccountsList,
+  getActivePlaylistByTrackId,
+  getPlaylists,
+  getTracksByProgressTxs,
+  getTransactionsList,
+  getTransactionsListByNetwork,
+  groupTransactions,
+  maxSize,
+  networks,
+  stateHook,
+} from '@app/utils';
 import React from 'react';
 import type {
-  TAccount,
-  TAsideList,
   TContext,
   TGroup,
-  TList,
   TPlaylist,
-  TTransaction,
   TTransferTrack,
 } from './context.type';
+import { initialState } from './data';
 
 const Context = React.createContext<TContext | null>(null);
 const ContextDispatch = React.createContext(null) as unknown as React.Context<
   React.Dispatch<{ payload?: any; type: string }>
 >;
 
-const localStorageKey = 'kethamp';
+export const localStorageKey = 'kethamp';
 
 const ContextProvider = ({ children }: { children: React.ReactNode }) => {
   const [localState] = useLocalStorage<typeof initialState>(
@@ -47,184 +57,6 @@ export function useContext() {
 
 export function useContextDispatch() {
   return React.useContext(ContextDispatch);
-}
-
-function groupByStep(list: TGroupTransactions | undefined, step: number) {
-  if (!list) {
-    return {};
-  }
-
-  const grouped: Record<string, TTransaction[]> = {};
-  const keys = Object.keys(list).map(parseFloat);
-
-  const minKey = Math.floor(Math.min(...keys) / step) * step;
-  const maxKey = Math.ceil(Math.max(...keys) / step) * step;
-
-  for (let i = minKey; i <= maxKey; i += step) {
-    grouped[i] = [];
-  }
-
-  keys.forEach((key) => {
-    const groupKey = Math.floor(key / step) * step;
-    grouped[groupKey]?.push(...list[key.toString()]);
-  });
-
-  return grouped;
-}
-
-type TGroupTransactions = Record<string, TTransaction[]>;
-function groupTransactions(
-  transactions: TTransaction[],
-  stepSize: number,
-): TGroupTransactions | undefined {
-  if (transactions) {
-    const minBlockNumber = transactions.reduce(
-      (acc, d) => Math.min(acc, d?.blockNumber ?? 0),
-      Infinity,
-    );
-    const lastBlockNumber = transactions.reduce(
-      (acc, d) => Math.max(acc, d?.blockNumber ?? 0),
-      0,
-    );
-    const duration = lastBlockNumber - minBlockNumber;
-    const steps = 100 / duration;
-
-    const transactionsByPercentage = transactions.reduce<TGroupTransactions>(
-      (acc, d) => {
-        const percentage =
-          (((d?.blockNumber ?? 0) - minBlockNumber) / duration) * 100;
-        const step = Math.floor(percentage * steps);
-
-        return {
-          ...acc,
-          [percentage]: acc[step] ? [...acc[step], d] : [d],
-        };
-      },
-      {},
-    );
-
-    return groupByStep(transactionsByPercentage, stepSize);
-  }
-}
-
-function networks(transactions: TContext['transactions']['data']): string[] {
-  if (!transactions) {
-    return [];
-  }
-
-  return transactions.reduce<string[]>((acc, d) => {
-    if (d.network && !acc.includes(d.network)) {
-      return [...acc, d.network];
-    }
-
-    return acc;
-  }, []);
-}
-
-function maxSize(data: TGroupTransactions | undefined): number {
-  if (!data) return 0;
-
-  return Math.max(0, ...Object.values(data).map((arr) => arr.length));
-}
-
-function getTransactionsList(
-  state: TContext,
-  graphData?: TContext['graph']['data'] | null,
-): TTransaction[] {
-  const { progress } = state.graph.options;
-
-  if (graphData) {
-    return graphData[progress] ?? [];
-  }
-
-  return state.graph.data?.[progress] ?? [];
-}
-
-function getTransactionsListByNetwork(
-  state: TContext,
-  networkList?: TContext['networks']['list'],
-  graphData?: TContext['graph']['data'],
-) {
-  const { progress } = state.graph.options;
-  let data = state.graph.data?.[progress] ?? [];
-
-  if (graphData) {
-    data = graphData[progress] ?? [];
-  }
-
-  if (!data) return [];
-
-  const networks = networkList || state.networks.list;
-
-  if (!networks) return [];
-
-  return networks.reduce<TList<TTransaction>[]>((list, networkId) => {
-    const filteredData = data.filter((d) => d.network === networkId);
-
-    if (filteredData.length > 0) {
-      list.push({
-        title: networkId,
-        list: filteredData,
-      });
-    }
-
-    return list;
-  }, []);
-}
-
-function getAccountsList(
-  accounts: TContext['accounts']['data'],
-): TContext['accounts']['list'] {
-  return Object.entries(accounts).flatMap(
-    ([chainKey, account]) =>
-      Object.entries(account).map(([accountName, accountData]) => ({
-        ...accountData,
-        chain: chainKey,
-        name: accountName,
-      })) as TAccount[],
-  );
-}
-
-function filterListByAccount(
-  list: TList<TTransaction>[] | null,
-  account: TAccount | null,
-) {
-  if (!list || !account) return list;
-
-  return Object.values(list).reduce<TList<TTransaction>[]>((acc, item) => {
-    acc.push({
-      ...item,
-      list: item.list?.filter(
-        (entry) =>
-          entry.from === account.address || entry.to === account.address,
-      ),
-    });
-
-    return acc;
-  }, []);
-}
-
-function getPlaylists(
-  data: TContext['playlists']['data'],
-): TAsideList<TPlaylist> | null {
-  if (!data) return null;
-
-  const playlists = {
-    title: 'Playlists',
-    groups: Object.entries(data).map(([id, { title, tracks }]) => ({
-      id,
-      title,
-      list: tracks,
-    })) as unknown as TAsideList<TPlaylist>['groups'],
-  };
-
-  return playlists;
-}
-
-function stateHook(state: TContext) {
-  localStorage?.setItem(localStorageKey, JSON.stringify(state));
-
-  return state;
 }
 
 function stateReducer(
@@ -351,6 +183,17 @@ function stateReducer(
             ...state.graph.options,
             isPlaying: action.payload.isPlaying || false,
             progress: action.payload.progress ?? next,
+          },
+          active: {
+            ...state.graph.active,
+            transaction: null,
+            tracks: getTracksByProgressTxs(next, nextState),
+            playlist: {
+              ...state.graph.active.playlist,
+              item:
+                getActivePlaylistByTrackId(next, nextState) ??
+                state.graph.active.playlist.item,
+            },
           },
         },
       });
@@ -583,59 +426,5 @@ function stateReducer(
       return stateHook(state);
   }
 }
-
-export const initialState = {
-  isLoading: true,
-  deployments: {
-    isDeployed: false,
-    playlists: null,
-  },
-  playlists: {
-    isLoading: false,
-    data: null,
-    list: null,
-  },
-  accounts: {
-    isLoading: false,
-    list: [],
-    data: {},
-  },
-  transactions: {
-    isLoading: false,
-    list: {
-      block: null,
-      network: null,
-      filtered: {
-        network: null,
-      },
-    },
-    data: null,
-  },
-  graph: {
-    data: null,
-    active: {
-      transaction: null,
-      account: null,
-      playlist: {
-        item: null,
-        track: {
-          active: null,
-          list: null,
-          completed: null,
-        },
-      },
-    },
-    options: {
-      isPlaying: false,
-      progress: 0,
-      stepSize: 10,
-      maxStepCount: 0,
-      volume: 1,
-    },
-  },
-  networks: {
-    list: [],
-  },
-};
 
 export default ContextProvider;

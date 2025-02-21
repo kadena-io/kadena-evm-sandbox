@@ -403,7 +403,7 @@
 
 .logoKadena {
   position: absolute;
-  bottom: 20px;
+  bottom: 16px;
   right: 124px;
   width: 168px;
   height: 48px;
@@ -416,8 +416,8 @@
 
 .logoEthDenver2025 {
   position: absolute;
-  bottom: 20px;
-  right: 70px;
+  bottom: 18px;
+  right: 74px;
   width: 48px;
   height: 48px;
   background-image: url('/assets/images/logo-eth-denver.png');

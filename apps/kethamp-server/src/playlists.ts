@@ -9,9 +9,15 @@ export const getPlaylist = async (list: string) => {
       return await getChain0Playlist();
     case "chain1":
       return await getChain1Playlist();
-    case "single":
+    case "single": {
       const [single] = await getCrosschainPlaylist();
-      return [single];
+      return [single].map((d) => ({ ...d, id: 'crts-001' }));
+    }
+    case "singlebob": {
+      const crosschainPlaylist = await getCrosschainPlaylist();
+      const [lastItem] = crosschainPlaylist.slice(-1);
+      return [lastItem].map((d) => ({ ...d, id: 'crtsb-001' }));
+    }
     default:
       return [];
   }
@@ -24,7 +30,7 @@ const getCrosschainPlaylist = async () => {
   const playlist: Track[] = [
     {
       id: "crt-000",
-      title: "Crosschain Transfer from Alice to Bob",
+      title: "Crosschain Transfer 100 KDA Alice to Bob",
       type: "transfer",
       from: alice,
       fromNetwork: "kadena_devnet1",
@@ -39,18 +45,18 @@ const getCrosschainPlaylist = async () => {
         {
           id: "crt2",
           title:
-            "Alice polls chain 0 for the SPV proof of the initiation of the crosschain transfer",
+            "Alice polls chain 0 for SPV proof of crosschain transfer initiation",
         },
         {
           id: "crt3",
           title:
-            "Alice submits the SPV proof to chain 1 to finalize the crosschain transfer",
+            "Alice submits SPV proof to chain 1 to finalize crosschain transfer",
         },
       ],
     },
     {
       id: "crt-001",
-      title: "Crosschain Transfer from Alice to Charlie",
+      title: "Crosschain Transfer 100 KDA Alice to Charlie",
       type: "transfer",
       from: alice,
       fromNetwork: "kadena_devnet1",
@@ -65,18 +71,18 @@ const getCrosschainPlaylist = async () => {
         {
           id: "crt5",
           title:
-            "Alice polls chain 0 for the SPV proof of the initiation of the crosschain transfer",
+            "Alice polls chain 0 for SPV proof of crosschain transfer initiation",
         },
         {
           id: "crt6",
           title:
-            "Alice submits the SPV proof to chain 1 to finalize the crosschain transfer",
+            "Alice submits SPV proof to chain 1 to finalize crosschain transfer",
         },
       ],
     },
     {
       id: "crt-002",
-      title: "Crosschain Transfer from Bob to Charlie",
+      title: "Crosschain Transfer 50 KDA Bob to Charlie",
       type: "transfer",
       from: bob,
       fromNetwork: "kadena_devnet2",
@@ -91,18 +97,18 @@ const getCrosschainPlaylist = async () => {
         {
           id: "crt8",
           title:
-            "Bob polls chain 1 for the SPV proof of the initiation of the crosschain transfer",
+            "Bob polls chain 1 for SPV proof of crosschain transfer initiation",
         },
         {
           id: "crt9",
           title:
-            "Bob submits the SPV proof to chain 0 to finalize the crosschain transfer",
+            "Bob submits SPV proof to chain 0 to finalize crosschain transfer",
         },
       ],
     },
     {
       id: "crt-003",
-      title: "Crosschain Transfer from charlie to charlie",
+      title: "Crosschain Transfer 100 KDA charlie to charlie",
       type: "transfer",
       from: charlie1,
       fromNetwork: "kadena_devnet2",
@@ -118,18 +124,18 @@ const getCrosschainPlaylist = async () => {
         {
           id: "crt11",
           title:
-            "Charlie polls chain 1 for the SPV proof of the initiation of the crosschain transfer",
+            "Charlie polls chain 1 for SPV proof of crosschain transfer initiation",
         },
         {
           id: "crt12",
           title:
-            "Charlie submits the SPV proof to chain 0 to finalize the crosschain transfer",
+            "Charlie submits SPV proof to chain 0 to finalize crosschain transfer",
         },
       ],
     },
     {
       id: "crt-004",
-      title: "Crosschain Transfer from charlie to Bob",
+      title: "Crosschain Transfer 150 KDA charlie to Bob",
       type: "transfer",
       from: charlie,
       fromNetwork: "kadena_devnet1",
@@ -144,24 +150,24 @@ const getCrosschainPlaylist = async () => {
         {
           id: "crt14",
           title:
-            "Charlie polls chain 0 for the SPV proof of the initiation of the crosschain transfer",
+            "Charlie polls chain 0 for SPV proof of crosschain transfer initiation",
         },
         {
           id: "crt15",
           title:
-            "Charlie submits the SPV proof to chain 1 to finalize the crosschain transfer",
+            "Charlie submits SPV proof to chain 1 to finalize crosschain transfer",
         },
       ],
     },
     {
       id: "crt-005",
-      title: "Crosschain Transfer from Bob to Alice",
+      title: "Crosschain Transfer 100 KDA Bob to Alice",
       type: "transfer",
       from: bob,
       fromNetwork: "kadena_devnet2",
       to: alice,
       toNetwork: "kadena_devnet1",
-      amount: hre.ethers.parseEther("200"),
+      amount: hre.ethers.parseEther("100"),
       steps: [
         {
           id: "crt16",
@@ -170,12 +176,38 @@ const getCrosschainPlaylist = async () => {
         {
           id: "crt17",
           title:
-            "Bob polls chain 1 for the SPV proof of the initiation of the crosschain transfer",
+              "Bob polls chain 1 for SPV proof of crosschain transfer initiation",
         },
         {
           id: "crt18",
           title:
-            "Bob submits the SPV proof to chain 0 to finalize the crosschain transfer",
+              "Bob submits SPV proof to chain 0 to finalize crosschain transfer",
+        },
+      ],
+    },
+    {
+      id: "crt-006",
+      title: "Crosschain Transfer 100 KDA Bob to Alice",
+      type: "transfer",
+      from: bob,
+      fromNetwork: "kadena_devnet2",
+      to: alice,
+      toNetwork: "kadena_devnet1",
+      amount: hre.ethers.parseEther("100"),
+      steps: [
+        {
+          id: "crt19",
+          title: "Bob initiates a crosschain transfer to Alice on chain 1",
+        },
+        {
+          id: "crt20",
+          title:
+              "Bob polls chain 1 for SPV proof of crosschain transfer initiation",
+        },
+        {
+          id: "crt21",
+          title:
+              "Bob submits SPV proof to chain 0 to finalize crosschain transfer",
         },
       ],
     },
@@ -188,7 +220,7 @@ const getChain0Playlist = async () => {
   const playlist: Track[] = [
     {
       id: "c0-000",
-      title: "Transfer from Alice to Bob",
+      title: "Transfer 100 KDA Alice to Bob",
       type: "transfer",
       from: alice,
       fromNetwork: "kadena_devnet1",
@@ -199,7 +231,7 @@ const getChain0Playlist = async () => {
     },
     {
       id: "c0-001",
-      title: "Transfer from Alice to Bob",
+      title: "Transfer 200 KDA Alice to Bob",
       type: "transfer",
       from: alice,
       fromNetwork: "kadena_devnet1",
@@ -210,7 +242,7 @@ const getChain0Playlist = async () => {
     },
     {
       id: "c0-002",
-      title: "Transfer from Bob to Alice",
+      title: "Transfer 50 KDA Bob to Alice",
       type: "transfer",
       from: bob,
       fromNetwork: "kadena_devnet1",
@@ -221,7 +253,7 @@ const getChain0Playlist = async () => {
     },
     {
       id: "c0-003",
-      title: "Transfer from Bob to charlie",
+      title: "Transfer 50 KDA Bob to charlie",
       type: "transfer",
       from: bob,
       fromNetwork: "kadena_devnet1",
@@ -232,7 +264,7 @@ const getChain0Playlist = async () => {
     },
     {
       id: "c0-004",
-      title: "Transfer from Alice to charlie",
+      title: "Transfer 50 KDA Alice to charlie",
       type: "transfer",
       from: charlie,
       fromNetwork: "kadena_devnet1",
@@ -243,7 +275,7 @@ const getChain0Playlist = async () => {
     },
     {
       id: "c0-005",
-      title: "Transfer from Alice to charlie",
+      title: "Transfer 100 KDA Alice to charlie",
       type: "transfer",
       from: alice,
       fromNetwork: "kadena_devnet1",
@@ -254,7 +286,7 @@ const getChain0Playlist = async () => {
     },
     {
       id: "c0-006",
-      title: "Transfer from charlie to Bob",
+      title: "Transfer 50 KDA charlie to Bob",
       type: "transfer",
       from: charlie,
       fromNetwork: "kadena_devnet1",
@@ -265,7 +297,7 @@ const getChain0Playlist = async () => {
     },
     {
       id: "c0-007",
-      title: "Transfer from Bob to Alice",
+      title: "Transfer 150 KDA Bob to Alice",
       type: "transfer",
       from: bob,
       fromNetwork: "kadena_devnet1",
@@ -276,7 +308,7 @@ const getChain0Playlist = async () => {
     },
     {
       id: "c0-008",
-      title: "Transfer from charlie to Alice",
+      title: "Transfer 50 KDA charlie to Alice",
       type: "transfer",
       from: charlie,
       fromNetwork: "kadena_devnet1",
@@ -287,7 +319,7 @@ const getChain0Playlist = async () => {
     },
     {
       id: "c0-009",
-      title: "Transfer from Bob to Alice",
+      title: "Transfer 100 KDA Bob to Alice",
       type: "transfer",
       from: bob,
       fromNetwork: "kadena_devnet1",
@@ -306,7 +338,7 @@ const getChain1Playlist = async () => {
   const playlist: Track[] = [
     {
       id: "c1-000",
-      title: "Transfer from Bob to Alice",
+      title: "Transfer 100 KDA Bob to Alice",
       type: "transfer",
       from: bob,
       fromNetwork: "kadena_devnet2",
@@ -317,7 +349,7 @@ const getChain1Playlist = async () => {
     },
     {
       id: "c1-001",
-      title: "Transfer from Bob to Alice",
+      title: "Transfer 100 KDA Bob to Alice",
       type: "transfer",
       from: bob,
       fromNetwork: "kadena_devnet2",
@@ -328,7 +360,7 @@ const getChain1Playlist = async () => {
     },
     {
       id: "c1-002",
-      title: "Transfer from Alice to Bob",
+      title: "Transfer 50 KDA Alice to Bob",
       type: "transfer",
       from: alice,
       fromNetwork: "kadena_devnet2",
@@ -339,7 +371,7 @@ const getChain1Playlist = async () => {
     },
     {
       id: "c1-003",
-      title: "Transfer from Alice to charlie",
+      title: "Transfer 50 KDA Alice to charlie",
       type: "transfer",
       from: alice,
       fromNetwork: "kadena_devnet2",
@@ -350,7 +382,7 @@ const getChain1Playlist = async () => {
     },
     {
       id: "c1-004",
-      title: "Transfer from charlie to Bob",
+      title: "Transfer 50 KDA charlie to Bob",
       type: "transfer",
       from: charlie,
       fromNetwork: "kadena_devnet2",
@@ -361,7 +393,7 @@ const getChain1Playlist = async () => {
     },
     {
       id: "c1-005",
-      title: "Transfer from charlie to Bob",
+      title: "Transfer 100 KDA charlie to Bob",
       type: "transfer",
       from: bob,
       fromNetwork: "kadena_devnet2",
@@ -372,7 +404,7 @@ const getChain1Playlist = async () => {
     },
     {
       id: "c1-006",
-      title: "Transfer from charlie to Alice",
+      title: "Transfer 50 KDA charlie to Alice",
       type: "transfer",
       from: charlie,
       fromNetwork: "kadena_devnet2",
@@ -383,7 +415,7 @@ const getChain1Playlist = async () => {
     },
     {
       id: "c1-007",
-      title: "Transfer from Alice to Bob",
+      title: "Transfer 150 KDA Alice to Bob",
       type: "transfer",
       from: alice,
       fromNetwork: "kadena_devnet2",
@@ -394,7 +426,7 @@ const getChain1Playlist = async () => {
     },
     {
       id: "c1-008",
-      title: "Transfer from charlie to Bob",
+      title: "Transfer 50 KDA charlie to Bob",
       type: "transfer",
       from: charlie,
       fromNetwork: "kadena_devnet2",
@@ -405,7 +437,7 @@ const getChain1Playlist = async () => {
     },
     {
       id: "c1-009",
-      title: "Transfer from Alice to Bob",
+      title: "Transfer 100 KDA Alice to Bob",
       type: "transfer",
       from: alice,
       fromNetwork: "kadena_devnet2",

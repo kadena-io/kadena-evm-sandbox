@@ -115,7 +115,7 @@ const crossChainTransfer = async (track: TransferTrack) => {
     );
   const receipt = await tx.wait();
   if (!receipt) throw new Error("Transaction failed");
-  await saveTx(track.fromNetwork, receipt, `${track.title} - Start`);
+  await saveTx(track.fromNetwork, receipt, `${track.title} - Start`, track.id);
   const logIndex = receipt?.logs.findIndex(
     (log) => log.topics[0] === eventSigHash
   );
@@ -132,7 +132,12 @@ const crossChainTransfer = async (track: TransferTrack) => {
   const txTo = await kewxTo
     .connect(track.to)
     .redeemCrossChain(track.to.address, track.amount, proof);
-  await saveTx(track.toNetwork, await txTo.wait(), `${track.title} - End`);
+  await saveTx(
+    track.toNetwork,
+    await txTo.wait(),
+    `${track.title} - End`,
+    track.id
+  );
 };
 const transfer = async (track: TransferTrack) => {
   if (track.fromNetwork !== track.toNetwork)
@@ -144,7 +149,7 @@ const transfer = async (track: TransferTrack) => {
     .connect(track.from)
     .transfer(track.to.address, track.amount);
   const receipt = await tx.wait();
-  await saveTx(track.fromNetwork, receipt, track.title);
+  await saveTx(track.fromNetwork, receipt, track.title, track.id);
 };
 const getSPVProof = async ({
   networkId,
@@ -222,13 +227,19 @@ const getTxs = async () => {
   const data = await readFile(".txs.json", "utf-8");
   return JSON.parse(data || "[]") as any[];
 };
-const saveTx = async (network: NetworkId, newTx: any, title?: string) => {
+const saveTx = async (
+  network: NetworkId,
+  newTx: any,
+  title?: string,
+  id?: string
+) => {
   const currentTxs = await getTxs();
   const contracts = await getContracts();
   const allTxs = [
     ...currentTxs,
     {
       title,
+      trackId: id,
       ...newTx.toJSON(),
       network,
       logs: newTx.logs.map((log: any) => {
@@ -306,8 +317,9 @@ export const app = new Elysia()
       return {
         chain0: toJSON(await getPlaylist("chain0")),
         chain1: toJSON(await getPlaylist("chain1")),
-        crossChain: toJSON(await getPlaylist("crosschain")),
+        crosschain: toJSON(await getPlaylist("crosschain")),
         single: toJSON(await getPlaylist("single")),
+        singlebob: toJSON(await getPlaylist("singlebob")),
       };
     },
     {}

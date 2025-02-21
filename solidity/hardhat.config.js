@@ -15,7 +15,6 @@ if (devnetAccounts.accounts.length !== requiredAccounts) {
   throw new Error(`Expected ${requiredAccounts} accounts in devnet-accounts.json, found ${devnetAccounts.accounts.length}`);
 };
 
-/** @type import('hardhat/config').HardhatUserConfig */
 module.exports = {
   solidity: {
     compilers: [

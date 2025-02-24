@@ -9,23 +9,88 @@ export const getPlaylist = async (list: string) => {
       return await getChain0Playlist();
     case "chain1":
       return await getChain1Playlist();
-    case "single": {
-      const [single] = await getCrosschainPlaylist();
-      return [single].map((d) => ({ ...d, id: 'crts-001' }));
-    }
-    case "singlebob": {
-      const crosschainPlaylist = await getCrosschainPlaylist();
-      const [lastItem] = crosschainPlaylist.slice(-1);
-      return [lastItem].map((d) => ({ ...d, id: 'crtsb-001' }));
-    }
+    case "singleAlice":
+      return await getCrosschainAlice();
+    case "singleBob":
+      return await getCrosschainBob();
     default:
       return [];
   }
 };
-const getCrosschainPlaylist = async () => {
-  await hre.switchNetwork("kadena_devnet1");
+const getCrosschainAlice = async () => {
+  await hre.switchNetwork("kadena_devnet0");
   const [, alice, , charlie] = await hre.ethers.getSigners();
-  await hre.switchNetwork("kadena_devnet2");
+  await hre.switchNetwork("kadena_devnet1");
+  const [, , bob, charlie1] = await hre.ethers.getSigners();
+  const playlist: Track[] = [
+    {
+      id: "crtA-001",
+      title: "Crosschain Transfer 100 KDA Alice to Bob",
+      type: "transfer",
+      from: alice,
+      fromNetwork: "kadena_devnet0",
+      to: bob,
+      toNetwork: "kadena_devnet1",
+      amount: hre.ethers.parseEther("200"),
+      steps: [
+        {
+          id: "crtA1",
+          title: "Alice initiates a crosschain transfer from chain0 to Bob on chain1",
+        },
+        {
+          id: "crtA2",
+          title:
+              "Alice polls chain1 for SPV proof of crosschain transfer initiation",
+        },
+        {
+          id: "crtA3",
+          title:
+              "Alice submits SPV proof to chain1 to finalize crosschain transfer",
+        },
+      ],
+    },
+  ];
+  return playlist;
+};
+const getCrosschainBob = async () => {
+  await hre.switchNetwork("kadena_devnet0");
+  const [, alice, , charlie] = await hre.ethers.getSigners();
+  await hre.switchNetwork("kadena_devnet1");
+  const [, , bob, charlie1] = await hre.ethers.getSigners();
+  const playlist: Track[] = [
+    {
+      id: "crtB-001",
+      title: "Crosschain Transfer 100 KDA Bob to Alice",
+      type: "transfer",
+      from: bob,
+      fromNetwork: "kadena_devnet1",
+      to: alice,
+      toNetwork: "kadena_devnet0",
+      amount: hre.ethers.parseEther("100"),
+      steps: [
+        {
+          id: "crtB1",
+          title: "Bob initiates a crosschain transfer from chain1 to Alice on chain0",
+        },
+        {
+          id: "crtB2",
+          title:
+              "Bob polls chain0 for SPV proof of crosschain transfer initiation",
+        },
+        {
+          id: "crtB3",
+          title:
+              "Bob submits SPV proof to chain0 to finalize crosschain transfer",
+        },
+      ],
+    },
+  ];
+  return playlist;
+};
+const getCrosschainPlaylist = async () => {
+  await hre.switchNetwork("kadena_devnet0");
+  const [, alice, , charlie] = await hre.ethers.getSigners();
+  await hre.switchNetwork("kadena_devnet1");
   const [, , bob, charlie1] = await hre.ethers.getSigners();
   const playlist: Track[] = [
     {
@@ -33,9 +98,9 @@ const getCrosschainPlaylist = async () => {
       title: "Crosschain Transfer 100 KDA Alice to Bob",
       type: "transfer",
       from: alice,
-      fromNetwork: "kadena_devnet1",
+      fromNetwork: "kadena_devnet0",
       to: bob,
-      toNetwork: "kadena_devnet2",
+      toNetwork: "kadena_devnet1",
       amount: hre.ethers.parseEther("100"),
       steps: [
         {
@@ -59,9 +124,9 @@ const getCrosschainPlaylist = async () => {
       title: "Crosschain Transfer 100 KDA Alice to Charlie",
       type: "transfer",
       from: alice,
-      fromNetwork: "kadena_devnet1",
+      fromNetwork: "kadena_devnet0",
       to: charlie1,
-      toNetwork: "kadena_devnet2",
+      toNetwork: "kadena_devnet1",
       amount: hre.ethers.parseEther("100"),
       steps: [
         {
@@ -85,9 +150,9 @@ const getCrosschainPlaylist = async () => {
       title: "Crosschain Transfer 50 KDA Bob to Charlie",
       type: "transfer",
       from: bob,
-      fromNetwork: "kadena_devnet2",
+      fromNetwork: "kadena_devnet1",
       to: charlie,
-      toNetwork: "kadena_devnet1",
+      toNetwork: "kadena_devnet0",
       amount: hre.ethers.parseEther("50"),
       steps: [
         {
@@ -111,9 +176,9 @@ const getCrosschainPlaylist = async () => {
       title: "Crosschain Transfer 100 KDA charlie to charlie",
       type: "transfer",
       from: charlie1,
-      fromNetwork: "kadena_devnet2",
+      fromNetwork: "kadena_devnet1",
       to: charlie,
-      toNetwork: "kadena_devnet1",
+      toNetwork: "kadena_devnet0",
       amount: hre.ethers.parseEther("100"),
       steps: [
         {
@@ -138,9 +203,9 @@ const getCrosschainPlaylist = async () => {
       title: "Crosschain Transfer 150 KDA charlie to Bob",
       type: "transfer",
       from: charlie,
-      fromNetwork: "kadena_devnet1",
+      fromNetwork: "kadena_devnet0",
       to: bob,
-      toNetwork: "kadena_devnet2",
+      toNetwork: "kadena_devnet1",
       amount: hre.ethers.parseEther("150"),
       steps: [
         {
@@ -164,9 +229,9 @@ const getCrosschainPlaylist = async () => {
       title: "Crosschain Transfer 100 KDA Bob to Alice",
       type: "transfer",
       from: bob,
-      fromNetwork: "kadena_devnet2",
+      fromNetwork: "kadena_devnet1",
       to: alice,
-      toNetwork: "kadena_devnet1",
+      toNetwork: "kadena_devnet0",
       amount: hre.ethers.parseEther("100"),
       steps: [
         {
@@ -190,9 +255,9 @@ const getCrosschainPlaylist = async () => {
       title: "Crosschain Transfer 100 KDA Bob to Alice",
       type: "transfer",
       from: bob,
-      fromNetwork: "kadena_devnet2",
+      fromNetwork: "kadena_devnet1",
       to: alice,
-      toNetwork: "kadena_devnet1",
+      toNetwork: "kadena_devnet0",
       amount: hre.ethers.parseEther("100"),
       steps: [
         {
@@ -215,7 +280,7 @@ const getCrosschainPlaylist = async () => {
   return playlist;
 };
 const getChain0Playlist = async () => {
-  await hre.switchNetwork("kadena_devnet1");
+  await hre.switchNetwork("kadena_devnet0");
   const [, alice, bob, charlie] = await hre.ethers.getSigners();
   const playlist: Track[] = [
     {
@@ -223,9 +288,9 @@ const getChain0Playlist = async () => {
       title: "Transfer 100 KDA Alice to Bob",
       type: "transfer",
       from: alice,
-      fromNetwork: "kadena_devnet1",
+      fromNetwork: "kadena_devnet0",
       to: bob,
-      toNetwork: "kadena_devnet1",
+      toNetwork: "kadena_devnet0",
       amount: hre.ethers.parseEther("100"),
       steps: [{ id: "c01", title: "Alice transfers to Bob on chain 0" }],
     },
@@ -234,9 +299,9 @@ const getChain0Playlist = async () => {
       title: "Transfer 200 KDA Alice to Bob",
       type: "transfer",
       from: alice,
-      fromNetwork: "kadena_devnet1",
+      fromNetwork: "kadena_devnet0",
       to: bob,
-      toNetwork: "kadena_devnet1",
+      toNetwork: "kadena_devnet0",
       amount: hre.ethers.parseEther("200"),
       steps: [{ id: "c02", title: "Alice transfers to Bob on chain 0" }],
     },
@@ -245,9 +310,9 @@ const getChain0Playlist = async () => {
       title: "Transfer 50 KDA Bob to Alice",
       type: "transfer",
       from: bob,
-      fromNetwork: "kadena_devnet1",
+      fromNetwork: "kadena_devnet0",
       to: alice,
-      toNetwork: "kadena_devnet1",
+      toNetwork: "kadena_devnet0",
       amount: hre.ethers.parseEther("50"),
       steps: [{ id: "c03", title: "Bob transfers to Alice on chain 0" }],
     },
@@ -256,9 +321,9 @@ const getChain0Playlist = async () => {
       title: "Transfer 50 KDA Bob to charlie",
       type: "transfer",
       from: bob,
-      fromNetwork: "kadena_devnet1",
+      fromNetwork: "kadena_devnet0",
       to: charlie,
-      toNetwork: "kadena_devnet1",
+      toNetwork: "kadena_devnet0",
       amount: hre.ethers.parseEther("50"),
       steps: [{ id: "c04", title: "Bob transfers to Charlie on chain 0" }],
     },
@@ -267,9 +332,9 @@ const getChain0Playlist = async () => {
       title: "Transfer 50 KDA Alice to charlie",
       type: "transfer",
       from: charlie,
-      fromNetwork: "kadena_devnet1",
+      fromNetwork: "kadena_devnet0",
       to: alice,
-      toNetwork: "kadena_devnet1",
+      toNetwork: "kadena_devnet0",
       amount: hre.ethers.parseEther("50"),
       steps: [{ id: "c05", title: "Charlie transfers to Alice on chain 0" }],
     },
@@ -278,9 +343,9 @@ const getChain0Playlist = async () => {
       title: "Transfer 100 KDA Alice to charlie",
       type: "transfer",
       from: alice,
-      fromNetwork: "kadena_devnet1",
+      fromNetwork: "kadena_devnet0",
       to: charlie,
-      toNetwork: "kadena_devnet1",
+      toNetwork: "kadena_devnet0",
       amount: hre.ethers.parseEther("100"),
       steps: [{ id: "c06", title: "Alice transfers to Charlie on chain 0" }],
     },
@@ -289,9 +354,9 @@ const getChain0Playlist = async () => {
       title: "Transfer 50 KDA charlie to Bob",
       type: "transfer",
       from: charlie,
-      fromNetwork: "kadena_devnet1",
+      fromNetwork: "kadena_devnet0",
       to: bob,
-      toNetwork: "kadena_devnet1",
+      toNetwork: "kadena_devnet0",
       amount: hre.ethers.parseEther("50"),
       steps: [{ id: "c07", title: "Charlie transfers to Bob on chain 0" }],
     },
@@ -300,9 +365,9 @@ const getChain0Playlist = async () => {
       title: "Transfer 150 KDA Bob to Alice",
       type: "transfer",
       from: bob,
-      fromNetwork: "kadena_devnet1",
+      fromNetwork: "kadena_devnet0",
       to: alice,
-      toNetwork: "kadena_devnet1",
+      toNetwork: "kadena_devnet0",
       amount: hre.ethers.parseEther("150"),
       steps: [{ id: "c08", title: "Bob transfers to Alice on chain 0" }],
     },
@@ -311,9 +376,9 @@ const getChain0Playlist = async () => {
       title: "Transfer 50 KDA charlie to Alice",
       type: "transfer",
       from: charlie,
-      fromNetwork: "kadena_devnet1",
+      fromNetwork: "kadena_devnet0",
       to: alice,
-      toNetwork: "kadena_devnet1",
+      toNetwork: "kadena_devnet0",
       amount: hre.ethers.parseEther("50"),
       steps: [{ id: "c09", title: "Charlie transfers to Alice on chain 0" }],
     },
@@ -322,9 +387,9 @@ const getChain0Playlist = async () => {
       title: "Transfer 100 KDA Bob to Alice",
       type: "transfer",
       from: bob,
-      fromNetwork: "kadena_devnet1",
+      fromNetwork: "kadena_devnet0",
       to: alice,
-      toNetwork: "kadena_devnet1",
+      toNetwork: "kadena_devnet0",
       amount: hre.ethers.parseEther("100"),
       steps: [{ id: "c010", title: "Bob transfers to Alice on chain 0" }],
     },
@@ -333,7 +398,7 @@ const getChain0Playlist = async () => {
 };
 
 const getChain1Playlist = async () => {
-  await hre.switchNetwork("kadena_devnet2");
+  await hre.switchNetwork("kadena_devnet1");
   const [, alice, bob, charlie] = await hre.ethers.getSigners();
   const playlist: Track[] = [
     {
@@ -341,9 +406,9 @@ const getChain1Playlist = async () => {
       title: "Transfer 100 KDA Bob to Alice",
       type: "transfer",
       from: bob,
-      fromNetwork: "kadena_devnet2",
+      fromNetwork: "kadena_devnet1",
       to: alice,
-      toNetwork: "kadena_devnet2",
+      toNetwork: "kadena_devnet1",
       amount: hre.ethers.parseEther("100"),
       steps: [{ id: "c11", title: "Bob transfers to Alice on chain 1" }],
     },
@@ -352,9 +417,9 @@ const getChain1Playlist = async () => {
       title: "Transfer 100 KDA Bob to Alice",
       type: "transfer",
       from: bob,
-      fromNetwork: "kadena_devnet2",
+      fromNetwork: "kadena_devnet1",
       to: alice,
-      toNetwork: "kadena_devnet2",
+      toNetwork: "kadena_devnet1",
       amount: hre.ethers.parseEther("200"),
       steps: [{ id: "c12", title: "Bob transfers to Alice on chain 1" }],
     },
@@ -363,9 +428,9 @@ const getChain1Playlist = async () => {
       title: "Transfer 50 KDA Alice to Bob",
       type: "transfer",
       from: alice,
-      fromNetwork: "kadena_devnet2",
+      fromNetwork: "kadena_devnet1",
       to: bob,
-      toNetwork: "kadena_devnet2",
+      toNetwork: "kadena_devnet1",
       amount: hre.ethers.parseEther("50"),
       steps: [{ id: "c13", title: "Alice transfers to Bob on chain 1" }],
     },
@@ -374,9 +439,9 @@ const getChain1Playlist = async () => {
       title: "Transfer 50 KDA Alice to charlie",
       type: "transfer",
       from: alice,
-      fromNetwork: "kadena_devnet2",
+      fromNetwork: "kadena_devnet1",
       to: charlie,
-      toNetwork: "kadena_devnet2",
+      toNetwork: "kadena_devnet1",
       amount: hre.ethers.parseEther("50"),
       steps: [{ id: "c14", title: "Alice transfers to Charlie on chain 1" }],
     },
@@ -385,9 +450,9 @@ const getChain1Playlist = async () => {
       title: "Transfer 50 KDA charlie to Bob",
       type: "transfer",
       from: charlie,
-      fromNetwork: "kadena_devnet2",
+      fromNetwork: "kadena_devnet1",
       to: bob,
-      toNetwork: "kadena_devnet2",
+      toNetwork: "kadena_devnet1",
       amount: hre.ethers.parseEther("50"),
       steps: [{ id: "c15", title: "Charlie transfers to Bob on chain 1" }],
     },
@@ -396,9 +461,9 @@ const getChain1Playlist = async () => {
       title: "Transfer 100 KDA charlie to Bob",
       type: "transfer",
       from: bob,
-      fromNetwork: "kadena_devnet2",
+      fromNetwork: "kadena_devnet1",
       to: charlie,
-      toNetwork: "kadena_devnet2",
+      toNetwork: "kadena_devnet1",
       amount: hre.ethers.parseEther("100"),
       steps: [{ id: "c16", title: "Bob transfers to Charlie on chain 1" }],
     },
@@ -407,9 +472,9 @@ const getChain1Playlist = async () => {
       title: "Transfer 50 KDA charlie to Alice",
       type: "transfer",
       from: charlie,
-      fromNetwork: "kadena_devnet2",
+      fromNetwork: "kadena_devnet1",
       to: alice,
-      toNetwork: "kadena_devnet2",
+      toNetwork: "kadena_devnet1",
       amount: hre.ethers.parseEther("50"),
       steps: [{ id: "c17", title: "Charlie transfers to Alice on chain 1" }],
     },
@@ -418,9 +483,9 @@ const getChain1Playlist = async () => {
       title: "Transfer 150 KDA Alice to Bob",
       type: "transfer",
       from: alice,
-      fromNetwork: "kadena_devnet2",
+      fromNetwork: "kadena_devnet1",
       to: bob,
-      toNetwork: "kadena_devnet2",
+      toNetwork: "kadena_devnet1",
       amount: hre.ethers.parseEther("150"),
       steps: [{ id: "c18", title: "Alice transfers to Bob on chain 1" }],
     },
@@ -429,9 +494,9 @@ const getChain1Playlist = async () => {
       title: "Transfer 50 KDA charlie to Bob",
       type: "transfer",
       from: charlie,
-      fromNetwork: "kadena_devnet2",
+      fromNetwork: "kadena_devnet1",
       to: bob,
-      toNetwork: "kadena_devnet2",
+      toNetwork: "kadena_devnet1",
       amount: hre.ethers.parseEther("50"),
       steps: [{ id: "c19", title: "Charlie transfers to Bob on chain 1" }],
     },
@@ -440,9 +505,9 @@ const getChain1Playlist = async () => {
       title: "Transfer 100 KDA Alice to Bob",
       type: "transfer",
       from: alice,
-      fromNetwork: "kadena_devnet2",
+      fromNetwork: "kadena_devnet1",
       to: bob,
-      toNetwork: "kadena_devnet2",
+      toNetwork: "kadena_devnet1",
       amount: hre.ethers.parseEther("100"),
       steps: [{ id: "c110", title: "Alice transfers to Bob on chain 1" }],
     },

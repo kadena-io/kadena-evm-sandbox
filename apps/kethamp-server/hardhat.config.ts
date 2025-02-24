@@ -23,12 +23,12 @@ const config: HardhatUserConfig = {
     },
   },
   networks: {
-    kadena_devnet1: {
+    kadena_devnet0: {
       url: "http://localhost:8545",
       chainId: 1789,
       accounts: accounts.map(({ privateKey }) => privateKey),
     },
-    kadena_devnet2: {
+    kadena_devnet1: {
       url: "http://localhost:8555",
       chainId: 1790,
       accounts: accounts.map(({ privateKey }) => privateKey),

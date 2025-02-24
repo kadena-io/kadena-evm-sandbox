@@ -1,6 +1,6 @@
 import hre from "hardhat";
 
-export type NetworkId = "kadena_devnet1" | "kadena_devnet2";
+export type NetworkId = "kadena_devnet0" | "kadena_devnet1";
 export type DeployTrack = {
   id: string;
   title: string;
@@ -13,10 +13,17 @@ export type RegisterCrossChainTrack = {
   type: "register-cross-chain";
   networks: NetworkId[];
 };
-export type FundTrack = {
+export type FundTrackAlice = {
   id: string;
   title: string;
-  type: "fund";
+  type: "fundAlice";
+  network: NetworkId;
+  address: string;
+};
+export type FundTrackBob = {
+  id: string;
+  title: string;
+  type: "fundBob";
   network: NetworkId;
   address: string;
 };
@@ -41,5 +48,6 @@ export type TransferTrack = {
 export type Track =
   | DeployTrack
   | RegisterCrossChainTrack
-  | FundTrack
+  | FundTrackAlice
+  | FundTrackBob
   | TransferTrack;

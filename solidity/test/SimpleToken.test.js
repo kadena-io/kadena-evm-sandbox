@@ -336,7 +336,7 @@ describe("SimpleToken Unit Tests", async function () {
           .withArgs(token1Info.chain, token0Info.chain);
       });
 
-      it("Should revert when redeeming on the wrong contrct", async function () {
+      it("Should revert when redeeming on the wrong contract", async function () {
         // Switch to chain1, where token1 is deployed
         await switchNetwork(token1Info.network.name);
 

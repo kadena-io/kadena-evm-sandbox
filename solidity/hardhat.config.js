@@ -16,7 +16,6 @@ if (devnetAccounts.accounts.length !== requiredAccounts) {
   throw new Error(`Expected ${requiredAccounts} accounts in devnet-accounts.json, found ${devnetAccounts.accounts.length}`);
 };
 
-/** @type import('hardhat/config').HardhatUserConfig */
 module.exports = {
   solidity: {
     compilers: [
@@ -50,7 +49,7 @@ module.exports = {
 
     ]
   },
-  // defaultNetwork: "kadena_devnet0",
+  defaultNetwork: "kadena_devnet0",
   networks: {
     // This is a "fake" network. It is used only as configuration for
     // externally managed hardhat nodes.

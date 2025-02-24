@@ -1,16 +1,46 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-"use client";
+'use client';
 
-import React from "react";
-import { TAccount, TContext, TList, TTransaction } from "./context.type";
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
+import useLocalStorage from '@app/hooks/localStorage';
+import {
+  filterListByAccount,
+  getAccountsList,
+  getActivePlaylistByTrackId,
+  getPlaylists,
+  getTracksByProgressTxs,
+  getTransactionsList,
+  getTransactionsListByNetwork,
+  groupTransactions,
+  maxSize,
+  networks,
+  stateHook,
+} from '@app/utils';
+import React from 'react';
+import type {
+  TContext,
+  TGroup,
+  TPlaylist,
+  TTransferTrack,
+} from './context.type';
+import { initialState } from './data';
 
 const Context = React.createContext<TContext | null>(null);
 const ContextDispatch = React.createContext(null) as unknown as React.Context<
   React.Dispatch<{ payload?: any; type: string }>
 >;
 
+export const localStorageKey = 'kethamp';
+
 const ContextProvider = ({ children }: { children: React.ReactNode }) => {
-  const [state, dispatch] = React.useReducer(stateReducer, initialState);
+  const [localState] = useLocalStorage<typeof initialState>(
+    localStorageKey,
+    initialState,
+  );
+  const [state, dispatch] = React.useReducer(stateReducer, {
+    ...initialState,
+    ...localState,
+  });
 
   return (
     <Context.Provider value={state}>
@@ -29,170 +59,19 @@ export function useContextDispatch() {
   return React.useContext(ContextDispatch);
 }
 
-function groupByStep(list: TGroupTransactions | undefined, step: number) {
-  if (!list) {
-    return {};
-  }
-
-  const grouped: Record<string, TTransaction[]> = {};
-  const keys = Object.keys(list).map(parseFloat);
-
-  const minKey = Math.floor(Math.min(...keys) / step) * step;
-  const maxKey = Math.ceil(Math.max(...keys) / step) * step;
-
-  for (let i = minKey; i <= maxKey; i += step) {
-    grouped[i] = [];
-  }
-
-  keys.forEach((key) => {
-    const groupKey = Math.floor(key / step) * step;
-    grouped[groupKey]?.push(...list[key.toString()]);
-  });
-
-  return grouped;
-}
-
-type TGroupTransactions = Record<string, TTransaction[]>;
-function groupTransactions(
-  transactions: TTransaction[],
-  stepSize: number
-): TGroupTransactions | undefined {
-  if (transactions) {
-    const minBlockNumber = transactions.reduce(
-      (acc, d) => Math.min(acc, d?.blockNumber ?? 0),
-      Infinity
-    );
-    const lastBlockNumber = transactions.reduce(
-      (acc, d) => Math.max(acc, d?.blockNumber ?? 0),
-      0
-    );
-    const duration = lastBlockNumber - minBlockNumber;
-    const steps = 100 / duration;
-
-    const transactionsByPercentage = transactions.reduce<TGroupTransactions>(
-      (acc, d) => {
-        const percentage =
-          (((d?.blockNumber ?? 0) - minBlockNumber) / duration) * 100;
-        const step = Math.floor(percentage * steps);
-
-        return {
-          ...acc,
-          [percentage]: acc[step] ? [...acc[step], d] : [d],
-        };
-      },
-      {}
-    );
-
-    return groupByStep(transactionsByPercentage, stepSize);
-  }
-}
-
-function networks(transactions: TContext["transactions"]["data"]): string[] {
-  if (!transactions) {
-    return [];
-  }
-
-  return transactions.reduce<string[]>((acc, d) => {
-    if (d.network && !acc.includes(d.network)) {
-      return [...acc, d.network];
-    }
-
-    return acc;
-  }, []);
-}
-
-function maxSize(data: TGroupTransactions | undefined): number {
-  if (!data) return 0;
-
-  return Math.max(0, ...Object.values(data).map((arr) => arr.length));
-}
-
-function getTransactionsList(
-  state: TContext,
-  graphData?: TContext["graph"]["data"] | null
-): TTransaction[] {
-  const { progress } = state.graph.options;
-
-  if (graphData) {
-    return graphData[progress] ?? [];
-  }
-
-  return state.graph.data?.[progress] ?? [];
-}
-
-function getTransactionsListByNetwork(
-  state: TContext,
-  networkList?: TContext["networks"]["list"],
-  graphData?: TContext["graph"]["data"]
-) {
-  const { progress } = state.graph.options;
-  let data = state.graph.data?.[progress] ?? [];
-
-  if (graphData) {
-    data = graphData[progress] ?? [];
-  }
-
-  if (!data) return [];
-
-  const networks = networkList || state.networks.list;
-
-  if (!networks) return [];
-
-  return networks.reduce<TList<TTransaction>[]>((list, networkId) => {
-    const filteredData = data.filter((d) => d.network === networkId);
-
-    if (filteredData.length > 0) {
-      list.push({
-        title: networkId,
-        list: filteredData,
-      });
-    }
-
-    return list;
-  }, []);
-}
-
-function getAccountsList(
-  accounts: TContext["accounts"]["data"]
-): TContext["accounts"]["list"] {
-  return Object.entries(accounts).flatMap(
-    ([chainKey, account]) =>
-      Object.entries(account).map(([accountName, accountData]) => ({
-        ...accountData,
-        chain: chainKey,
-        name: accountName,
-      })) as TAccount[]
-  );
-}
-
-function filterListByAccount(
-  list: TList<TTransaction>[] | null,
-  account: TAccount | null
-) {
-  if (!list || !account) return list;
-
-  return Object.values(list).reduce<TList<TTransaction>[]>((acc, item) => {
-    acc.push({ ...item, list: item.list.filter(
-      (entry) => entry.from === account.address || entry.to === account.address
-    ) });
-
-    return acc;
-  }, []);
-}
-
 function stateReducer(
   state: TContext,
-  action: { payload?: any; type: string }
+  action: { payload?: any; type: string },
 ) {
   switch (action.type) {
-    case "UPDATE_DATA": {
+    case 'UPDATE_DATA': {
       const graphData = groupTransactions(
         action.payload.transactions,
-        state.graph.options.stepSize
+        state.graph.options.stepSize,
       );
       const networkData = networks(action.payload.transactions);
 
-      return {
+      return stateHook({
         ...state,
         networks: {
           ...state.networks,
@@ -211,7 +90,7 @@ function stateReducer(
             network: getTransactionsListByNetwork(
               state,
               networkData,
-              graphData
+              graphData,
             ),
           },
         },
@@ -223,27 +102,27 @@ function stateReducer(
             maxStepCount: maxSize(graphData),
           },
         },
-      };
+      });
     }
 
-    case "UPDATE_ACCOUNTS":
-      return {
+    case 'UPDATE_ACCOUNTS':
+      return stateHook({
         ...state,
         accounts: {
           ...state.accounts,
           data: action.payload.accounts,
           list: [] /* accounts(action.payload.transactions) */,
         },
-      };
+      });
 
-    case "UPDATE_TRANSCATIONS":
-      return {
+    case 'UPDATE_TRANSCATIONS':
+      return stateHook({
         ...state,
         transactions: action.payload.transactions,
-      };
+      });
 
-    case "RESET_PROGRESS": {
-      return {
+    case 'RESET_PROGRESS': {
+      return stateHook({
         ...state,
         graph: {
           ...state.graph,
@@ -253,11 +132,11 @@ function stateReducer(
             isPlaying: false,
           },
         },
-      };
+      });
     }
 
-    case "STOP_PROGRESS": {
-      return {
+    case 'STOP_PROGRESS': {
+      return stateHook({
         ...state,
         graph: {
           ...state.graph,
@@ -266,18 +145,18 @@ function stateReducer(
             isPlaying: false,
           },
         },
-      };
+      });
     }
 
-    case "SET_PROGRESS": {
+    case 'SET_PROGRESS': {
       const progress = action.payload.progress ?? state.graph.options.progress;
       let next = action.payload.next ?? 0;
 
-      if (action.payload.direction === "forwards") {
+      if (action.payload.direction === 'forwards') {
         if (progress < 100 && next > 100) {
           next = 100;
         }
-      } else if (action.payload.direction === "backwards") {
+      } else if (action.payload.direction === 'backwards') {
         if (progress > 0 && next < 0) {
           next = 0;
         }
@@ -286,7 +165,7 @@ function stateReducer(
       const nextState = { ...state };
       nextState.graph.options.progress = next;
 
-      return {
+      return stateHook({
         ...state,
         transactions: {
           ...state.transactions,
@@ -305,21 +184,32 @@ function stateReducer(
             isPlaying: action.payload.isPlaying || false,
             progress: action.payload.progress ?? next,
           },
+          active: {
+            ...state.graph.active,
+            transaction: null,
+            tracks: getTracksByProgressTxs(next, nextState),
+            playlist: {
+              ...state.graph.active.playlist,
+              item:
+                getActivePlaylistByTrackId(next, nextState) ??
+                state.graph.active.playlist.item,
+            },
+          },
         },
-      };
+      });
     }
 
-    case "SET_ACTIVE_TRANSACTION": {
+    case 'SET_ACTIVE_TRANSACTION': {
       let transaction =
         state?.transactions?.data?.find(
-          (d) => d.hash === action.payload.hash
+          (d) => d.hash === action.payload.hash,
         ) || null;
 
       if (state.graph.active.transaction?.hash === action.payload.hash) {
         transaction = null;
       }
 
-      return {
+      return stateHook({
         ...state,
         graph: {
           ...state.graph,
@@ -328,15 +218,15 @@ function stateReducer(
             transaction,
           },
         },
-      };
+      });
     }
 
-    case "SET_ACTIVE_ACCOUNT": {
+    case 'SET_ACTIVE_ACCOUNT': {
       let account =
         state.accounts.list.find(
           (d) =>
             d.address === action.payload.address &&
-            d.chain === action.payload.chain
+            d.chain === action.payload.chain,
         ) || null;
 
       if (
@@ -346,7 +236,7 @@ function stateReducer(
         account = null;
       }
 
-      return {
+      return stateHook({
         ...state,
         graph: {
           ...state.graph,
@@ -364,142 +254,177 @@ function stateReducer(
               ...state.transactions.list.filtered,
               network: filterListByAccount(
                 state.transactions.list.network,
-                account
+                account,
               ),
             },
           },
         },
-      };
+      });
     }
 
-    case "SET_ACTIVE_PLAYLIST": {
-      let playlist =
-        state.playlists.data.find((d) => d.id === action.payload.playlistId) ||
-        null;
+    case 'SET_ACTIVE_PLAYLIST': {
+      const playlist: TGroup<TPlaylist> | null =
+        action.payload.playlist ?? null;
 
-      if (playlist === state.graph.active.playlist) {
-        playlist = null;
+      if (playlist?.id === state.graph.active.playlist.item?.id) {
+        return state;
       }
 
-      return {
+      return stateHook({
         ...state,
         graph: {
           ...state.graph,
           active: {
             ...state.graph.active,
-            playlist,
+            playlist: {
+              ...state.graph.active.playlist,
+              item: action.payload.playlist ?? null,
+              track: {
+                ...state.graph.active.playlist.track,
+                active: null,
+                list: null,
+                completed: null,
+              },
+            },
           },
         },
-      };
+      });
     }
 
-    case "SET_DEPLOYMENT":
-      return {
+    case 'SET_ACTIVE_PLAYLIST_TRACK': {
+      let playlist: TTransferTrack | null = action.payload.playlist ?? null;
+
+      if (playlist?.id === state.graph.active.playlist.item?.id) {
+        playlist = null;
+      }
+
+      return stateHook({
+        ...state,
+        graph: {
+          ...state.graph,
+          active: {
+            ...state.graph.active,
+            playlist: {
+              ...state.graph.active.playlist,
+              track: {
+                active: playlist,
+                list: playlist?.steps ?? null,
+                completed: null,
+              },
+            },
+          },
+        },
+      });
+    }
+
+    case 'SET_DEPLOYMENT':
+      return stateHook({
         ...state,
         deployments: {
           ...state.deployments,
           isDeployed: action.payload,
           playlists: [],
         },
-      };
+      });
 
-    case "CHECK_DEPLOYMENT":
-      return {
+    case 'CHECK_DEPLOYMENT':
+      return stateHook({
         ...state,
         deployments: {
           ...state.deployments,
           isDeployed: !!state.transactions.data?.length,
         },
-      };
+      });
 
-    case "DEPLOYED_PLAYLISTS":
-      return {
+    case 'RESET_PLAYLISTS': {
+      const { playlists: data } = action.payload || { playlists: null };
+      let list = null;
+
+      if (data) {
+        list = getPlaylists(data);
+      }
+
+      if (
+        !state.graph.active.playlist.item ||
+        !state.graph.active.playlist.track.list?.length
+      ) {
+        const [firstGroup] = list?.groups ?? [];
+
+        return stateHook({
+          ...state,
+          graph: {
+            ...state.graph,
+            active: {
+              ...state.graph.active,
+              playlist: {
+                item: firstGroup ?? null,
+                track: {
+                  ...state.graph.active.playlist.track,
+                  list: firstGroup.list ?? null,
+                  completed: null,
+                },
+              },
+            },
+          },
+          playlists: {
+            ...state.playlists,
+            data,
+            list,
+          },
+        });
+      }
+
+      return stateHook({
+        ...state,
+        playlists: {
+          ...state.playlists,
+          data,
+          list,
+        },
+      });
+    }
+
+    case 'DEPLOYED_PLAYLISTS':
+      return stateHook({
         ...state,
         deployments: {
           ...state.deployments,
           playlists: [
             ...new Set([
-              ...state.deployments.playlists,
-              action.payload.playlist,
+              ...(state.deployments.playlists || []),
+              action.payload.playlistId,
             ]),
-          ],
+          ].filter((d) => d),
         },
-      };
+      });
 
-    case "LOADING":
-      return {
+    case 'SET_VOLUME':
+      return stateHook({
+        ...state,
+        graph: {
+          ...state.graph,
+          options: {
+            ...state.graph.options,
+            volume: action.payload.volume,
+          },
+        },
+      });
+
+    case 'LOADING':
+      return stateHook({
         ...state,
         isLoading: action.payload,
-      };
+      });
 
-    case "RESET_STATE": {
-      return {
+    case 'RESET_STATE': {
+      return stateHook({
         ...initialState,
-      };
+      });
     }
 
     default:
-      return state;
+      return stateHook(state);
   }
 }
-
-export const initialState = {
-  isLoading: true,
-  deployments: {
-    isDeployed: false,
-    playlists: [],
-  },
-  playlists: {
-    isLoading: false,
-    list: [],
-    data: [
-      {
-        id: "chain0",
-        title: "Play on chain 0",
-      },
-      {
-        id: "chain1",
-        title: "Play on chain 1",
-      },
-      {
-        id: "crosschain",
-        title: "Play crosschain transfers",
-      },
-    ],
-  },
-  accounts: {
-    isLoading: false,
-    list: [],
-    data: {},
-  },
-  transactions: {
-    isLoading: false,
-    list: {
-      block: null,
-      network: null,
-      filtered: {
-        network: null,
-      },
-    },
-    data: null,
-  },
-  graph: {
-    data: null,
-    active: {
-      transaction: null,
-      account: null,
-      playlist: null,
-    },
-    options: {
-      isPlaying: false,
-      progress: 0,
-      stepSize: 10,
-      maxStepCount: 0,
-    },
-  },
-  networks: {
-    list: [],
-  },
-};
 
 export default ContextProvider;

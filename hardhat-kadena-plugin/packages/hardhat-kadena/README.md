@@ -10,6 +10,23 @@ To install the plugin, run the following command: **NOT PUBLISHED YET**
 npm install hardhat_kadena
 ```
 
+## Build from source
+You can also build the plugin from source. To do this, first, clone the repository and follow these steps:
+
+**Note**: You need to have `pnpm` installed.
+```bash
+cd hardhat-kadena-plugin
+pnpm install
+cd packages/hardhat-kadena
+pnpm build
+```
+Once built, you can run the tests for the example project:
+```bash
+cd ../solidity-example
+pnpm hardhat test
+```
+
+
 ## Usage
 
 To use the plugin in your Hardhat project, import it in your Hardhat configuration file (`hardhat.config.ts` or `hardhat.config.js`):
@@ -39,8 +56,7 @@ The plugin uses the following configuration options:
 | `accounts`    | `HardhatNetworkAccountsConfig` (optional) | Defines the accounts configuration for the network (default: Hardhat network accounts). |
 | `chains`      | `number` (optional) | Specifies the number of chains in the Chainweb network (default: `2`). |
 | `graph`       | `{ [key: number]: number[] }` (optional) | Defines the graph structure of the Chainweb network where keys represent chain IDs and values are arrays of connected chain IDs (default: Pearson graph). |
-| `logging`     | `"none" \| "info" \| "debug"` (optional) | Sets the logging level for debugging 
-purposes (default: `"info"`). |
+| `logging`     | `"none" \| "info" \| "debug"` (optional) | Sets the logging level for debugging  purposes (default: `"info"`). |
 
 ## Graph
 If you don’t provide a graph, the plugin automatically generates one for the chains using its built-in algorithm. Currently, it supports only 2, 3, 10, or 20 chains. If you need a different number of chains, you must explicitly pass the graph property
@@ -51,7 +67,13 @@ If you don’t provide a graph, the plugin automatically generates one for the c
 module.exports = {
   solidity: "0.8.20",
   chainweb: {
-    chains: 2,
+    chains: 4,
+    graph: {
+      0: [1,2,3]
+      1: [0,2,3]
+      2: [0,1,3]
+      3: [0,1,2]
+    }
   },
 };
 ```
@@ -73,14 +95,11 @@ module.exports = {
   networks: {
     kadena_devnet_0: {
       chainId: 123, // Use custom chainId for chain 0
+      gasPrice: 0.1 // set custom gas price
     },
   },
   chainweb: {
     chains: 2,
-    graph: {
-      0: [1],
-      1: [0],
-    },
   },
 };
 ```
@@ -117,6 +136,17 @@ export interface ChainwebPluginApi {
 | `deployMocks` | None | `ReturnType<DeployContractOnChains>` | Deploys mock contracts for testing. |
 | `network` | None | `ChainwebNetwork` | Provides access to the Chainweb network object. |
 
+For the spv proof you need to pass the origin with the following interface
+```TS
+export interface Origin {
+  chain: bigint;
+  originContractAddress: string;
+  height: bigint;
+  txIdx: bigint;
+  eventIdx: bigint;
+}
+```
+
 ### Example
 ```TS
 import { chainweb } from "hardhat"
@@ -140,8 +170,9 @@ This plugin overrides `switchNetwork` from `hardhat-switch-network` to load the 
 ## Future Works
 
 - Support external Chainweb configuration.
+- Support chainweb docker compose
 - Support multiple Chianweb
-- Expose PRC Server
+- Expose PRC Server for `hardhat --node`
 
 ## License
 

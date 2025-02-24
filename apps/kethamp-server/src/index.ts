@@ -1,4 +1,4 @@
-import hre, { ethers } from "hardhat";
+import hre from "hardhat";
 import { SimpleToken } from "../typechain-types";
 import { Elysia, t } from "elysia";
 import { swagger } from "@elysiajs/swagger";
@@ -10,47 +10,48 @@ import {
   NetworkId,
   Track,
   TransferTrack,
-  FundTrack,
+  FundTrackAlice,
+  FundTrackBob,
   RegisterCrossChainTrack,
 } from "./types";
 import { getPlaylist } from "./playlists";
 
 const getDeployPlaylist = async () => {
-  await hre.switchNetwork("kadena_devnet1");
+  await hre.switchNetwork("kadena_devnet0");
   const [, alice] = await hre.ethers.getSigners();
-  await hre.switchNetwork("kadena_devnet2");
+  await hre.switchNetwork("kadena_devnet1");
   const [, , bob] = await hre.ethers.getSigners();
   const playlist: Track[] = [
     {
       id: "deploy-1",
+      title: "Deploy KEWX on devnet0",
+      type: "deploy",
+      network: "kadena_devnet0",
+    },
+    {
+      id: "deploy-2",
       title: "Deploy KEWX on devnet1",
       type: "deploy",
       network: "kadena_devnet1",
     },
     {
-      id: "deploy-2",
-      title: "Deploy KEWX on devnet2",
-      type: "deploy",
-      network: "kadena_devnet2",
-    },
-    {
       id: "register-cross-chain-1",
       title: "Register cross-chain address",
       type: "register-cross-chain",
-      networks: ["kadena_devnet1", "kadena_devnet2"],
+      networks: ["kadena_devnet0", "kadena_devnet1"],
     },
     {
       id: "fund-1",
-      title: "Fund Alice on devnet1",
-      type: "fund",
-      network: "kadena_devnet1",
+      title: "Fund Alice on devnet0",
+      type: "fundAlice",
+      network: "kadena_devnet0",
       address: alice.address,
     },
     {
       id: "fund-2",
-      title: "Fund Bob on devnet2",
-      type: "fund",
-      network: "kadena_devnet2",
+      title: "Fund Bob on devnet1",
+      type: "fundBob",
+      network: "kadena_devnet1",
       address: bob.address,
     },
   ];
@@ -111,7 +112,7 @@ const crossChainTransfer = async (track: TransferTrack) => {
     .transferCrossChain(
       track.to.address,
       track.amount,
-      track.toNetwork === "kadena_devnet1" ? 0n : 1n
+      track.toNetwork === "kadena_devnet0" ? 0n : 1n
     );
   const receipt = await tx.wait();
   if (!receipt) throw new Error("Transaction failed");
@@ -164,11 +165,11 @@ const getSPVProof = async ({
 }) => {
   const origin = {
     height,
-    chain: networkId === "kadena_devnet1" ? 0 : 1,
+    chain: networkId === "kadena_devnet0" ? 0 : 1,
     txIdx,
     eventIdx,
   };
-  const target = networkId === "kadena_devnet1" ? 0 : 1;
+  const target = networkId === "kadena_devnet0" ? 0 : 1;
   const res = await fetch(
     `http://localhost:1848/chainweb/0.0/evm-development/chain/${target}/spv/chain/${origin.chain}/height/${origin.height}/transaction/${origin.txIdx}/event/${origin.eventIdx}`
   );
@@ -177,7 +178,7 @@ const getSPVProof = async ({
   const hexProof = "0x" + Buffer.from(proofStr, "utf8").toString("hex");
   return hexProof;
 };
-const fund = async (track: FundTrack) => {
+const fundAlice = async (track: FundTrackAlice) => {
   await hre.switchNetwork(track.network);
   const [owner] = await hre.ethers.getSigners();
   const kewx = await getContract(track.network);
@@ -185,6 +186,16 @@ const fund = async (track: FundTrack) => {
   const tx = await kewx
     .connect(owner)
     .transfer(track.address, hre.ethers.parseEther("1000"));
+  await saveTx(track.network, await tx.wait(), track.title);
+};
+const fundBob = async (track: FundTrackBob) => {
+  await hre.switchNetwork(track.network);
+  const [owner] = await hre.ethers.getSigners();
+  const kewx = await getContract(track.network);
+  if (!kewx) throw new Error("Contract not deployed");
+  const tx = await kewx
+    .connect(owner)
+    .transfer(track.address, hre.ethers.parseEther("500"));
   await saveTx(track.network, await tx.wait(), track.title);
 };
 const registerCrossChain = async (track: RegisterCrossChainTrack) => {
@@ -198,14 +209,15 @@ const registerCrossChain = async (track: RegisterCrossChainTrack) => {
       const [owner] = await hre.ethers.getSigners();
       const tx = await kewx
         .connect(owner)
-        .setCrossChainAddress(network === "kadena_devnet1" ? 0n : 1n, address);
+        .setCrossChainAddress(network === "kadena_devnet0" ? 0n : 1n, address);
       await saveTx(network, await tx.wait(), `${track.title} - ${network}`);
     }
   }
 };
 export const play = async (track: Track) => {
   if (track.type === "deploy") return await deploy(track);
-  if (track.type === "fund") return await fund(track);
+  if (track.type === "fundAlice") return await fundAlice(track);
+  if (track.type === "fundBob") return await fundBob(track);
   if (track.type === "transfer") return await transfer(track);
   if (track.type === "register-cross-chain")
     return await registerCrossChain(track);
@@ -243,7 +255,7 @@ const saveTx = async (
       ...newTx.toJSON(),
       network,
       logs: newTx.logs.map((log: any) => {
-        const x = contracts.kadena_devnet1?.interface.parseLog(log);
+        const x = contracts.kadena_devnet0?.interface.parseLog(log);
         return {
           event: x?.fragment.format(),
           args: x?.args.map((arg: any) => arg.toString()),
@@ -274,36 +286,36 @@ export const app = new Elysia()
   .get(
     "/accounts",
     async () => {
-      await hre.switchNetwork("kadena_devnet1");
+      await hre.switchNetwork("kadena_devnet0");
       const [owner, alice, bob, charlie] = await hre.ethers.getSigners();
       const chain0 = {
         alice: {
           address: alice.address,
-          balance: await getBalance(alice, "kadena_devnet1"),
+          balance: await getBalance(alice, "kadena_devnet0"),
         },
         bob: {
           address: bob.address,
-          balance: await getBalance(bob, "kadena_devnet1"),
+          balance: await getBalance(bob, "kadena_devnet0"),
         },
         charlie: {
           address: charlie.address,
-          balance: await getBalance(charlie, "kadena_devnet1"),
+          balance: await getBalance(charlie, "kadena_devnet0"),
         },
       };
-      await hre.switchNetwork("kadena_devnet2");
+      await hre.switchNetwork("kadena_devnet1");
       const [owner1, alice1, bob1, charlie1] = await hre.ethers.getSigners();
       const chain1 = {
         alice: {
           address: alice1.address,
-          balance: await getBalance(alice1, "kadena_devnet2"),
+          balance: await getBalance(alice1, "kadena_devnet1"),
         },
         bob: {
           address: bob1.address,
-          balance: await getBalance(bob1, "kadena_devnet2"),
+          balance: await getBalance(bob1, "kadena_devnet1"),
         },
         charlie: {
           address: charlie1.address,
-          balance: await getBalance(charlie1, "kadena_devnet2"),
+          balance: await getBalance(charlie1, "kadena_devnet1"),
         },
       };
 
@@ -318,8 +330,8 @@ export const app = new Elysia()
         chain0: toJSON(await getPlaylist("chain0")),
         chain1: toJSON(await getPlaylist("chain1")),
         crosschain: toJSON(await getPlaylist("crosschain")),
-        single: toJSON(await getPlaylist("single")),
-        singlebob: toJSON(await getPlaylist("singlebob")),
+        singleAlice: toJSON(await getPlaylist("singleAlice")),
+        singleBob: toJSON(await getPlaylist("singleBob")),
       };
     },
     {}

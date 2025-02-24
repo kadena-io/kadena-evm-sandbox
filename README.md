@@ -11,7 +11,7 @@ tags: [pact, chainweb, network, node operator]
 This repository presents a preview of the support for the Ethereum Virtual Machine (EVM) execution environment running on [Chainweb nodes](<(https://kadena.io/chainweb)>) in the
 [Kadena](https://kadena.io) blockchain.
 This preview demonstrates how to set up EVM-compatible nodes and execute cross-chain transactions to transfer assets from one chain to another.
-In the preview, thee are two EVM-compatible chains and a Solidity contract that demonstrates transferring tokens between the two EVM chains.
+In the preview, there are two EVM-compatible chains and a Solidity contract that demonstrates transferring tokens between the two EVM chains.
 The preview is the first step toward an integrated and feature-rich multi-chain proof-of-work consensus network for Solidity and Pact developers to deploy smart contracts.
 
 ## What's included in the preview
@@ -25,8 +25,10 @@ The repository for the preview includes the following directories and components
 | Name            | What it provides                                                                                                                                                                                                                  |
 | --------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | allocations     | Files to set up an ethers project that describes a set of BIP-44 wallets and allocations to be created in the genesis block for the development network.                                                                          |
+| apps | Files to set up the contract, server, and front-end application that demonstrates cross-chain transactions.|
 | blockscout      | Files to set up an optional block explorer for the EVM chains in the development network. [Blockscout](https://www.blockscout.com/) instances provide an explorer interface and API similar to [Etherscan](https://etherscan.io). |
 | devnet          | A Docker compose project and files to set up the Chainweb node for the development network.                                                                                                                                       |
+| docs | Technical documentation about the functions and events proposed for the Kadena Chainweb EVM cross-chain bridging protocol in draft form.|
 | docker-bake.hcl | A script to build multi-platform images for the development network Docker compose project.                                                                                                                                       |
 | network         | An optional command-line program for managing and monitoring the development network in the Kadena Chainweb EVM sandbox.                                                                                                          |
 | solidity        | A Hardhat project that demonstrates the implementation of a simple ERC-20 token with support for burn and mint style transfers between the two EVM chains in the network.                                                         |

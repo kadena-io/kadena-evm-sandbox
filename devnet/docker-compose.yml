@@ -215,3 +215,13 @@ services:
       source ./functions.sh
       info $$HEIGHT
 
+  nginx:
+    container_name: chainweb-evm-nginx
+    image: nginx:alpine
+    ports:
+      - 8888:80
+    volumes:
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - chainweb-evm-chain0
+      - chainweb-evm-chain1

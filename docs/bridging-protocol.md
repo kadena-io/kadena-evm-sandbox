@@ -1,13 +1,14 @@
 # Proposal: Cross-Chain Bridging Protocol (Draft)
 
-| **Category** | ERC or Informational |
+|   |   |
 | --- | --- |
+| **Title** | Cross-Chain Bridging Protocol |
+| **Status** | Draft |
+| **Author** | Stuart Popejoy, Lars Kuhtz, Jose Cardona, Heather Swope, Andy Tang, Linda Ortega, Randy Daal, John Wiegley  |
+| **Category** | ERC or Informational |
 | **EIP** | XXXX (TBD) |
 | **KIP** | XX (TBD) |
-| **Title** | Cross-Chain Bridging Protocol |
-| **Author** | @Stuart, @Heather Swope, @Andy Tang, @Linda Ortega, @Randy Daal, @John Wiegley  |
 | **Discussions-To** |  |
-| **Status** | Draft |
 | **Created** | 2025-01-23 |
 | **Requires** | None |
 | **Replaces** | None |
@@ -140,7 +141,7 @@ The cross-chain bridging protocol involves three main steps:
     3. **Parameters:**
         1. `targetChainId`: The Chainweb chain identifier of the target chain.
         2. `targetContractAddress`: The contract on the target chain that will handle completing the cross-chain.
-        3. `crossChainOperationType`: Determines the kind of operation that is being transmitted to the target chain. 
+        3. `crossChainOperationType`: The kind of operation that is being transmitted to the target chain. 
         4. `crossChainData`: Set of bytes representing operation-specific data that MUST have been encoded according to the `crossChainOperationType` specified previously. An example struct (pre-encoding) for an ERC-20 transfer could be:
         
         ```solidity
@@ -289,7 +290,7 @@ The cross-chain bridging protocol involves three main steps:
         ```
         
     3. **Parameters:**
-        1. `crossChainOperationType`: ~~Determines~~ The kind of operation that is being transmitted to the target chain.
+        1. `crossChainOperationType`: The kind of operation that is being transmitted to the target chain.
         2. `crossChainData`: Set of bytes representing operation-specific data that are encoded according to the `crossChainOperationType` specified.
         3. `origin`: The `CrossChainOrigin` struct that allows for globally and unambiguously identifying cross-chain events.
             1. `originChainId`: The Chainweb chain identifier of the source chain.

@@ -507,3 +507,10 @@ The mining accounts are:
 
 - `m/44'/1'/1'/0/0` (address: 0xd42d71cdc2A0a78fE7fBE7236c19925f62C442bA)
 - `m/44'/1'/1'/0/1` (address: 0x38a6BD13CC381c68751BE2cef97BD79EBcb2Bb31)
+
+## Related resources
+
+For additional information about Kadena Chainweb EVM, see the following resources:
+
+- [Proposal: Cross-Chain Bridging Protocol (Draft)](https://github.com/kadena-io/kadena-evm-sandbox/docs/bridging-protocol.md)
+- [Get started with Kadena Chainweb EVM](https://docs.kadena.io/guides/nodes/howto-evm)

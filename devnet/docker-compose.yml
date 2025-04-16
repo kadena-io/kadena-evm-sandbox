@@ -21,7 +21,6 @@ volumes:
   grafana_data:
 
 services:
-
   # ########################################################################## #
   # Chainweb Node
   #
@@ -32,8 +31,8 @@ services:
     container_name: chainweb-node
     labels:
       com.docker.lb.ip_hash: true
-      com.chainweb.devnet.description: "EVM Devnet Chainweb Node"
-      com.chainweb.devnet.chainweb-node: ""
+      com.chainweb.devnet.description: 'EVM Devnet Chainweb Node'
+      com.chainweb.devnet.chainweb-node: ''
     image: ${CHAINWEB_NODE_IMAGE:-ghcr.io/kadena-io/evm-devnet-chainweb-node:latest}
     restart: unless-stopped
     stop_grace_period: 20s
@@ -43,8 +42,8 @@ services:
         soft: 65535
         hard: 65535
     expose:
-      - "1789"
-      - "1848"
+      - '1789'
+      - '1848'
     volumes:
       - chainweb-node_data:/chainweb/db:rw
     configs:
@@ -57,7 +56,7 @@ services:
       chainweb-evm-chain1:
         condition: service_started
     ports:
-      - "1848:1848"
+      - '1848:1848'
 
     entrypoint:
       - /chainweb/chainweb-node
@@ -92,11 +91,13 @@ services:
         order: stop-first
 
     healthcheck:
-      test: 
+      test:
         - 'CMD'
         - '/bin/bash'
         - '-c'
-        - 'exec 3<>/dev/tcp/localhost/1848; printf "GET /health-check HTTP/1.1\r\nhost: http://localhost:1848\r\nConnection: close\r\n\r\n" >&3; grep -q "200 OK" <&3 || exit 1'
+        - 'exec 3<>/dev/tcp/localhost/1848; printf "GET /health-check
+          HTTP/1.1\r\nhost: http://localhost:1848\r\nConnection: close\r\n\r\n"
+          >&3; grep -q "200 OK" <&3 || exit 1'
       interval: 30s
       timeout: 30s
       retries: 5
@@ -117,8 +118,8 @@ services:
     command:
       - --chain=/config/chainweb-chain0-spec.json
     ports:
-      - "8545:8545"
-      - "8546:8546"
+      - '8545:8545'
+      - '8546:8546'
     environment:
       CHAINWEB_CHAIN_ID: 0
 
@@ -137,20 +138,20 @@ services:
     command:
       - --chain=/config/chainweb-chain1-spec.json
     ports:
-      - "8555:8545"
-      - "8556:8546"
+      - '8555:8545'
+      - '8556:8546'
     environment:
       CHAINWEB_CHAIN_ID: 1
 
   chainweb-miner:
     container_name: chainweb-miner
-    image: "${MINING_CLIENT_IMAGE:-ghcr.io/kadena-io/chainweb-mining-client:latest}"
+    image: '${MINING_CLIENT_IMAGE:-ghcr.io/kadena-io/chainweb-mining-client:latest}'
     platform: linux/amd64
     restart: unless-stopped
     depends_on:
       chainweb-node:
         condition: service_healthy
-    entrypoint: "/chainweb-mining-client/chainweb-mining-client"
+    entrypoint: '/chainweb-mining-client/chainweb-mining-client'
     command:
       - --node=chainweb-node:1848
 
@@ -167,7 +168,7 @@ services:
       # only used when worker is set to "on-demand"
       - --on-demand-port=1917
     ports:
-      - "1917:1917"
+      - '1917:1917'
 
   # ########################################################################## #
   # Genesis Allocations
@@ -187,10 +188,10 @@ services:
 
   curl:
     labels:
-      com.chainweb.devnet.description: "Curl Into Network"
-      com.chainweb.devnet.debug: ""
+      com.chainweb.devnet.description: 'Curl Into Network'
+      com.chainweb.devnet.debug: ''
     image: curlimages/curl:latest
-    profiles: ["debug"]
+    profiles: ['debug']
 
   # example usages
   #
@@ -201,17 +202,16 @@ services:
   # > docker compose run --rm debug -c "source ./functions.sh; list_receipts_from_height 1 90000"
   #
   debug:
-    build: 
+    build:
       context: ./debug
       dockerfile: Dockerfile
-    profiles: ["debug"]
+    profiles: ['debug']
     entrypoint:
       - /bin/bash
       - -c
     environment:
       HEIGHT: ${HEIGHT:-latest}
-    command: 
-    - | 
-      source ./functions.sh
-      info $$HEIGHT
-
+    command:
+      - |
+        source ./functions.sh
+        info $$HEIGHT

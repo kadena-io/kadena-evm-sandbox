@@ -1,0 +1,351 @@
+name: 'evm-devnet'
+
+secrets:
+  jwtsecret:
+    file: ./jwtsecret
+
+configs:
+  chainweb-node:
+    file: ./chainweb-node.yaml
+  chainweb-chain0-spec:
+    file: ./chainweb-chain0-spec.json
+  chainweb-chain1-spec:
+    file: ./chainweb-chain1-spec.json
+
+volumes:
+  chainweb-node_data:
+  chainweb-node2_data:
+  chainweb-evm-chain0_data:
+  chainweb-evm-chain1_data:
+  logs:
+  prometheus_data:
+  grafana_data:
+
+networks:
+  hostnetwork:
+  subnetwork:
+
+# TODO
+# Move the chainweb-node to separate networks
+# Each chainweb-node has its own chainweb-evm-chain
+
+# TODO
+# p2p between two chainweb-nodes
+#
+
+services:
+  # ########################################################################## #
+  # Chainweb Node
+  #
+  # First node, bootstrap node
+
+  chainweb-node:
+    container_name: chainweb-node
+    labels:
+      com.docker.lb.ip_hash: true
+      com.chainweb.devnet.description: 'EVM Devnet Chainweb Node'
+      com.chainweb.devnet.chainweb-node: ''
+    image: ${CHAINWEB_NODE_IMAGE:-ghcr.io/kadena-io/evm-devnet-chainweb-node:latest}
+    restart: unless-stopped
+    stop_grace_period: 20s
+    stop_signal: SIGINT
+    ulimits:
+      nofile:
+        soft: 65535
+        hard: 65535
+    expose:
+    - '1789'
+    - '1848'
+    volumes:
+    - chainweb-node_data:/chainweb/db:rw
+    - ./devnet-bootstrap-node.cert.pem:/chainweb/devnet-bootstrap-node.cert.pem:ro
+    - ./devnet-bootstrap-node.key.pem:/chainweb/devnet-bootstrap-node.key.pem:ro
+    configs:
+      - source: chainweb-node
+        target: /chainweb/config/chainweb-node.yaml
+        mode: 0440
+    depends_on:
+      chainweb-evm-chain0:
+        condition: service_started
+      chainweb-evm-chain1:
+        condition: service_started
+    ports:
+    - '1848:1848'
+    entrypoint:
+    - /chainweb/chainweb-node
+      # Runtime Settings
+    - +RTS
+    - -T
+    - -H400M
+    - -A64M
+    - -RTS
+    - --config-file=config/chainweb-node.yaml
+    - --database-directory=/chainweb/db
+    command:
+      # Common Configuration
+    - --disable-pow
+    - --bootstrap-reachability=0
+    - --p2p-hostname=chainweb-node
+    - --p2p-certificate-chain-file=/chainweb/devnet-bootstrap-node.cert.pem
+    - --p2p-certificate-key-file=/chainweb/devnet-bootstrap-node.key.pem
+    - --cluster-id=chainweb-node
+    - --enable-mining-coordination
+    - --chain-0-uri=http://chainweb-evm-chain0:8551/
+    - --chain-1-uri=http://chainweb-evm-chain1:8551/
+    environment:
+    - DISABLE_POW_VALIDATION
+    deploy:
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
+        window: 120s
+      update_config:
+        delay: 60s
+        order: stop-first
+    healthcheck:
+      test:
+      - 'CMD'
+      - '/bin/bash'
+      - '-c'
+      - 'exec 3<>/dev/tcp/localhost/1848; printf "GET /health-check
+          HTTP/1.1\r\nhost: http://localhost:1848\r\nConnection: close\r\n\r\n"
+          >&3; grep -q "200 OK" <&3 || exit 1'
+      interval: 30s
+      timeout: 30s
+      retries: 5
+      start_period: 2m
+    networks:
+    - hostnetwork
+
+  chainweb-evm-chain0:
+    container_name: chainweb-evm-chain0
+    hostname: chainweb-evm-chain0
+    extends:
+      file: ./reth-common.yaml
+      service: reth-common
+    configs:
+      - source: chainweb-chain0-spec
+        target: /config/chainweb-chain0-spec.json
+        mode: 0440
+    volumes:
+    - chainweb-evm-chain0_data:/root/.local/share/reth/1789/
+    command:
+    - --chain=/config/chainweb-chain0-spec.json
+    ports:
+    - '8545:8545'
+    - '8546:8546'
+    environment:
+      CHAINWEB_CHAIN_ID: 0
+    networks:
+    - hostnetwork
+
+  chainweb-evm-chain1:
+    container_name: chainweb-evm-chain1
+    hostname: chainweb-evm-chain1
+    extends:
+      file: ./reth-common.yaml
+      service: reth-common
+    configs:
+      - source: chainweb-chain1-spec
+        target: /config/chainweb-chain1-spec.json
+        mode: 0440
+    volumes:
+    - chainweb-evm-chain1_data:/root/.local/share/reth/1790/
+    command:
+    - --chain=/config/chainweb-chain1-spec.json
+    ports:
+    - '8555:8545'
+    - '8556:8546'
+    environment:
+      CHAINWEB_CHAIN_ID: 1
+    networks:
+    - hostnetwork
+
+  chainweb-miner:
+    container_name: chainweb-miner
+    image: '${MINING_CLIENT_IMAGE:-ghcr.io/kadena-io/chainweb-mining-client:latest}'
+    platform: linux/amd64
+    restart: unless-stopped
+    depends_on:
+      chainweb-node:
+        condition: service_healthy
+    entrypoint: '/chainweb-mining-client/chainweb-mining-client'
+    command:
+    - --node=chainweb-node:1848
+      # possible values are "constant-delay", "simulation", and "on-demand"
+      # It is also possible to run two miner containers using different worker
+      # type, for instance "simulation" and "on-demand".
+    - --worker=${MINING_WORKER:-constant-delay}
+    - --thread-count=2
+    - --no-tls
+      # --only used when worker is set to "simulation"
+    - --hash-rate=1000000
+      # only used when worker is set to "constant-delay"
+    - --constant-delay-block-time=${BLOCK_RATE:-30}
+      # only used when worker is set to "on-demand"
+    - --on-demand-port=1917
+    ports:
+    - '1917:1917'
+    networks:
+    - hostnetwork
+
+  chainweb-miner2:
+    container_name: chainweb-miner2
+    image: '${MINING_CLIENT_IMAGE:-ghcr.io/kadena-io/chainweb-mining-client:latest}'
+    platform: linux/amd64
+    restart: unless-stopped
+    depends_on:
+      chainweb-node:
+        condition: service_healthy
+    entrypoint: '/chainweb-mining-client/chainweb-mining-client'
+    command:
+    - --node=chainweb-node2:1849
+      # possible values are "constant-delay", "simulation", and "on-demand"
+      # It is also possible to run two miner containers using different worker
+      # type, for instance "simulation" and "on-demand".
+    - --worker=${MINING_WORKER:-constant-delay}
+    - --thread-count=2
+    - --no-tls
+      # --only used when worker is set to "simulation"
+    - --hash-rate=1000000
+      # only used when worker is set to "constant-delay"
+    - --constant-delay-block-time=${BLOCK_RATE:-30}
+      # only used when worker is set to "on-demand"
+    - --on-demand-port=1917
+    ports:
+    - '1918:1917'
+    networks:
+    - hostnetwork
+
+  # ########################################################################## #
+  # Genesis Allocations
+
+  allocations:
+    image: ${ALLOCATIONS_IMAGE:-ghcr.io/kadena-io/evm-devnet-allocations:latest}
+    build:
+      context: ../allocations
+      dockerfile: Dockerfile
+    depends_on:
+    - chainweb-evm-chain0
+    environment:
+      RPC_URL: http://chainweb-evm-chain0:8545
+    networks:
+    - hostnetwork
+
+  # ########################################################################## #
+  # Debugging Utils
+
+  curl:
+    labels:
+      com.chainweb.devnet.description: 'Curl Into Network'
+      com.chainweb.devnet.debug: ''
+    image: curlimages/curl:latest
+    profiles: ['debug']
+    networks:
+    - hostnetwork
+
+  # example usages
+  #
+  # Get info at block height:
+  # > docker compose run --rm -e 'HEIGHT=92094' debug | jq '.headers."1"' | jqp
+  #
+  # Scan block from block height for receipts:
+  # > docker compose run --rm debug -c "source ./functions.sh; list_receipts_from_height 1 90000"
+  #
+  debug:
+    build:
+      context: ./debug
+      dockerfile: Dockerfile
+    profiles: ['debug']
+    entrypoint:
+    - /bin/bash
+    - -c
+    environment:
+      HEIGHT: ${HEIGHT:-latest}
+    command:
+    - |
+        source ./functions.sh
+        info $$HEIGHT
+    networks:
+    - hostnetwork
+
+  # ########################################################################## #
+  # Chainweb Node
+  # secondary network
+
+  chainweb-node2:
+    container_name: chainweb-node2
+    labels:
+      com.docker.lb.ip_hash: true
+      com.chainweb.devnet.description: 'EVM Devnet Chainweb Node2'
+      com.chainweb.devnet.chainweb-node2: ''
+    image: ${CHAINWEB_NODE_IMAGE:-ghcr.io/kadena-io/evm-devnet-chainweb-node:latest}
+    restart: unless-stopped
+    stop_grace_period: 20s
+    stop_signal: SIGINT
+    ulimits:
+      nofile:
+        soft: 65535
+        hard: 65535
+    expose:
+    - '1789'
+    - '1848'
+    volumes:
+    - chainweb-node2_data:/chainweb/db:rw
+    configs:
+      - source: chainweb-node
+        target: /chainweb/config/chainweb-node.yaml
+        mode: 0440
+    depends_on:
+    - chainweb-node
+      # chainweb-evm-chain0:
+      #   condition: service_started
+      # chainweb-evm-chain1:
+      #   condition: service_started
+    ports:
+    - '1849:1848'
+    entrypoint:
+    - /chainweb/chainweb-node
+      # Runtime Settings
+    - +RTS
+    - -T
+    - -H400M
+    - -A64M
+    - -RTS
+    - --config-file=config/chainweb-node.yaml
+    - --database-directory=/chainweb/db
+    command:
+      # Common Configuration
+    - --disable-pow
+    - --known-peer-info=YNo7pXthYQ9RQKv1bbpQf2R5LcLYA3ppx2BL2Hf8fIM@chainweb-node:1789
+    - --bootstrap-reachability=1
+    - --p2p-hostname=chainweb-node2
+    - --cluster-id=chainweb-node2
+    - --chain-0-uri=http://chainweb-evm-chain0:8551/
+    - --chain-1-uri=http://chainweb-evm-chain1:8551/
+    environment:
+    - DISABLE_POW_VALIDATION
+    deploy:
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
+        window: 120s
+      update_config:
+        delay: 60s
+        order: stop-first
+    healthcheck:
+      test:
+      - 'CMD'
+      - '/bin/bash'
+      - '-c'
+      - 'exec 3<>/dev/tcp/localhost/1849; printf "GET /health-check
+          HTTP/1.1\r\nhost: http://localhost:1849\r\nConnection: close\r\n\r\n"
+          >&3; grep -q "200 OK" <&3 || exit 1'
+      interval: 30s
+      timeout: 30s
+      retries: 5
+      start_period: 2m
+    networks:
+    - hostnetwork

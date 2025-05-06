@@ -39,5 +39,6 @@ function get_summary() {
     column -t
 }
 
+echo Node: ${NODE}
 get_summary
 

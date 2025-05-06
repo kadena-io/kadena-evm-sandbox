@@ -50,6 +50,10 @@ def join_specs (specs : list[dict]) -> Spec:
 
 # #############################################################################
 # Payload Provider Configuration for Consensus
+#
+# TODO: this enables payload production for all enabled payload providers.
+# We could safe some resources by only enabling mining when mining coordination
+# is also enabled in consensus.
 
 jwtsecret = '10b45e8907ab12dd750f688733e73cf433afadfd2f270e5b75a6b8fff22dd352'
 evmMinerAddress = '0xd42d71cdc2A0a78fE7fBE7236c19925f62C442bA'
@@ -139,116 +143,124 @@ def chainweb_consensus_service(
     is_bootnode = False,
     mining = False, 
     exposed = False
-): return {
-    "container_name" : f"{node_name}-consensus",
-    "hostname" : f"{node_name}-consensus",
-    "labels": {
-        "com.docker.lb.ip_hash": True,
-        "com.chainweb.devnet.description": "EVM Devnet Chainweb Node",
-        "com.chainweb.devnet.chainweb-node": ""
-    },
-    "image": "${CHAINWEB_NODE_IMAGE:-ghcr.io/kadena-io/evm-devnet-chainweb-node:latest}",
-    # "platform": "linux/arm64",
-    "restart": "unless-stopped",
-    "stop_grace_period": "20s",
-    "stop_signal": "SIGINT",
-    "ulimits": {
-        "nofile": {
-            "soft": 65535,
-            "hard": 65535
-        }
-    },
-    "expose": [
-        "1789",
-        "1848"
-    ],
-    "volumes": [
-        f"{node_name}-consensus_data:/chainweb/db:rw"
-    ],
-    "configs": [
-        {
+): 
+    result = {
+        "container_name" : f"{node_name}-consensus",
+        "hostname" : f"{node_name}-consensus",
+        "labels": {
+            "com.docker.lb.ip_hash": True,
+            "com.chainweb.devnet.description": "EVM Devnet Chainweb Node",
+            "com.chainweb.devnet.chainweb-node": ""
+        },
+        "image": "${CHAINWEB_NODE_IMAGE:-ghcr.io/kadena-io/evm-devnet-chainweb-node:latest}",
+        # "platform": "linux/arm64",
+        "restart": "unless-stopped",
+        "stop_grace_period": "20s",
+        "stop_signal": "SIGINT",
+        "ulimits": {
+            "nofile": {
+                "soft": 65535,
+                "hard": 65535,
+            },
+        },
+        "expose": [
+            "1789",
+            "1848",
+        ],
+        "ports": [],
+        "secrets": [],
+        "volumes": [
+            f"{node_name}-consensus_data:/chainweb/db:rw"
+        ],
+        "configs": [{
             "source": f"{node_name}-consensus-config",
             "target": "/chainweb/config/consensus.yaml",
             "mode": "0440"
-        },
-        {
+        },{
             "source": f"{node_name}-payload-providers",
             "target": "/chainweb/config/payload-providers.yaml",
             "mode": "0440"
-        }
-    ],
-    "secrets": [{
-        "source": f"{node_name}-consensus-p2p-key",
-        "target": "p2p.key.pem",
-    },{
-        "source": f"{node_name}-consensus-p2p-certificate",
-        "target": "p2p.cert.pem",
-    }] if is_bootnode else [],
-
-    "depends_on": {
-        f"{node_name}-evm-{i}": { "condition": "service_started" } 
-        for i in evm_cids
-    } | ({
-        f"{bootnode_consensus_host}": { "condition": "service_healthy" }
-    } if not is_bootnode else {}),
-    "networks": {
-        f"{node_name}-internal": None,
-        "p2p": None,
-    },
-    "ports": [ "1848:1848" ] if exposed else [],
-    "entrypoint": [
-        "/chainweb/chainweb-node",
-        # Runtime Settings
-        "+RTS",
-        "-T",
-        "-H400M",
-        "-A64M",
-        "-RTS",
-        "--config-file=config/consensus.yaml",
-        "--config-file=config/payload-providers.yaml",
-        "--database-directory=/chainweb/db",
-        "--disable-pow",
-        f"--cluster-id={node_name}-consensus",
-
-        # Mining
-        "--enable-mining-coordination" if mining else "--disable-mining-coordination",
-    ] + ([
-        # Bootnode Settings
-        "--bootstrap-reachability=0",
-        "--p2p-certificate-chain-file=/run/secrets/p2p.cert.pem",
-        "--p2p-certificate-key-file=/run/secrets/p2p.key.pem",
-        f"--p2p-hostname={node_name}-consensus",
-    ] if is_bootnode else [
-        "--p2p-hostname=0.0.0.0",
-        "--bootstrap-reachability=0.6",
-        f"--known-peer-info=YNo7pXthYQ9RQKv1bbpQf2R5LcLYA3ppx2BL2Hf8fIM@{bootnode_consensus_host}:1789",
-    ]),
-
-    "deploy": {
-        "restart_policy": {
-            "condition": "on-failure",
-            "delay": "5s",
-            "max_attempts": 3,
-            "window": "120s"
+        }],
+        "depends_on": {
+            f"{node_name}-evm-{i}": { "condition": "service_started" } 
+            for i in evm_cids
         },
-        "update_config": {
-            "delay": "60s",
-            "order": "stop-first"
-        }
-    },
-    "healthcheck": {
-        "test": [
-            "CMD",
-            "/bin/bash",
-            "-c",
-            "exec 3<>/dev/tcp/localhost/1848; printf \"GET /health-check HTTP/1.1\\r\\nhost: http://localhost:1848\\r\\nConnection: close\\r\\n\\r\\n\" >&3; grep -q \"200 OK\" <&3 || exit 1"
+        "networks": {
+            f"{node_name}-internal": None,
+            "p2p": None,
+        },
+        "entrypoint": [
+            "/chainweb/chainweb-node",
+            # Runtime Settings
+            "+RTS",
+            "-T",
+            "-H400M",
+            "-A64M",
+            "-RTS",
+            "--config-file=config/consensus.yaml",
+            "--config-file=config/payload-providers.yaml",
+            "--database-directory=/chainweb/db",
+            "--disable-pow",
+            f"--cluster-id={node_name}-consensus",
         ],
-        "interval": "30s",
-        "timeout": "30s",
-        "retries": 5,
-        "start_period": "2m"
+        "deploy": {
+            "restart_policy": {
+                "condition": "on-failure",
+                "delay": "5s",
+                "max_attempts": 3,
+                "window": "120s",
+            },
+            "update_config": {
+                "delay": "60s",
+                "order": "stop-first",
+            },
+        },
+        "healthcheck": {
+            "test": [
+                "CMD",
+                "/bin/bash",
+                "-c",
+                "exec 3<>/dev/tcp/localhost/1848; printf \"GET /health-check HTTP/1.1\\r\\nhost: http://localhost:1848\\r\\nConnection: close\\r\\n\\r\\n\" >&3; grep -q \"200 OK\" <&3 || exit 1"
+            ],
+            "interval": "30s",
+            "timeout": "30s",
+            "retries": 5,
+            "start_period": "2m",
+        },
     }
-}
+
+    if exposed:
+        result["ports"] += [ "1848:1848" ]
+
+    if is_bootnode:
+        result["entrypoint"] += [
+            # Bootnode Settings
+            "--bootstrap-reachability=0",
+            "--p2p-certificate-chain-file=/run/secrets/p2p.cert.pem",
+            "--p2p-certificate-key-file=/run/secrets/p2p.key.pem",
+            f"--p2p-hostname={node_name}-consensus",
+        ]
+        result["secrets"] += [{
+            "source": f"{node_name}-consensus-p2p-key",
+            "target": "p2p.key.pem",
+        },{
+            "source": f"{node_name}-consensus-p2p-certificate",
+            "target": "p2p.cert.pem",
+        }]
+    else: 
+        result["entrypoint"] += [
+            "--p2p-hostname=0.0.0.0",
+            "--bootstrap-reachability=0.6",
+            f"--known-peer-info=YNo7pXthYQ9RQKv1bbpQf2R5LcLYA3ppx2BL2Hf8fIM@{bootnode_consensus_host}:1789",
+        ]
+        result["depends_on"] |= {
+            f"{bootnode_consensus_host}": { "condition": "service_healthy" },
+        }
+
+    if mining:
+        result["entrypoint"] += ["--enable-mining-coordination"]
+
+    return result
 
 # ############################################################################# #
 # EVM Services
@@ -260,13 +272,7 @@ def evm_chain(
     is_bootnode = False,
     exposed = False
 ) -> Spec:
-    if not is_bootnode:
-        if not os.path.isdir("./config/bootnode"):
-            raise RuntimeError("Bootnode config directory not found.")
-        with open(f"config/bootnode/bootnode-evm-{cid}-enode" , "r") as f:
-            boot_enodes = f.read().strip()
-
-    return {
+    result = {
         "container_name": f"{node_name}-evm-{cid}",
         "hostname": f"{node_name}-evm-{cid}",
         "restart": "unless-stopped",
@@ -276,13 +282,9 @@ def evm_chain(
             "dockerfile": "Dockerfile",
         },
         "secrets": [{
-                "source": f"{node_name}-jwtsecret",
-                "target": "jwtsecret",
-            }] + 
-            ([{
-                "source": f"{node_name}-evm-{cid}-p2p-secret",
-                "target": "p2p-secret",
-            }] if is_bootnode else []),
+            "source": f"{node_name}-jwtsecret",
+            "target": "jwtsecret",
+        }],
         "configs": [
             {
                 "source": f"{node_name}-chain-spec-{cid}",
@@ -338,55 +340,76 @@ def evm_chain(
             f"--discovery.port={30303 + cid}",
             # chainweb
             "--chain=/config/chain-spec.json",
-
-            # Only for bootstrap nodes
-            "--p2p-secret-key=/run/secrets/p2p-secret",
-
-            # for non-bootstrap nodes
-            # Comma separated enode URLs for P2P discovery bootstrap.
-            # "--bootnodes=TODO"
-        ] + ([f"--bootnodes={boot_enodes}"] if not is_bootnode else []),
-        "ports": [
-            f"{cid*1000+8545}:{8545}",
-            f"{cid*1000+8546}:{8546}"
-        ] if exposed else [],
+        ],
         "environment": [
             f"CHAINWEB_CHAIN_ID={cid}"
-        ]
+        ], 
+        "ports": [],
     }
+
+    # exposed node
+    if exposed:
+        result["ports"] += [
+            f"{cid*1000+8545}:{8545}",
+            f"{cid*1000+8546}:{8546}",
+        ]
+   
+    # bootnode
+    if is_bootnode:
+        result["entrypoint"] += [
+            "--p2p-secret-key=/run/secrets/p2p-secret",
+        ]
+        result["secrets"] += [{
+            "source": f"{node_name}-evm-{cid}-p2p-secret",
+            "target": "p2p-secret",
+        }]
+    else:
+        if not os.path.isdir("./config/bootnode"):
+            raise RuntimeError("Bootnode config directory not found.")
+        with open(f"config/bootnode/bootnode-evm-{cid}-enode" , "r") as f:
+            boot_enodes = f.read().strip()
+        result["entrypoint"] += [f"--bootnodes={boot_enodes}"]
+
+    return result
 
 # ############################################################################# #
 # Chainweb Miner
 
-def chainweb_mining_client (node_name : str, *, exposed = False): return {
-    "container_name": f"{node_name}-mining-client",
-    "hostname": f"{node_name}-mining-client",
-    "image": "${MINING_CLIENT_IMAGE:-ghcr.io/kadena-io/chainweb-mining-client:latest}",
-    "platform": "linux/amd64",
-    "restart": "unless-stopped",
-    "depends_on": {
-        f"{node_name}-consensus": {
-            "condition": "service_healthy"
-        }
-    },
-    "networks": {
-        f"{node_name}-internal": None,
-    },
-    "entrypoint": "/chainweb-mining-client/chainweb-mining-client",
-    "command": [
-        f"--node={node_name}-consensus:1848",
-        "--worker=${MINING_WORKER:-constant-delay}",
-        "--thread-count=2",
-        "--no-tls",
-        # only used when worker is set to "simulation"
-        "--hash-rate=1000000",
-        # only used when worker is set to "constant-delay"
-        "--constant-delay-block-time=${BLOCK_RATE:-2}",
-        # only used when worker is set to "on-demand"
-        "--on-demand-port=1917",
-    ],
-    "ports": [ "1917:1917" ] if exposed else [],
-}
+def chainweb_mining_client (node_name : str, *, exposed = False): 
+    result = {
+        "container_name": f"{node_name}-mining-client",
+        "hostname": f"{node_name}-mining-client",
+        "image": "${MINING_CLIENT_IMAGE:-ghcr.io/kadena-io/chainweb-mining-client:latest}",
+        "platform": "linux/amd64",
+        "restart": "unless-stopped",
+        "depends_on": {
+            f"{node_name}-consensus": {
+                "condition": "service_healthy"
+            }
+        },
+        "networks": {
+            f"{node_name}-internal": None,
+        },
+        "entrypoint": "/chainweb-mining-client/chainweb-mining-client",
+        "command": [
+            f"--node={node_name}-consensus:1848",
+            "--worker=${MINING_WORKER:-constant-delay}",
+            "--thread-count=2",
+            "--no-tls",
+            # only used when worker is set to "simulation"
+            "--hash-rate=1000000",
+            # only used when worker is set to "constant-delay"
+            "--constant-delay-block-time=${BLOCK_RATE:-2}",
+            # only used when worker is set to "on-demand"
+            "--on-demand-port=1917",
+        ],
+        "ports": [],
+    }
+
+    if exposed:
+        result["ports"] += [ "1917:1917" ]
+
+    return result
 
 # ############################################################################# #
 # Allocations
@@ -496,26 +519,12 @@ def chainweb_node(
 ) -> Spec: 
     jwtsecret_config(node_name)
     payload_provider_config(node_name, evm_cids)
-    return spec | {
+    result = spec | {
         "secrets": {
             f"{node_name}-jwtsecret": {
                 "file": f"./config/{node_name}/jwtsecret"
             }
-        } | 
-        ({
-            f"{node_name}-evm-{cid}-p2p-secret": { 
-                "file": f"./config/{node_name}/evm-{cid}-p2p-secret" 
-            } for cid in evm_cids
-        } | {
-            f"{node_name}-consensus-p2p-key": {
-                "file": f"./config/{node_name}-consensus-p2p.key.pem"
-            }
-        } | {
-            f"{node_name}-consensus-p2p-certificate": {
-                "file": f"./config/{node_name}-consensus-p2p.cert.pem"
-            }
-        } if is_bootnode else {}),
-
+        },
         "configs": {
             f"{node_name}-consensus-config": {
                 "file": "./config/consensus-config.yaml"
@@ -552,13 +561,32 @@ def chainweb_node(
                 is_bootnode = is_bootnode,
                 exposed = exposed,
             ) for cid in evm_cids
-        } | ({
+        },
+    }
+
+    if is_bootnode:
+        result["secrets"] |= {
+            f"{node_name}-evm-{cid}-p2p-secret": { 
+                "file": f"./config/{node_name}/evm-{cid}-p2p-secret" 
+            } for cid in evm_cids
+        } | {
+            f"{node_name}-consensus-p2p-key": {
+                "file": f"./config/{node_name}-consensus-p2p.key.pem"
+            },
+            f"{node_name}-consensus-p2p-certificate": {
+                "file": f"./config/{node_name}-consensus-p2p.cert.pem"
+            }
+        }
+
+    if mining: 
+        result["services"] |= {
             f"{node_name}-mining-client": chainweb_mining_client(
                 node_name,
                 exposed = exposed,
             )
-        } if mining else {}),
-    }
+        }
+
+    return result
 
 # ############################################################################# #
 # Project

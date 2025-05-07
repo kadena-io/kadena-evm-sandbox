@@ -1,7 +1,6 @@
 #!/usr/bin/env bash
 
 export NODE=${1:-bootnode-consensus}
-export EVMNODE=${2:-chainweb-evm-chain}
 
 function get_summary_json() {
     docker compose run -ti --rm curl -skL "https://${NODE}:1789/chainweb/0.0/evm-development/cut" |
@@ -26,8 +25,6 @@ function get_summary() {
             , height: .value.height
             , hash: .value.hash
             , type: (if ((.key|tonumber) > 19 and (.key|tonumber) < 40) then "evm" else "default" end)
-            # , provider_uri: (if ((.key|tonumber) < 2) then ("http://" + env.EVMNODE + "-" + .key + ":8551") else "--" end)
-            # , URI: ("http://" + env.NODE + ":1848/chainweb/0.0/evm-development/chain/" + .key + "/header/" + .value.hash)
             } 
         | with_entries (.key |= ascii_downcase)
         ]

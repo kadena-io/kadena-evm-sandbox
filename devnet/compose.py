@@ -8,18 +8,72 @@ import os
 import json
 import yaml
 from secp256k1 import PrivateKey
+from typing import TypedDict, Any
 
 # #############################################################################
 # BOILERPLATE
 # #############################################################################
 
-Spec = dict[str, dict]
+# TODO: at this point it might actually be beter to define actual Python classes
+# instead of just using dictionaries. In the end it is all about readability and
+# convenience.
+
+class Service(TypedDict, total=False):
+    container_name: str
+    hostname: str
+    labels: dict[str, Any]
+    image: str
+    restart: str
+    stop_grace_period: str
+    stop_signal: str
+    ulimits: dict[str, dict[str, str|int]]
+    expose: list[str]
+    ports: list[dict|str]
+    secrets: list[dict|str]
+    configs: list[dict|str]
+    volumes: list[dict|str]
+    networks: dict[str, None]
+    depends_on: dict[str,dict]
+    entrypoint: list[str]
+    deploy: dict[str, dict[str, str|int]]
+    healthcheck: dict
+    build: dict[str, str]
+    environment: list[str] | dict[str, str]
+    platform: str
+    profiles: list[str]
+    command: list[str]
+
+class Spec(TypedDict):
+    name: str
+    secrets: dict[str, dict]
+    configs: dict[str, dict]
+    networks: dict[str, None]
+    volumes: dict[str, None]
+    services: dict[str, Service]
+
+# Template for a service component. These are not merged by default. The
+# default values in the template makes updateing more convient by providing
+# default values and also a bit less error prone by fixing the some of the types.
+#
+service : Service = {
+    "ulimits": {},
+    "expose": [],
+    "ports": [],
+    "secrets": [],
+    "configs": [],
+    "volumes": [],
+    "networks": {},
+    "depends_on": {},
+    "entrypoint": [],
+    "profiles": [],
+    "command": [],
+}
 
 # Template for a service specification. The toplevel elements are merged into a
 # single docker compose projects.
 #
 spec : Spec = {
-    "name": None,
+    "name": "spec",
     "secrets": {},
     "configs": {},
     "networks": {},
@@ -29,7 +83,7 @@ spec : Spec = {
 
 # Shallow merge of docker compose specifications with increasing precedence.
 #
-def join_specs (specs : list[dict]) -> Spec:
+def join_specs (specs : list[Spec]) -> Spec:
     def join (left : Spec, right : Spec) -> Spec:
         return {
             "name": left["name"] if left["name"] else right["name"],
@@ -39,7 +93,7 @@ def join_specs (specs : list[dict]) -> Spec:
             "volumes": left["volumes"] | right["volumes"],
             "services": left["services"] | right["services"],
         }
-    result = dict(spec)
+    result : Spec = Spec(spec)
     for x in specs:
         result = join(result, x)
     return result
@@ -143,8 +197,8 @@ def chainweb_consensus_service(
     is_bootnode = False,
     mining = False, 
     exposed = False
-): 
-    result = {
+) -> Service: 
+    result : Service = {
         "container_name" : f"{node_name}-consensus",
         "hostname" : f"{node_name}-consensus",
         "labels": {
@@ -271,8 +325,8 @@ def evm_chain(
     *,
     is_bootnode = False,
     exposed = False
-) -> Spec:
-    result = {
+) -> Service:
+    result : Service = {
         "container_name": f"{node_name}-evm-{cid}",
         "hostname": f"{node_name}-evm-{cid}",
         "restart": "unless-stopped",
@@ -375,8 +429,8 @@ def evm_chain(
 # ############################################################################# #
 # Chainweb Miner
 
-def chainweb_mining_client (node_name : str, *, exposed = False): 
-    result = {
+def chainweb_mining_client (node_name : str, *, mode = 'simulation', exposed = False) -> Service: 
+    result : Service ={
         "container_name": f"{node_name}-mining-client",
         "hostname": f"{node_name}-mining-client",
         "image": "${MINING_CLIENT_IMAGE:-ghcr.io/kadena-io/chainweb-mining-client:latest}",
@@ -390,12 +444,14 @@ def chainweb_mining_client (node_name : str, *, exposed = False):
         "networks": {
             f"{node_name}-internal": None,
         },
-        "entrypoint": "/chainweb-mining-client/chainweb-mining-client",
-        "command": [
+        "entrypoint": [
+            "/chainweb-mining-client/chainweb-mining-client",
             f"--node={node_name}-consensus:1848",
-            "--worker=${MINING_WORKER:-constant-delay}",
             "--thread-count=2",
             "--no-tls",
+
+            f"--worker={mode}",
+
             # only used when worker is set to "simulation"
             "--hash-rate=1000000",
             # only used when worker is set to "constant-delay"
@@ -414,7 +470,7 @@ def chainweb_mining_client (node_name : str, *, exposed = False):
 # ############################################################################# #
 # Allocations
   
-def allocations(node_name : str, evm_cid: int): return {
+def allocations(node_name : str, evm_cid: int) -> Service : return {
     "container_name": f"{node_name}-allocations",
     "image": "${ALLOCATIONS_IMAGE:-ghcr.io/kadena-io/evm-devnet-allocations:latest}",
     "build": {
@@ -437,7 +493,7 @@ def allocations(node_name : str, evm_cid: int): return {
 # ############################################################################# #
 # Debugging Utils
   
-def curl(nodes: list[str]): return {
+def curl(nodes: list[str]) -> Service: return {
     "labels": {
         "com.chainweb.devnet.description": "Curl Into Network",
         "com.chainweb.devnet.debug": "",
@@ -459,7 +515,7 @@ def curl(nodes: list[str]): return {
 # Scan block from block height for receipts:
 # > docker compose run --rm debug -c "source ./functions.sh; list_receipts_from_height 1 90000"
 #
-def debug(nodes: list[str]): return {
+def debug(nodes: list[str]) -> Service: return {
     "build": {
         "context": "./debug",
         "dockerfile": "Dockerfile"
@@ -513,13 +569,14 @@ def debug(nodes: list[str]): return {
 def chainweb_node(
     node_name,
     evm_cids,
-    is_bootnode = False,
-    mining = False,
-    exposed = False
+    is_bootnode : bool = False,
+    mining_mode : str|None = None,
+    exposed : bool = False,
 ) -> Spec: 
     jwtsecret_config(node_name)
     payload_provider_config(node_name, evm_cids)
-    result = spec | {
+    result : Spec = {
+        "name": f"{node_name}",
         "secrets": {
             f"{node_name}-jwtsecret": {
                 "file": f"./config/{node_name}/jwtsecret"
@@ -551,7 +608,7 @@ def chainweb_node(
                 node_name,
                 evm_cids,
                 is_bootnode = is_bootnode,
-                mining = mining,
+                mining = False if mining_mode is None else True,
                 exposed = exposed,
             )
         } | { 
@@ -578,11 +635,12 @@ def chainweb_node(
             }
         }
 
-    if mining: 
+    if mining_mode is not None: 
         result["services"] |= {
             f"{node_name}-mining-client": chainweb_mining_client(
                 node_name,
                 exposed = exposed,
+                mode = mining_mode,
             )
         }
 
@@ -591,67 +649,201 @@ def chainweb_node(
 # ############################################################################# #
 # Project
 
-def other_services(nodes: list[str]) -> Spec: return spec | {
-    "services": {
-        "allocations": allocations("bootnode", 20),
-        "curl": curl(nodes),
-        "debug": debug(nodes),
-    },
-}
+def other_services(nodes: list[str]) -> Spec: 
+    return {
+        "name": "other-services",
+        "services": {
+            "allocations": allocations("bootnode", 20),
+            "curl": curl(nodes),
+            "debug": debug(nodes),
+        },
+        "networks": {},
+        "volumes": {},
+        "configs": {},
+        "secrets": {},
+    }
 
 # ############################################################################# #
-# COMPOSE PROJECT DEFINITION
+# COMPOSE PROJECT DEFINITIONS
 # ############################################################################# #
 
-def project() -> Spec: 
+# A project for testing and debugging chainweb-node itself. It runs several
+# nodes in different configurations.
+#
+def kadena_dev_project() -> Spec: 
 
     nodes = ["bootnode", "appdev"]
 
     # Create boostrap information
-    bootstrap_evm_cids = list(range(20, 40))
+    evm_cids = list(range(20, 40))
 
     # Create bootstrap node IDs
-    evm_bootnodes("bootnode", bootstrap_evm_cids)
+    evm_bootnodes("bootnode", evm_cids)
 
-    top = spec | { 
-        "name": "chainweb-evm",
-        "networks": {
-            f"p2p": None,
-        },
-    }
+    top : Spec = spec
+    top["name"] = "chainweb-evm"
+    top["networks"] = { f"p2p": None }
+
     return join_specs([
         top,
         chainweb_node(
             "bootnode",
-            bootstrap_evm_cids,
+            evm_cids,
             is_bootnode = True,
-            mining = True,
+            mining_mode = None,
+            exposed = False,
+        ),
+        chainweb_node(
+            "miner-1",
+            evm_cids,
+            is_bootnode = False,
+            mining_mode = "simulation",
+            exposed = False,
+        ),
+        chainweb_node(
+            "miner-2",
+            evm_cids,
+            is_bootnode = False,
+            mining_mode = "simulation",
             exposed = False,
         ),
         chainweb_node(
             "appdev",
-            [20],
+            [20,30],
             is_bootnode = False,
-            mining = False,
+            mining_mode = None,
             exposed = True,
         ),
         other_services(nodes),
     ]) 
 
+# A project setup for DApp development. It runs a single full bootstrap nodes
+# that allows mines.
+#
+# * The node that backs the service API includes only the chains that are
+#   provided on the command line.
+# * Blocks are produced at a fixed rate of 2 seconds per chain.
+# * There is a single bootstrap node that is also a miner.
+#
+def app_dev_project(exposed_chains) -> Spec: 
+
+    nodes = ["bootnode", "appdev"]
+
+    # Create boostrap information
+    evm_cids = list(range(20, 40))
+
+    # Create bootstrap node IDs
+    evm_bootnodes("bootnode", evm_cids)
+
+    top : Spec = spec
+    top["name"] = "chainweb-evm"
+    top["networks"] = { f"p2p": None }
+
+    return join_specs([
+        top,
+        chainweb_node(
+            "bootnode",
+            evm_cids,
+            is_bootnode = True,
+            mining_mode = "constant-delay",
+            exposed = False,
+        ),
+        chainweb_node(
+            "appdev",
+            exposed_chains,
+            is_bootnode = False,
+            mining_mode = None,
+            exposed = True,
+        ),
+        other_services(nodes),
+    ]) 
+
+# A project setup "legacy" pact development. It exposes the service API for all
+# pact chains.
+#
+# FIXME: this is work in progress
+#
+def pact_project(pact_chains) -> Spec: 
+
+    nodes = ["bootnode", "appdev"]
+
+    evm_cids = list(range(20, 40))
+    # pact_cids = list(range(0, 20))
+
+    # Create bootstrap node IDs
+    evm_bootnodes("bootnode", evm_cids)
+
+    top : Spec = spec
+    top["name"] = "chainweb-evm"
+    top["networks"] = { f"p2p": None }
+
+    return join_specs([
+        top,
+        chainweb_node(
+            "bootnode",
+            evm_cids,
+            is_bootnode = True,
+            mining_mode = "constant-delay",
+            exposed = False,
+        ),
+        chainweb_node(
+            "appdev",
+            pact_chains,
+            is_bootnode = False,
+            mining_mode = None,
+            exposed = True,
+        ),
+        other_services(nodes),
+    ]) 
+
+# A project setup for mining pools. It runs a single full node that has mining
+# enabled.
+#
+# The minining client exposes the stratum server API on port 1917.
+#
+# FIXME: this is work in progress
+#
+def mining_pool_project() -> Spec:
+    nodes = ["bootnode", "appdev"]
+
+    # Create boostrap information
+    evm_cids = list(range(20, 40))
+
+    # Create bootstrap node IDs
+    evm_bootnodes("bootnode", evm_cids)
+
+    top : Spec = spec
+    top["name"] = "chainweb-evm"
+    top["networks"] = { f"p2p": None }
+
+    return join_specs([
+        top,
+
+        # TODO configure miner and expose the stratum server port.
+        chainweb_node(
+            "bootnode",
+            evm_cids,
+            is_bootnode = True,
+            mining_mode = "stratum",
+            exposed = False,
+        ),
+        other_services(nodes),
+    ]) 
 
 # #############################################################################
 # main
 
 parser=argparse.ArgumentParser()
-parser.add_argument("--evm-chains")
+parser.add_argument("--exposed-chains")
+parser.add_argument("--project") # TODO
 args=parser.parse_args()
 
 # All available EVM chains
-if args.evm_chains is None:
-    evm_cids = list(range(20,40))
+if args.exposed_chains is None:
+    exposed_cids = list(range(20,40))
 else:
-    evm_cids = list(map(int, args.evm_chains.split(",")))
+    exposed_cids = list(map(int, args.evm_chains.split(",")))
 
 # print the docker-compose file
-print(json.dumps(project(), indent=4))
+print(json.dumps(kadena_dev_project(), indent=4))
 

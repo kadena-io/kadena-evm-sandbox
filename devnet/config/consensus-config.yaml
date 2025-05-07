@@ -1,7 +1,7 @@
 chainweb:
   chainwebVersion: evm-development
   throttling:
-    global: 1000
+    global: 500
     mempool: 20
     putPeer: 55
   serviceApi:
@@ -16,7 +16,7 @@ chainweb:
 
 logging:
   logger:
-    log_level: info
+    log_level: warn
   backend:
     format: text
     color: 'true'

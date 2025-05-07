@@ -36,10 +36,23 @@ for node in ${nodes}; do
 done
 
 echo
-echo "deepest fork on chain 0 between any two nodes":
+echo "largest difference on chain 0 between any two nodes":
 for a in "${hashes[@]}"; do
     for b in "${hashes[@]}"; do
         echo $(echo "{}" | jq "${a} - ${b} | length")
     done
 done | sort -n | tail -1
+
+echo "forks on chain 0 between any two nodes":
+for a in "${hashes[@]}"; do
+    for b in "${hashes[@]}"; do
+        x=$(echo $(echo "{}" | jq "${a} - ${b} | length"))
+        y=$(echo $(echo "{}" | jq "${a} - ${b} | length"))
+        if [ "$x" -lt "$y" -a "$x" -gt 0 ]; then
+            echo $x
+        elif [ "$y" -lt "$x" -a "$y" -gt 0 ]; then
+            echo $y
+        fi
+    done
+done
 

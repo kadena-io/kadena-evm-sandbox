@@ -420,7 +420,7 @@ def evm_chain(
     else:
         if not os.path.isdir("./config/bootnode"):
             raise RuntimeError("Bootnode config directory not found.")
-        with open(f"config/bootnode/bootnode-evm-{cid}-enode" , "r") as f:
+        with open(f"config/bootnode/evm-{cid}-enode" , "r") as f:
             boot_enodes = f.read().strip()
         result["entrypoint"] += [f"--bootnodes={boot_enodes}"]
 
@@ -667,6 +667,37 @@ def other_services(nodes: list[str]) -> Spec:
 # COMPOSE PROJECT DEFINITIONS
 # ############################################################################# #
 
+# A minimal project setup. It runs a single exposed bootnode that has mining
+# enabled.
+#
+# It also includes the definition of curl container for easy to internal APIs
+# for debugging.
+#
+def minimal_project() -> Spec: 
+    # Create boostrap information
+    evm_cids = list(range(20, 40))
+
+    # Create bootstrap node IDs
+    evm_bootnodes("bootnode", evm_cids)
+
+    top : Spec = spec
+    top["name"] = "chainweb-evm"
+    top["networks"] = { f"p2p": None }
+    top["services"] = {
+        "curl": curl(["bootnode"]),
+    }
+
+    return join_specs([
+        top,
+        chainweb_node(
+            "bootnode",
+            evm_cids,
+            is_bootnode = True,
+            mining_mode = "simulation",
+            exposed = True,
+        ),
+    ]) 
+
 # A project for testing and debugging chainweb-node itself. It runs several
 # nodes in different configurations.
 #
@@ -845,5 +876,6 @@ else:
     exposed_cids = list(map(int, args.evm_chains.split(",")))
 
 # print the docker-compose file
-print(json.dumps(kadena_dev_project(), indent=4))
+# print(json.dumps(kadena_dev_project(), indent=4))
+print(json.dumps(minimal_project(), indent=4))
 

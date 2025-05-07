@@ -206,8 +206,8 @@ def chainweb_consensus_service(
             "com.chainweb.devnet.description": "EVM Devnet Chainweb Node",
             "com.chainweb.devnet.chainweb-node": ""
         },
-        "image": "${CHAINWEB_NODE_IMAGE:-ghcr.io/kadena-io/evm-devnet-chainweb-node:latest}",
-        # "platform": "linux/arm64",
+        "image": "${CHAINWEB_NODE_IMAGE:-ghcr.io/kadena-io/chainweb-node:pp-evm}",
+        "platform": "linux/amd64",
         "restart": "unless-stopped",
         "stop_grace_period": "20s",
         "stop_signal": "SIGINT",

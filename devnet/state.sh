@@ -3,7 +3,7 @@
 export NODE=${1:-bootnode-consensus}
 
 function get_summary_json() {
-    docker compose run -ti --rm curl -skL "https://${NODE}:1789/chainweb/0.0/evm-development/cut" |
+    docker compose run -i --rm curl -skL "https://${NODE}:1789/chainweb/0.0/evm-development/cut" |
     jq '{ 
         node: env.NODE,
         chain_0: .hashes."0".height,
@@ -14,7 +14,7 @@ function get_summary_json() {
 }
 
 function get_summary() {
-    docker compose run -ti --rm curl -skL "https://${NODE}:1789/chainweb/0.0/evm-development/cut" |
+    docker compose run -i --rm curl -skL "https://${NODE}:1789/chainweb/0.0/evm-development/cut" |
     jq -r '
         .height as $ch
         |

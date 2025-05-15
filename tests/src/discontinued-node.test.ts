@@ -1,43 +1,26 @@
-import { describe, test, expect, afterAll } from 'bun:test';
-import { $, fs, log } from 'zx';
-
-const $devnet = $({ cwd: '../devnet' });
-const $root = $({ cwd: '../' });
-
-const CONFIG = {
-  KILL_PREVIOUS: true,
-  VERBOSE: false,
-};
-
-$.verbose = CONFIG.VERBOSE;
+import { describe, test, expect, afterAll, beforeAll } from 'bun:test';
+import {
+  CONFIG,
+  $devnet,
+  $root,
+  stopAndRemoveNetwork,
+  generateDockerComposeAndStartNetwork,
+} from './devnet-utils';
 
 describe('start network, stop node, restart node', () => {
-  afterAll(() => {
-    console.log('stopping network...');
-    $devnet`docker compose -f ../devnet/docker-compose.test.yml down -v`;
-    console.log('network stopped');
-    console.log('removing docker-compose.test.yml');
-    fs.rmSync('../devnet/docker-compose.test.yml');
-    console.log('docker-compose.test.yml removed');
-  });
-  test('generate docker-compose.test.yml', async () => {
-    if (CONFIG.KILL_PREVIOUS) {
-      if (fs.existsSync('../devnet/docker-compose.test.yml')) {
-        console.log('docker-compose.test.yml already exists');
-
-        console.log('cleaning old run');
-        await $devnet`docker compose -f ../devnet/docker-compose.test.yml down -v`;
-
-        console.log('removing old docker-compose.test.yml');
-        fs.rmSync('../devnet/docker-compose.test.yml');
-      }
+  beforeAll(() => {
+    if (CONFIG.CLEAN_BEFORE) {
+      return stopAndRemoveNetwork();
     }
+  });
+  afterAll(() => {
+    if (CONFIG.CLEAN_AFTER) {
+      return stopAndRemoveNetwork();
+    }
+  });
 
-    console.log('Generating docker-compose.test.yml...');
-    await $devnet`uv run python ./compose.py > docker-compose.test.yml`;
-
-    console.log('starting network...');
-    await $devnet`docker compose -f ../devnet/docker-compose.test.yml up -d`;
+  test('generate docker-compose.test.yml', async () => {
+    await generateDockerComposeAndStartNetwork();
 
     await waitForCutHeight(98);
 

@@ -326,6 +326,7 @@ def evm_chain(
     is_bootnode = False,
     exposed = False
 ) -> Service:
+    apis="admin,debug,eth,net,trace,txpool,web3,rpc,reth,ots" # ,flashbots,miner,mev"
     result : Service = {
         "container_name": f"{node_name}-evm-{cid}",
         "hostname": f"{node_name}-evm-{cid}",
@@ -373,6 +374,9 @@ def evm_chain(
             "node",
             "--metrics=0.0.0.0:9001",
             "--log.file.directory=/root/logs",
+            # p2p
+            "--addr=0.0.0.0",
+            f"--port={30303 + cid}",
             # authrpc
             "--authrpc.jwtsecret=/run/secrets/jwtsecret",
             "--authrpc.addr=0.0.0.0",
@@ -381,12 +385,12 @@ def evm_chain(
             "--http",
             "--http.addr=0.0.0.0",
             "--http.port=8545",
-            "--http.api=admin,debug,eth,net,trace,txpool,web3,rpc,reth,ots",
+            f"--http.api={apis}",
             # websocket
             "--ws",
             "--ws.addr=0.0.0.0",
             "--ws.port=8546",
-            "--ws.api=admin,debug,eth,net,trace,txpool,web3,rpc,reth,ots",
+            f"--ws.api={apis}",
             # discovery
             "--disable-nat",
             "--nat=none",
@@ -876,6 +880,17 @@ else:
     exposed_cids = list(map(int, args.evm_chains.split(",")))
 
 # print the docker-compose file
-# print(json.dumps(kadena_dev_project(), indent=4))
-print(json.dumps(minimal_project(), indent=4))
+match args.project:
+    case "minimal":
+        print(json.dumps(minimal_project(), indent=4))
+    case "kadena-dev":
+        print(json.dumps(kadena_dev_project(), indent=4))
+    case "appdev":
+        print(json.dumps(app_dev_project(exposed_cids), indent=4))
+    case "pact":
+        print(json.dumps(pact_project(exposed_cids), indent=4))
+    case "mining-pool":
+        print(json.dumps(mining_pool_project(), indent=4))
+    case _:
+        print(json.dumps(minimal_project(), indent=4))
 

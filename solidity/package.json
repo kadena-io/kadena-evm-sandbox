@@ -2,7 +2,9 @@
     "name": "hardhat-project",
     "scripts": {
         "test": "npx hardhat test",
-        "deploy:hardhat": "npx hardhat run scripts/deploy.js"
+        "deploy:hardhat": "npx hardhat run scripts/deploy.js",
+        "deploy:sandbox": "npx hardhat run scripts/deploy.js --chainweb sandbox",
+        "deploy:devnet": "npx hardhat run scripts/deploy.js --chainweb devnet"
     },
     "devDependencies": {
         "@nomicfoundation/hardhat-chai-matchers": "^2.0.0",

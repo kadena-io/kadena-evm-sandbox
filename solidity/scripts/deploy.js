@@ -1,9 +1,20 @@
-const { Contract, ContractFactory } = require("ethers");
-const { ethers } = require("hardhat");
-const { deployContracts } = require("../test/utils/utils");
+const { chainweb } = require('hardhat');
 
 async function main() {
-  await deployContracts();
+  const deployed = await chainweb.deployContractOnChains({
+    name: 'SimpleToken',
+    constructorArgs: [ethers.parseUnits('1000000')],
+  });
+
+  if (deployed.deployments.length === 0) {
+    console.log('No contracts deployed');
+    return;
+  }
+  console.log('Contracts deployed');
+
+  deployed.deployments.forEach(async (deployment) => {
+    console.log(`${deployment.address} on ${deployment.chain}`);
+  });
 }
 
 main()

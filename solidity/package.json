@@ -1,5 +1,9 @@
 {
     "name": "hardhat-project",
+    "scripts": {
+        "test": "npx hardhat test",
+        "deploy:hardhat": "npx hardhat run scripts/deploy.js"
+    },
     "devDependencies": {
         "@nomicfoundation/hardhat-chai-matchers": "^2.0.0",
         "@nomicfoundation/hardhat-ethers": "^3.0.0",

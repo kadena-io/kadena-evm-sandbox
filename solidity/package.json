@@ -21,9 +21,7 @@
         "hardhat": "^2.24.0",
         "hardhat-gas-reporter": "^1.0.8",
         "hardhat-switch-network": "^1.2.0",
-        "solidity-coverage": "^0.8.1"
-    },
-    "dependencies": {
+        "solidity-coverage": "^0.8.1",
         "@kadena/hardhat-chainweb": "^1.4.6"
     }
 }

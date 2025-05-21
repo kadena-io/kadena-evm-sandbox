@@ -29,6 +29,7 @@ module.exports = {
       chains: 2,
       accounts: devnetAccounts.accounts.map((account) => account.privateKey),
       chainIdOffset: 1789,
+      chainwebChainIdOffset: 0, // needs to be changed for multi-chain devnet
       externalHostUrl:
         "https://evm-devnet.kadena.network/chainweb/0.0/evm-development",
     },
@@ -37,6 +38,7 @@ module.exports = {
       chains: 1,
       accounts: devnetAccounts.accounts.map((account) => account.privateKey),
       chainIdOffset: 1789,
+      chainwebChainIdOffset: 0, // needs to be changed for multi-chain sandbox
       externalHostUrl:
         "http://localhost:8545",
     },

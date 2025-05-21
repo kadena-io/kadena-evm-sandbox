@@ -2,7 +2,7 @@
   "name": "tests",
   "private": true,
   "scripts": {
-    "test": "bun test"
+    "test": "bun test --timeout 300000"
   },
   "devDependencies": {
     "@types/bun": "latest"

@@ -3,14 +3,14 @@
 echo ""
 echo "Stopping chain 0 containers..."
 echo "=============================="
-docker compose -p bs_chain_0  --env-file ./envs/chain-0.env -f common-docker-compose.yaml down -v
+docker compose -p bs_chain_0  --env-file ./envs/chain-0.env -f common-docker-compose.yaml down -v --remove-orphans
 
 echo ""
 echo "Stopping chain 1 containers..."
 echo "=============================="
-docker compose -p bs_chain_1  --env-file ./envs/chain-1.env -f common-docker-compose.yaml down -v
+docker compose -p bs_chain_1  --env-file ./envs/chain-1.env -f common-docker-compose.yaml down -v --remove-orphans
 
 echo ""
 echo "Stopping database containers..."
 echo "==============================="
-docker compose -p bs_database  -f db-docker-compose.yaml down -v
+docker compose -p bs_database  -f db-docker-compose.yaml down -v --remove-orphans

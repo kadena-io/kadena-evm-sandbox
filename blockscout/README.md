@@ -30,17 +30,11 @@ Assuming the current working dir is the root of the repository,
     cd ../blockscout-compose
     ```
 
-3.  start Blockscout instance for chain 0:
+3.  start Blockscout instances:
 
     ```sh
-    docker compose -f chain-0.yaml up -d
+    ./start
     ```
-
-4.  start Blockscout instance for chain 1:
-  
-   ```sh
-   docker compose -f chain-1.yaml up -d
-   ```
 
 5.  Navigate to the Blockscout UI:
 
@@ -56,8 +50,7 @@ Assuming the current working dir is the root of the repository,
 # Shutting down
 
 ```sh
-docker compose -f chain-0.yaml down -v --remove-orphans
-docker compose -f chain-1.yaml down -v --remove-orphans
+./stop
 ```
 
 # Verify Contracts
@@ -105,15 +98,17 @@ Verification can be done directly from the hardhat project.
     Pull images:
 
     ```sh
-    docker compose -f chain-0.yaml pull
-    docker compose -f chain-1.yaml pull
+    docker compose -p bs_database  -f db-docker-compose.yaml pull
+    docker compose -p bs_chain_0  --env-file ./envs/chain-0.env -f common-docker-compose.yaml pull
+    docker compose -p bs_chain_1  --env-file ./envs/chain-1.env -f common-docker-compose.yaml pull
     ```
 
     And then start the project without pulling:
 
     ```sh
-    docker compose -f chain-0.yaml up -d --pull=missing
-    docker compose -f chain-1.yaml up -d --pull=missing
+    docker compose -p bs_database  -f db-docker-compose.yaml --pull=missing
+    docker compose -p bs_chain_0  --env-file ./envs/chain-0.env -f common-docker-compose.yaml --pull=missing
+    docker compose -p bs_chain_1  --env-file ./envs/chain-1.env -f common-docker-compose.yaml --pull=missing
     ```
 
 *   Currently, some internal components of Blockscout communicate via the

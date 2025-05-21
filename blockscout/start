@@ -1,5 +1,18 @@
 #!/bin/bash
 
+echo ""
+echo "Starting database containers..."
+echo "==============================="
 docker compose -p bs-database  -f db-docker-compose.yaml up -d  
+echo "Waiting for database containers to be ready..."
+sleep 10
+
+echo ""
+echo "Starting chain 0 containers..."
+echo "=============================="
 docker compose -p bs-chain-0  --env-file ./envs/chain-0.env -f common-docker-compose.yaml up -d
+
+echo ""
+echo "Starting chain 1 containers..."
+echo "=============================="
 docker compose -p bs-chain-1  --env-file ./envs/chain-1.env -f common-docker-compose.yaml up -d

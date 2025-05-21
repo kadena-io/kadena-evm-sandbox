@@ -1,11 +1,29 @@
-import { describe, test, expect, afterAll, beforeAll } from 'bun:test';
+import { describe, test, expect, afterAll, beforeAll, it } from 'bun:test';
 import {
-  CONFIG,
   $devnet,
-  $root,
-  stopAndRemoveNetwork,
+  CONFIG,
+  createDockerComposeFile,
   generateDockerComposeAndStartNetwork,
+  getDevnetStatus,
+  stopAndRemoveNetwork,
+  waitForCutHeight,
 } from './devnet-utils';
+import { DOCKER_COMPOSE_FILE } from './devnet-utils';
+
+import { fs, $ } from 'zx';
+$.verbose = CONFIG.VERBOSE;
+
+describe(`verify ${DOCKER_COMPOSE_FILE} generation`, () => {
+  it(`generate ${DOCKER_COMPOSE_FILE}`, async () => {
+    await createDockerComposeFile();
+    const fileExists = fs.existsSync(DOCKER_COMPOSE_FILE);
+    expect(fileExists).toBe(true);
+    expect(async () => {
+      console.log('checking docker compose config...');
+      return await $devnet`docker compose -f ${DOCKER_COMPOSE_FILE} config`;
+    }).not.toThrow();
+  });
+});
 
 describe('start network, stop node, restart node', () => {
   beforeAll(() => {
@@ -19,13 +37,13 @@ describe('start network, stop node, restart node', () => {
     }
   });
 
-  test('generate docker-compose.test.yml', async () => {
+  test(`generate ${DOCKER_COMPOSE_FILE}`, async () => {
     await generateDockerComposeAndStartNetwork();
 
     await waitForCutHeight(98);
 
     console.log('stopping bootnode-evm-20...');
-    await $devnet`docker compose -f ../devnet/docker-compose.test.yml stop bootnode-evm-20`;
+    await $devnet`docker compose -f ${DOCKER_COMPOSE_FILE} stop bootnode-evm-20`;
     console.log('bootnode-evm-20 stopped');
 
     console.log('verifying lowest chain-height is evm-20...');
@@ -41,7 +59,7 @@ describe('start network, stop node, restart node', () => {
     expect(lowestHeight).toEqual(evm20);
 
     console.log('restarting bootnode-evm-20...');
-    await $devnet`docker compose -f ../devnet/docker-compose.test.yml start bootnode-evm-20`;
+    await $devnet`docker compose -f ${DOCKER_COMPOSE_FILE} start bootnode-evm-20`;
     console.log('bootnode-evm-20 started');
 
     console.log('waiting for cut-height to catch up...');
@@ -63,62 +81,3 @@ describe('start network, stop node, restart node', () => {
     }
   });
 });
-
-async function getDevnetStatus() {
-  const devnetStatusOut = (await $root`./network devnet status`).stdall;
-
-  return devnetStatusOut
-    .split('\n')
-    .filter((line) => line.match(/^\d/))
-    .map((line) => line.trim().split(/\s+/))
-    .map(([chainId, height, hash, type]) => ({
-      chainId: parseInt(chainId!),
-      height: parseInt(height!),
-      hash,
-      type,
-    }));
-}
-
-async function waitForCutHeight(
-  cutHeight: number
-): Promise<number | undefined> {
-  console.log(`wait for cut-height of ${cutHeight}`);
-  let firstCutHeight: number | undefined = undefined;
-  let iteration = 0;
-  return new Promise(async (resolve, reject) => {
-    let currentHeight = 0;
-    while (currentHeight < cutHeight) {
-      const devnetStatus = (await $root`./network devnet status`).stdall;
-      currentHeight = parseInt(
-        devnetStatus
-          .split('\n')
-          .find((line) => line.startsWith('cut-height'))!
-          .split(':')[1]!
-          .trim()
-      );
-      if (firstCutHeight === undefined) firstCutHeight = currentHeight;
-      if (currentHeight === firstCutHeight && iteration > 0) {
-        reject('cut-height not increasing');
-      }
-      console.log(`cut-height: ${currentHeight}, waiting for ${cutHeight}`);
-      if (currentHeight < cutHeight) await waitSeconds(5);
-      iteration++;
-    }
-    console.log(`cut-height ${currentHeight} > ${cutHeight} reached`);
-    resolve(currentHeight);
-  });
-}
-
-function waitSeconds(seconds: number) {
-  return new Promise((resolve) => {
-    let count = 0;
-    const intervalId = setInterval(() => {
-      count++;
-      process.stdout.write('.');
-      if (count === seconds) {
-        clearInterval(intervalId);
-        resolve(true);
-      }
-    }, 1000);
-  });
-}

@@ -1,0 +1,5 @@
+#!/bin/bash
+
+docker compose -p bs-database  -f db-docker-compose.yaml down -v  
+docker compose -p bs-chain-0  --env-file ./envs/chain-0.env -f common-docker-compose.yaml down -v
+docker compose -p bs-chain-1  --env-file ./envs/chain-1.env -f common-docker-compose.yaml down -v

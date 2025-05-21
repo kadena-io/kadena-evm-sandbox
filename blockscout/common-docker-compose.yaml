@@ -1,6 +1,4 @@
 volumes:
-  blockscout-db-data:
-  stats-db-data:
   redis-data:
   logs:
   dets:
@@ -11,34 +9,36 @@ services:
       file: ./services/redis.yml
       service: redis-db
 
-  db-init:
-    extends:
-      file: ./services/db.yml
-      service: db-init
 
-  db:
-    depends_on:
-      db-init:
-        condition: service_completed_successfully
+
+  create-blockscout-db:
     extends:
       file: ./services/db.yml
-      service: db
+      service: create-blockscout-db
+    networks:
+      - database-network  
+
+      
 
   backend:
     depends_on:
-      - db
-      - redis-db
+      redis-db:
+        condition: service_started
+      create-blockscout-db : 
+          condition: service_completed_successfully  
     extends:
       file: ./services/backend.yml
       service: backend
-    links:
-      - db:database
     environment:
       - CHAIN_ID=${CHAIN_ID?}
       - SUBNETWORK=${SUBNETWORK?}
       - ETHEREUM_JSONRPC_HTTP_URL=${ETHEREUM_JSONRPC_HTTP_URL?}
       - ETHEREUM_JSONRPC_WS_URL=${ETHEREUM_JSONRPC_WS_URL?}
       - ETHEREUM_JSONRPC_TRACE_URL=${ETHEREUM_JSONRPC_TRACE_URL?}
+      - DATABASE_URL=${BLOCKSCOUT_DB_URL}
+    networks:
+      - database-network  
+      - default
 
   visualizer:
     extends:
@@ -59,41 +59,49 @@ services:
     environment:
       - NEXT_PUBLIC_NETWORK_ID=${NEXT_PUBLIC_NETWORK_ID?}
 
-      # Kinda sucks. Why does this communicate via the host network?
+      # Kinda sucks. Why does this communicate via the host network? 
+      # I think because this urls will be used in the browser so they should target the host not the container
       - NEXT_PUBLIC_STATS_API_HOST=http://localhost:${PROXY_STATS_PORT}
       - NEXT_PUBLIC_VISUALIZE_API_HOST=http://localhost:${PROXY_VISUALIZER_PORT}
       - NEXT_PUBLIC_API_HOST=localhost:${PROXY_UI_PORT}
       - NEXT_PUBLIC_APP_HOST=localhost:${PROXY_UI_PORT}
 
-  stats-db-init:
-    extends:
-      file: ./services/stats.yml
-      service: stats-db-init
 
-  stats-db:
-    depends_on:
-      stats-db-init:
-        condition: service_completed_successfully
+  create-stats-db:
     extends:
-      file: ./services/stats.yml
-      service: stats-db
+      file: ./services/db.yml
+      service: create-stats-db
+    networks:
+      - database-network 
 
   stats:
     depends_on:
-      - stats-db
-      - backend
+      backend:
+        condition: service_started
+      create-stats-db : 
+          condition: service_completed_successfully
     extends:
       file: ./services/stats.yml
       service: stats
+    networks:
+      - database-network  
+      - default    
 
   user-ops-indexer:
     depends_on:
-      - db
-      - backend
+      backend:
+        condition: service_started
+      create-stats-db : 
+          condition: service_completed_successfully
     extends:
       file: ./services/user-ops-indexer.yml
       service: user-ops-indexer
-
+    networks:
+      - database-network  
+      - default  
+    environment:
+      - USER_OPS_INDEXER__INDEXER__RPC_URL=${USER_OPS_INDEXER__INDEXER__RPC_URL}
+      - USER_OPS_INDEXER__DATABASE__CONNECT__URL=${BLOCKSCOUT_DB_URL}  
   smart-contract-verifier:
     extends:
       file: ./services/smart-contract-verifier.yml
@@ -110,5 +118,11 @@ services:
     extends:
       file: ./services/nginx.yml
       service: proxy
-    platform: linux/amd64
 
+networks:
+  default:
+    driver: bridge
+
+  database-network:
+    external: true
+    name: database-network

@@ -1,0 +1,48 @@
+volumes:
+  blockscout-db-data:
+  stats-db-data:
+
+services:
+  db-init:
+    extends:
+      file: ./services/databases.yml
+      service: db-init
+    networks:
+      - database-network  
+
+  db:
+    depends_on:
+      db-init:
+        condition: service_completed_successfully
+    extends:
+      file: ./services/databases.yml
+      service: db
+    networks:
+      - database-network  
+
+  stats-db-init:
+    extends:
+      file: ./services/databases.yml
+      service: stats-db-init
+    networks:
+      - database-network  
+
+
+  stats-db:
+    depends_on:
+      stats-db-init:
+        condition: service_completed_successfully
+    extends:
+      file: ./services/databases.yml
+      service: stats-db
+    networks:
+      - database-network  
+
+
+
+networks:
+  database-network:
+    name: database-network
+    driver: bridge
+
+

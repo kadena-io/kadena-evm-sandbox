@@ -1,35 +1,20 @@
 services:
-  db-init:
+  create-stats-db:
     image: postgres:17
-    volumes:
-      - blockscout-db-data:/var/lib/postgresql/data
-    entrypoint:
-      - sh
-      - -c
-      - |
-        chown -R 2000:2000 /var/lib/postgresql/data
-        chown -R 2000:2000 /var/run/postgresql
-
-  db:
-    image: postgres:17
-    # user: 2000:2000
-    shm_size: 256m
-    restart: always
-    command: postgres -c 'max_connections=200' -c 'client_connection_check_interval=60000'
+    entrypoint: ["sh", "-c"]
+    command: >
+      "psql -h stats-db -U stats -d postgres -tAc \"SELECT 1 FROM pg_database WHERE datname='${STATS_DB_NAME}'\" | grep -q 1 || psql -h stats-db -U stats -d postgres -c \"CREATE DATABASE ${STATS_DB_NAME};\""
     environment:
-        POSTGRES_DB: 'blockscout'
-        POSTGRES_USER: 'blockscout'
-        POSTGRES_PASSWORD: 'ceWb1MeLBEeOIfk65gU8EjF8'
-    expose:
-      - 7432:5432
-    # ports:
-    #   - target: 5432
-    #     published: 7432
-    volumes:
-      - blockscout-db-data:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U blockscout -d blockscout"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 10s
+        STATS_DB_NAME: ${STATS_DB_NAME}
+        PGUSER: 'stats'
+        PGPASSWORD: 'n0uejXPl61ci6ldCuE2gQU5Y'  
+
+  create-blockscout-db:
+    image: postgres:17
+    entrypoint: ["sh", "-c"]
+    command: >
+      "psql -h db -U blockscout -d postgres -tAc \"SELECT 1 FROM pg_database WHERE datname='${BLOCKSCOUT_DB_NAME}'\" | grep -q 1 || psql -h db -U blockscout -d postgres -c \"CREATE DATABASE ${BLOCKSCOUT_DB_NAME};\""    
+    environment:
+        BLOCKSCOUT_DB_NAME: ${BLOCKSCOUT_DB_NAME}
+        PGUSER: 'blockscout'
+        PGPASSWORD: 'ceWb1MeLBEeOIfk65gU8EjF8'  

@@ -8,15 +8,23 @@ services:
     extends:
       file: ./services/redis.yml
       service: redis-db
-
-
+    networks:
+      - default   
+      
 
   create-blockscout-db:
     extends:
-      file: ./services/db.yml
+      file: ./services/create-db.yml
       service: create-blockscout-db
     networks:
       - database-network  
+
+  create-stats-db:
+    extends:
+      file: ./services/create-db.yml
+      service: create-stats-db
+    networks:
+      - database-network     
 
       
 
@@ -37,8 +45,8 @@ services:
       - ETHEREUM_JSONRPC_TRACE_URL=${ETHEREUM_JSONRPC_TRACE_URL?}
       - DATABASE_URL=${BLOCKSCOUT_DB_URL}
     networks:
-      - database-network  
-      - default
+      - database-network 
+      - default   
 
   visualizer:
     extends:
@@ -67,13 +75,6 @@ services:
       - NEXT_PUBLIC_APP_HOST=localhost:${PROXY_UI_PORT}
 
 
-  create-stats-db:
-    extends:
-      file: ./services/db.yml
-      service: create-stats-db
-    networks:
-      - database-network 
-
   stats:
     depends_on:
       backend:
@@ -84,15 +85,17 @@ services:
       file: ./services/stats.yml
       service: stats
     networks:
-      - database-network  
-      - default    
+      - database-network 
+      - default      
 
   user-ops-indexer:
     depends_on:
       backend:
         condition: service_started
-      create-stats-db : 
+      create-blockscout-db : 
           condition: service_completed_successfully
+      create-stats-db : 
+          condition: service_completed_successfully    
     extends:
       file: ./services/user-ops-indexer.yml
       service: user-ops-indexer
@@ -118,6 +121,8 @@ services:
     extends:
       file: ./services/nginx.yml
       service: proxy
+    networks:
+     - default    
 
 networks:
   default:

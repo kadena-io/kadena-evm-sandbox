@@ -112,18 +112,20 @@ def join_specs (specs : list[Spec]) -> Spec:
 jwtsecret = '10b45e8907ab12dd750f688733e73cf433afadfd2f270e5b75a6b8fff22dd352'
 evmMinerAddress = '0xd42d71cdc2A0a78fE7fBE7236c19925f62C442bA'
 
+defaultPactMiner = {
+    "account": "NoMiner",
+    "public-keys": [],
+    "predicate": "<",
+}
+
 def jwtsecret_config(node_name: str) -> None:
     os.makedirs(f"./config/{node_name}", exist_ok=True)
     with open(f"config/{node_name}/jwtsecret", "w") as f:
         f.write(jwtsecret)
 
-def payload_provider_config(node_name: str, evm_chains: list[int]) -> None:
+def payload_provider_config(node_name: str, evm_chains: list[int], pact_chains: list[int]) -> None:
     config = {
         "chainweb": {
-            "default": {
-                "redeemAccount": '0xd42d71cdc2A0a78fE7fBE7236c19925f62C442bA',
-                "redeemChain": 0,
-            },
             "payloadProviders": {
                 f"chain-{cid}": {
                     "type": "evm",
@@ -131,7 +133,17 @@ def payload_provider_config(node_name: str, evm_chains: list[int]) -> None:
                     "minerAddress": f"{evmMinerAddress}",
                     "engineJwtSecret": f"{jwtsecret}",
                 } for cid in evm_chains
-            },
+            } | {
+                f"chain-{cid}": {
+                    "type": "pact",
+                    "miner": defaultPactMiner,
+                } for cid in pact_chains
+            } | {
+                "default": {
+                    "redeemAccount": '0xd42d71cdc2A0a78fE7fBE7236c19925f62C442bA',
+                    "redeemChain": 0,
+                },
+            }
         },
     }
     os.makedirs(f"./config/{node_name}", exist_ok=True)
@@ -573,12 +585,13 @@ def debug(nodes: list[str]) -> Service: return {
 def chainweb_node(
     node_name,
     evm_cids,
+    pact_cids,
     is_bootnode : bool = False,
     mining_mode : str|None = None,
     exposed : bool = False,
 ) -> Spec: 
     jwtsecret_config(node_name)
-    payload_provider_config(node_name, evm_cids)
+    payload_provider_config(node_name, evm_cids, pact_cids)
     result : Spec = {
         "name": f"{node_name}",
         "secrets": {
@@ -679,7 +692,8 @@ def other_services(nodes: list[str]) -> Spec:
 #
 def minimal_project() -> Spec: 
     # Create boostrap information
-    evm_cids = list(range(20, 40))
+    evm_cids = list(range(20, 25))
+    pact_cids = list(range(0, 20))
 
     # Create bootstrap node IDs
     evm_bootnodes("bootnode", evm_cids)
@@ -696,6 +710,7 @@ def minimal_project() -> Spec:
         chainweb_node(
             "bootnode",
             evm_cids,
+            pact_cids,
             is_bootnode = True,
             mining_mode = "simulation",
             exposed = True,
@@ -710,7 +725,8 @@ def kadena_dev_project() -> Spec:
     nodes = ["bootnode", "appdev"]
 
     # Create boostrap information
-    evm_cids = list(range(20, 40))
+    evm_cids = list(range(20, 25))
+    pact_cids = list(range(0, 20))
 
     # Create bootstrap node IDs
     evm_bootnodes("bootnode", evm_cids)
@@ -724,6 +740,7 @@ def kadena_dev_project() -> Spec:
         chainweb_node(
             "bootnode",
             evm_cids,
+            pact_cids,
             is_bootnode = True,
             mining_mode = None,
             exposed = False,
@@ -731,6 +748,7 @@ def kadena_dev_project() -> Spec:
         chainweb_node(
             "miner-1",
             evm_cids,
+            pact_cids,
             is_bootnode = False,
             mining_mode = "simulation",
             exposed = False,
@@ -738,13 +756,15 @@ def kadena_dev_project() -> Spec:
         chainweb_node(
             "miner-2",
             evm_cids,
+            pact_cids,
             is_bootnode = False,
             mining_mode = "simulation",
             exposed = False,
         ),
         chainweb_node(
             "appdev",
-            [20,30],
+            [20, 24],
+            [1, 5, 19],
             is_bootnode = False,
             mining_mode = None,
             exposed = True,
@@ -760,12 +780,13 @@ def kadena_dev_project() -> Spec:
 # * Blocks are produced at a fixed rate of 2 seconds per chain.
 # * There is a single bootstrap node that is also a miner.
 #
-def app_dev_project(exposed_chains) -> Spec: 
+def app_dev_project(exposed_evm_chains, exposed_pact_chains) -> Spec: 
 
     nodes = ["bootnode", "appdev"]
 
     # Create boostrap information
-    evm_cids = list(range(20, 40))
+    evm_cids = list(range(20, 25))
+    pact_cids = list(range(0, 20))
 
     # Create bootstrap node IDs
     evm_bootnodes("bootnode", evm_cids)
@@ -779,13 +800,15 @@ def app_dev_project(exposed_chains) -> Spec:
         chainweb_node(
             "bootnode",
             evm_cids,
+            pact_cids,
             is_bootnode = True,
             mining_mode = "constant-delay",
             exposed = False,
         ),
         chainweb_node(
             "appdev",
-            exposed_chains,
+            exposed_evm_chains,
+            exposed_pact_chains,
             is_bootnode = False,
             mining_mode = None,
             exposed = True,
@@ -802,8 +825,8 @@ def pact_project(pact_chains) -> Spec:
 
     nodes = ["bootnode", "appdev"]
 
-    evm_cids = list(range(20, 40))
-    # pact_cids = list(range(0, 20))
+    evm_cids = list(range(20, 25))
+    pact_cids = list(range(0, 20))
 
     # Create bootstrap node IDs
     evm_bootnodes("bootnode", evm_cids)
@@ -817,13 +840,15 @@ def pact_project(pact_chains) -> Spec:
         chainweb_node(
             "bootnode",
             evm_cids,
+            pact_cids,
             is_bootnode = True,
             mining_mode = "constant-delay",
             exposed = False,
         ),
         chainweb_node(
             "appdev",
-            pact_chains,
+            [],
+            exposed_pact_chains,
             is_bootnode = False,
             mining_mode = None,
             exposed = True,
@@ -842,7 +867,8 @@ def mining_pool_project() -> Spec:
     nodes = ["bootnode", "appdev"]
 
     # Create boostrap information
-    evm_cids = list(range(20, 40))
+    evm_cids = list(range(20, 25))
+    pact_cids = list(range(0, 20))
 
     # Create bootstrap node IDs
     evm_bootnodes("bootnode", evm_cids)
@@ -858,6 +884,7 @@ def mining_pool_project() -> Spec:
         chainweb_node(
             "bootnode",
             evm_cids,
+            pact_cids,
             is_bootnode = True,
             mining_mode = "stratum",
             exposed = False,
@@ -875,9 +902,12 @@ args=parser.parse_args()
 
 # All available EVM chains
 if args.exposed_chains is None:
-    exposed_cids = list(range(20,40))
+    exposed_evm_chains = list(range(20,25))
+    exposed_pact_chains = list(range(0,20))
 else:
     exposed_cids = list(map(int, args.evm_chains.split(",")))
+    exposed_evm_chains = [i for i in range(20, 25) if i in exposed_cids]
+    exposed_pact_chains = [i for i in range(0, 20) if i in exposed_cids]
 
 # print the docker-compose file
 match args.project:
@@ -886,9 +916,9 @@ match args.project:
     case "kadena-dev":
         print(json.dumps(kadena_dev_project(), indent=4))
     case "appdev":
-        print(json.dumps(app_dev_project(exposed_cids), indent=4))
+        print(json.dumps(app_dev_project(exposed_evm_chains, exposed_pact_chains), indent=4))
     case "pact":
-        print(json.dumps(pact_project(exposed_cids), indent=4))
+        print(json.dumps(pact_project(exposed_pact_chains), indent=4))
     case "mining-pool":
         print(json.dumps(mining_pool_project(), indent=4))
     case _:

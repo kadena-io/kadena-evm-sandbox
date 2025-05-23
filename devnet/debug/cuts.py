@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+import os
 from dataclasses import dataclass, field
 from enum import Enum
 from statistics import mean, median
@@ -175,8 +176,9 @@ async def get_branches_for_all_nodes(
 
 # Find forks per chain:
 #
-def forks(a : dict[Node, list[RankedBlockHash]]) -> Forks:
+def forks(x : dict[Node, list[RankedBlockHash]]) -> Forks:
     # O(n * m)
+    a = { k: v[::-1] for k, v in x.items() }
     min_rank = min([v[0][0] for v in a.values() if len(v) > 0])
     cur_rank = min_rank
     levels: dict[BlockHeight, dict[Node, BlockHash|None]] = {}
@@ -225,9 +227,21 @@ async def get_fork_points(
 ) -> dict[ChainId, ForkPoints]:
     async with aiohttp.ClientSession() as session:
         branches = await get_branches_for_all_nodes(session, nodes, chains=chains)
-        chains = [cid for cid in sum([list(v.keys()) for v in branches.values()], []) if cid is not None]
+        cids = frozenset([cid for cid in sum([list(v.keys()) for v in branches.values()], []) if cid is not None])
         return { cid : fork_points(forks(branches_for_chain(branches, cid)))
-            for cid in chains
+            for cid in cids
+        }
+
+async def get_forks(
+    nodes: frozenset[Node],
+    *,
+    chains: list[ChainId]|None = None
+) -> dict[ChainId, Forks]:
+    async with aiohttp.ClientSession() as session:
+        branches = await get_branches_for_all_nodes(session, nodes, chains=chains)
+        cids = frozenset([cid for cid in sum([list(v.keys()) for v in branches.values()], []) if cid is not None])
+        return { cid : forks(branches_for_chain(branches, cid))
+            for cid in cids
         }
 
 # ############################################################################ #
@@ -235,7 +249,7 @@ async def get_fork_points(
 
 # nodes=$(docker compose ps --format=json | jq -r '.Name | select(. | contains("consensus"))')
 
-def get_nodes() -> frozenset[Node]:
+def get_docker_project_nodes() -> frozenset[Node]:
     proc = subprocess.run(
         ["docker", "compose", "ps", "--format=json"],
         check=True,
@@ -274,20 +288,32 @@ async def summary(nodes: frozenset[Node]):
 # ############################################################################ #
 # Main
 
-async def main(nodes: frozenset[Node]):
+async def main(nodes: frozenset[Node], forks: bool):
     if args.chains is not None:
         chains = [int(c) for c in args.chains.split(',')]
     else:
         chains = None
-    fps = await get_fork_points(nodes, chains=chains)
-    print(json.dumps({
-        cid : [{
-            'nodes': list(nodes),
-            'height': h,
-        } for nodes, h in fp.items()]
-        for cid, fp in fps.items()
 
-    }))
+    if forks:
+        cfs = await get_forks(nodes, chains=chains)
+        print(json.dumps({
+            cid : [[{ 
+                'height': h,
+                'hash': hs,
+                'nodes': list(nodes),
+            } for (h, hs), nodes in level.items()
+            ] for level in fs
+            ] for cid, fs in cfs.items()
+        }))
+    else:
+        fps = await get_fork_points(nodes, chains=chains)
+        print(json.dumps({
+            cid : [{
+                'nodes': list(nodes),
+                'height': h,
+            } for nodes, h in fp.items()]
+            for cid, fp in fps.items()
+        }))
 
 if __name__ == "__main__":
     parser=argparse.ArgumentParser()
@@ -297,19 +323,24 @@ if __name__ == "__main__":
     parser.add_argument("--chains")
     parser.add_argument("--nodes")
     parser.add_argument("--summary", action='store_true', help="Show cut summary of nodes")
+    parser.add_argument("--forks", action='store_true', help="Show forks of nodes instead of fork points")
     args=parser.parse_args()
 
     if args.nodes is not None:
-        nodes = frozenset(args.nodes.split(','))
+        node_args = args.nodes.split(',')
+        nodes = frozenset([ f"{n}:1848" if ':' not in n else n for n in node_args ])
+    elif (env := os.getenv('CL_NODES')) is not None:
+        node_args = env.split(',')
+        nodes = frozenset([ f"{n}:1848" if ":" not in n else n for n in node_args ])
     else:
-        nodes = get_nodes()
+        nodes = get_docker_project_nodes()
         print(f"Found nodes: {nodes}")
 
     if args.summary:
         asyncio.run(summary(nodes))
         exit(0)
     else:
-        asyncio.run(main(nodes))
+        asyncio.run(main(nodes, args.forks))
 
 # ############################################################################ #
 

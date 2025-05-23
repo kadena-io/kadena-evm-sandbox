@@ -1,7 +1,12 @@
 #!/usr/bin/env python3
 
-# pip install secp256k1
-# pip install pyyaml
+# ########################## Instructions #####################################
+# Create a GITHUB_TOKEN env var with token with packages:read permission
+# to access the private docker images. Then run:
+## echo "$GITHUB_TOKEN" |docker login ghcr.io -u <GITHUB_USERNAME> --password-stdin
+# cd to this directory, then (use uv: https://docs.astral.sh/uv/getting-started/installation/)
+## uv run python ./compose.py > docker-compose.yaml && docker compose up -d
+# #############################################################################
 
 import argparse
 import os
@@ -18,6 +23,7 @@ from typing import TypedDict, Any
 # instead of just using dictionaries. In the end it is all about readability and
 # convenience.
 
+
 class Service(TypedDict, total=False):
     container_name: str
     hostname: str
@@ -26,22 +32,23 @@ class Service(TypedDict, total=False):
     restart: str
     stop_grace_period: str
     stop_signal: str
-    ulimits: dict[str, dict[str, str|int]]
+    ulimits: dict[str, dict[str, str | int]]
     expose: list[str]
-    ports: list[dict|str]
-    secrets: list[dict|str]
-    configs: list[dict|str]
-    volumes: list[dict|str]
+    ports: list[dict | str]
+    secrets: list[dict | str]
+    configs: list[dict | str]
+    volumes: list[dict | str]
     networks: dict[str, None]
-    depends_on: dict[str,dict]
+    depends_on: dict[str, dict]
     entrypoint: list[str]
-    deploy: dict[str, dict[str, str|int]]
+    deploy: dict[str, dict[str, str | int]]
     healthcheck: dict
     build: dict[str, str]
     environment: list[str] | dict[str, str]
     platform: str
     profiles: list[str]
     command: list[str]
+
 
 class Spec(TypedDict):
     name: str
@@ -51,11 +58,12 @@ class Spec(TypedDict):
     volumes: dict[str, None]
     services: dict[str, Service]
 
+
 # Template for a service component. These are not merged by default. The
 # default values in the template makes updateing more convient by providing
 # default values and also a bit less error prone by fixing the some of the types.
 #
-service : Service = {
+service: Service = {
     "ulimits": {},
     "expose": [],
     "ports": [],
@@ -72,7 +80,7 @@ service : Service = {
 # Template for a service specification. The toplevel elements are merged into a
 # single docker compose projects.
 #
-spec : Spec = {
+spec: Spec = {
     "name": "spec",
     "secrets": {},
     "configs": {},
@@ -81,10 +89,11 @@ spec : Spec = {
     "services": {},
 }
 
+
 # Shallow merge of docker compose specifications with increasing precedence.
 #
-def join_specs (specs : list[Spec]) -> Spec:
-    def join (left : Spec, right : Spec) -> Spec:
+def join_specs(specs: list[Spec]) -> Spec:
+    def join(left: Spec, right: Spec) -> Spec:
         return {
             "name": left["name"] if left["name"] else right["name"],
             "secrets": left["secrets"] | right["secrets"],
@@ -93,10 +102,12 @@ def join_specs (specs : list[Spec]) -> Spec:
             "volumes": left["volumes"] | right["volumes"],
             "services": left["services"] | right["services"],
         }
-    result : Spec = Spec(spec)
+
+    result: Spec = Spec(spec)
     for x in specs:
         result = join(result, x)
     return result
+
 
 # #############################################################################
 # CONFIGURATION FILES
@@ -109,8 +120,9 @@ def join_specs (specs : list[Spec]) -> Spec:
 # We could safe some resources by only enabling mining when mining coordination
 # is also enabled in consensus.
 
-jwtsecret = '10b45e8907ab12dd750f688733e73cf433afadfd2f270e5b75a6b8fff22dd352'
-evmMinerAddress = '0xd42d71cdc2A0a78fE7fBE7236c19925f62C442bA'
+jwtsecret = "10b45e8907ab12dd750f688733e73cf433afadfd2f270e5b75a6b8fff22dd352"
+evmMinerAddress = "0xd42d71cdc2A0a78fE7fBE7236c19925f62C442bA"
+
 
 defaultPactMiner = {
     "account": "NoMiner",
@@ -122,6 +134,7 @@ def jwtsecret_config(node_name: str) -> None:
     os.makedirs(f"./config/{node_name}", exist_ok=True)
     with open(f"config/{node_name}/jwtsecret", "w") as f:
         f.write(jwtsecret)
+
 
 def payload_provider_config(node_name: str, evm_chains: list[int], pact_chains: list[int]) -> None:
     config = {
@@ -140,7 +153,7 @@ def payload_provider_config(node_name: str, evm_chains: list[int], pact_chains: 
                 } for cid in pact_chains
             } | {
                 "default": {
-                    "redeemAccount": '0xd42d71cdc2A0a78fE7fBE7236c19925f62C442bA',
+                    "redeemAccount": "0xd42d71cdc2A0a78fE7fBE7236c19925f62C442bA",
                     "redeemChain": 0,
                 },
             }
@@ -149,10 +162,11 @@ def payload_provider_config(node_name: str, evm_chains: list[int], pact_chains: 
     os.makedirs(f"./config/{node_name}", exist_ok=True)
     with open(f"config/{node_name}/payload-providers.yaml", "w") as f:
         yaml.dump(config, f, default_flow_style=False)
-        
+
 
 # #############################################################################
 # Bootstrap Node IDs
+
 
 # This is needed only if more than a single node is deployed.
 #
@@ -181,6 +195,7 @@ def evm_bootnodes(node_name, evm_cids):
         with open(f"{dir}/evm-{cid}-enode", "w") as f:
             print(f"enode://{pk.hex()}@{node_name}-evm-{cid}:{30303+cid}", file=f)
 
+
 # #############################################################################
 # Simulate port forwarding
 #
@@ -202,21 +217,22 @@ def evm_bootnodes(node_name, evm_cids):
 bootnode_name = "bootnode"
 bootnode_consensus_host = f"{bootnode_name}-consensus"
 
+
 def chainweb_consensus_service(
-    node_name : str, 
-    evm_cids : list[int],
+    node_name: str,
+    evm_cids: list[int],
     *,
-    is_bootnode = False,
-    mining = False, 
-    exposed = False
-) -> Service: 
-    result : Service = {
-        "container_name" : f"{node_name}-consensus",
-        "hostname" : f"{node_name}-consensus",
+    is_bootnode=False,
+    mining=False,
+    exposed=False,
+) -> Service:
+    result: Service = {
+        "container_name": f"{node_name}-consensus",
+        "hostname": f"{node_name}-consensus",
         "labels": {
             "com.docker.lb.ip_hash": True,
             "com.chainweb.devnet.description": "EVM Devnet Chainweb Node",
-            "com.chainweb.devnet.chainweb-node": ""
+            "com.chainweb.devnet.chainweb-node": "",
         },
         "image": "${CHAINWEB_NODE_IMAGE:-ghcr.io/kadena-io/chainweb-node:pp-evm}",
         "platform": "linux/amd64",
@@ -235,21 +251,21 @@ def chainweb_consensus_service(
         ],
         "ports": [],
         "secrets": [],
-        "volumes": [
-            f"{node_name}-consensus_data:/chainweb/db:rw"
+        "volumes": [f"{node_name}-consensus_data:/chainweb/db:rw"],
+        "configs": [
+            {
+                "source": f"{node_name}-consensus-config",
+                "target": "/chainweb/config/consensus.yaml",
+                "mode": "0440",
+            },
+            {
+                "source": f"{node_name}-payload-providers",
+                "target": "/chainweb/config/payload-providers.yaml",
+                "mode": "0440",
+            },
         ],
-        "configs": [{
-            "source": f"{node_name}-consensus-config",
-            "target": "/chainweb/config/consensus.yaml",
-            "mode": "0440"
-        },{
-            "source": f"{node_name}-payload-providers",
-            "target": "/chainweb/config/payload-providers.yaml",
-            "mode": "0440"
-        }],
         "depends_on": {
-            f"{node_name}-evm-{i}": { "condition": "service_started" } 
-            for i in evm_cids
+            f"{node_name}-evm-{i}": {"condition": "service_started"} for i in evm_cids
         },
         "networks": {
             f"{node_name}-internal": None,
@@ -286,7 +302,7 @@ def chainweb_consensus_service(
                 "CMD",
                 "/bin/bash",
                 "-c",
-                "exec 3<>/dev/tcp/localhost/1848; printf \"GET /health-check HTTP/1.1\\r\\nhost: http://localhost:1848\\r\\nConnection: close\\r\\n\\r\\n\" >&3; grep -q \"200 OK\" <&3 || exit 1"
+                'exec 3<>/dev/tcp/localhost/1848; printf "GET /health-check HTTP/1.1\\r\\nhost: http://localhost:1848\\r\\nConnection: close\\r\\n\\r\\n" >&3; grep -q "200 OK" <&3 || exit 1',
             ],
             "interval": "30s",
             "timeout": "30s",
@@ -296,7 +312,7 @@ def chainweb_consensus_service(
     }
 
     if exposed:
-        result["ports"] += [ "1848:1848" ]
+        result["ports"] += ["1848:1848"]
 
     if is_bootnode:
         result["entrypoint"] += [
@@ -306,21 +322,24 @@ def chainweb_consensus_service(
             "--p2p-certificate-key-file=/run/secrets/p2p.key.pem",
             f"--p2p-hostname={node_name}-consensus",
         ]
-        result["secrets"] += [{
-            "source": f"{node_name}-consensus-p2p-key",
-            "target": "p2p.key.pem",
-        },{
-            "source": f"{node_name}-consensus-p2p-certificate",
-            "target": "p2p.cert.pem",
-        }]
-    else: 
+        result["secrets"] += [
+            {
+                "source": f"{node_name}-consensus-p2p-key",
+                "target": "p2p.key.pem",
+            },
+            {
+                "source": f"{node_name}-consensus-p2p-certificate",
+                "target": "p2p.cert.pem",
+            },
+        ]
+    else:
         result["entrypoint"] += [
             "--p2p-hostname=0.0.0.0",
             "--bootstrap-reachability=0.6",
             f"--known-peer-info=YNo7pXthYQ9RQKv1bbpQf2R5LcLYA3ppx2BL2Hf8fIM@{bootnode_consensus_host}:1789",
         ]
         result["depends_on"] |= {
-            f"{bootnode_consensus_host}": { "condition": "service_healthy" },
+            f"{bootnode_consensus_host}": {"condition": "service_healthy"},
         }
 
     if mining:
@@ -328,18 +347,14 @@ def chainweb_consensus_service(
 
     return result
 
+
 # ############################################################################# #
 # EVM Services
 
-def evm_chain(
-    node_name : str,
-    cid : int,
-    *,
-    is_bootnode = False,
-    exposed = False
-) -> Service:
-    apis="admin,debug,eth,net,trace,txpool,web3,rpc,reth,ots" # ,flashbots,miner,mev"
-    result : Service = {
+
+def evm_chain(node_name: str, cid: int, *, is_bootnode=False, exposed=False) -> Service:
+    apis = "admin,debug,eth,net,trace,txpool,web3,rpc,reth,ots"  # ,flashbots,miner,mev"
+    result: Service = {
         "container_name": f"{node_name}-evm-{cid}",
         "hostname": f"{node_name}-evm-{cid}",
         "restart": "unless-stopped",
@@ -348,10 +363,12 @@ def evm_chain(
             "context": "../rust",
             "dockerfile": "Dockerfile",
         },
-        "secrets": [{
-            "source": f"{node_name}-jwtsecret",
-            "target": "jwtsecret",
-        }],
+        "secrets": [
+            {
+                "source": f"{node_name}-jwtsecret",
+                "target": "jwtsecret",
+            }
+        ],
         "configs": [
             {
                 "source": f"{node_name}-chain-spec-{cid}",
@@ -375,12 +392,7 @@ def evm_chain(
             f"{30303 + cid}/tcp",
             f"{30303 + cid}/udp",
         ],
-        "ulimits": {
-            "nofile": {
-                "soft": 65535,
-                "hard": 65535
-            }
-        },
+        "ulimits": {"nofile": {"soft": 65535, "hard": 65535}},
         "entrypoint": [
             "/app/kadena-reth",
             "node",
@@ -411,9 +423,7 @@ def evm_chain(
             # chainweb
             "--chain=/config/chain-spec.json",
         ],
-        "environment": [
-            f"CHAINWEB_CHAIN_ID={cid}"
-        ], 
+        "environment": [f"CHAINWEB_CHAIN_ID={cid}"],
         "ports": [],
     }
 
@@ -423,40 +433,42 @@ def evm_chain(
             f"{cid*1000+8545}:{8545}",
             f"{cid*1000+8546}:{8546}",
         ]
-   
+
     # bootnode
     if is_bootnode:
         result["entrypoint"] += [
             "--p2p-secret-key=/run/secrets/p2p-secret",
         ]
-        result["secrets"] += [{
-            "source": f"{node_name}-evm-{cid}-p2p-secret",
-            "target": "p2p-secret",
-        }]
+        result["secrets"] += [
+            {
+                "source": f"{node_name}-evm-{cid}-p2p-secret",
+                "target": "p2p-secret",
+            }
+        ]
     else:
         if not os.path.isdir("./config/bootnode"):
             raise RuntimeError("Bootnode config directory not found.")
-        with open(f"config/bootnode/evm-{cid}-enode" , "r") as f:
+        with open(f"config/bootnode/evm-{cid}-enode", "r") as f:
             boot_enodes = f.read().strip()
         result["entrypoint"] += [f"--bootnodes={boot_enodes}"]
 
     return result
 
+
 # ############################################################################# #
 # Chainweb Miner
 
-def chainweb_mining_client (node_name : str, *, mode = 'simulation', exposed = False) -> Service: 
-    result : Service ={
+
+def chainweb_mining_client(
+    node_name: str, *, mode="simulation", exposed=False
+) -> Service:
+    result: Service = {
         "container_name": f"{node_name}-mining-client",
         "hostname": f"{node_name}-mining-client",
         "image": "${MINING_CLIENT_IMAGE:-ghcr.io/kadena-io/chainweb-mining-client:latest}",
         "platform": "linux/amd64",
         "restart": "unless-stopped",
-        "depends_on": {
-            f"{node_name}-consensus": {
-                "condition": "service_healthy"
-            }
-        },
+        "depends_on": {f"{node_name}-consensus": {"condition": "service_healthy"}},
         "networks": {
             f"{node_name}-internal": None,
         },
@@ -465,9 +477,7 @@ def chainweb_mining_client (node_name : str, *, mode = 'simulation', exposed = F
             f"--node={node_name}-consensus:1848",
             "--thread-count=2",
             "--no-tls",
-
             f"--worker={mode}",
-
             # only used when worker is set to "simulation"
             "--hash-rate=1000000",
             # only used when worker is set to "constant-delay"
@@ -479,52 +489,49 @@ def chainweb_mining_client (node_name : str, *, mode = 'simulation', exposed = F
     }
 
     if exposed:
-        result["ports"] += [ "1917:1917" ]
+        result["ports"] += ["1917:1917"]
 
     return result
 
+
 # ############################################################################# #
 # Allocations
-  
-def allocations(node_name : str, evm_cid: int) -> Service : return {
-    "container_name": f"{node_name}-allocations",
-    "image": "${ALLOCATIONS_IMAGE:-ghcr.io/kadena-io/evm-devnet-allocations:latest}",
-    "build": {
-        "context": "../allocations",
-        "dockerfile": "Dockerfile"
-    },
-    "depends_on": {
-        f"{node_name}-evm-{evm_cid}": {
-            "condition": "service_started"
-        }
-    },
-    "environment": [
-        f"RPC_URL=http://{node_name}-evm-{evm_cid}:8545"
-    ],
-    "networks": {
-        f"{node_name}-internal": None,
-    },
-}
+
+
+def allocations(node_name: str, evm_cid: int) -> Service:
+    return {
+        "container_name": f"{node_name}-allocations",
+        "image": "${ALLOCATIONS_IMAGE:-ghcr.io/kadena-io/evm-devnet-allocations:latest}",
+        "build": {"context": "../allocations", "dockerfile": "Dockerfile"},
+        "depends_on": {f"{node_name}-evm-{evm_cid}": {"condition": "service_started"}},
+        "environment": [f"RPC_URL=http://{node_name}-evm-{evm_cid}:8545"],
+        "networks": {
+            f"{node_name}-internal": None,
+        },
+    }
+
 
 # ############################################################################# #
 # Debugging Utils
+
   
-def curl(nodes: list[str]) -> Service: return {
-    "labels": {
-        "com.chainweb.devnet.description": "Curl Into Network",
-        "com.chainweb.devnet.debug": "",
-    },
-    "image": "curlimages/curl:latest",
-    "profiles": ["debug"],
-    "networks" : {
-        f"{n}-internal": None for n in nodes
-    } | {
-        "p2p": None,
-    },
-    "environment": {
-        "CL_NODES": "${CL_NODES:-" + ",".join([n + "-consensus" for n in nodes]) + "}"
-    },
-}
+def curl(nodes: list[str]) -> Service: 
+    return {
+        "labels": {
+            "com.chainweb.devnet.description": "Curl Into Network",
+            "com.chainweb.devnet.debug": "",
+        },
+        "image": "curlimages/curl:latest",
+        "profiles": ["debug"],
+        "networks" : { 
+            f"{n}-internal": None for n in nodes
+        } | {
+            "p2p": None,
+        },
+        "environment": {
+            "CL_NODES": "${CL_NODES:-" + ",".join([n + "-consensus" for n in nodes]) + "}"
+        },
+    }
 
 # example usages
 #
@@ -534,32 +541,33 @@ def curl(nodes: list[str]) -> Service: return {
 # Scan block from block height for receipts:
 # > docker compose run --rm debug -c "source ./functions.sh; list_receipts_from_height 1 90000"
 #
-def debug(nodes: list[str]) -> Service: return {
-    "build": {
-        "context": "./debug",
-        "dockerfile": "Dockerfile"
-    },
-    "profiles": ["debug"],
-    "entrypoint": [
-        "/bin/bash",
-        "-c"
-    ],
-    "environment": {
-        "HEIGHT": "${HEIGHT:-latest}",
-        "CL_NODES": "${CL_NODES:-" + ",".join([n + "-consensus" for n in nodes]) + "}"
-    },
-    "command": [
-        """
-        source ./functions.sh
-        info $$HEIGHT
-        """
-    ],
-    "networks" : {
-        f"{n}-internal": None for n in nodes
-    } | {
-        "p2p": None,
-    },
-}
+def debug(nodes: list[str]) -> Service:
+    return {
+        "build": {
+            "context": "./debug",
+            "dockerfile": "Dockerfile"
+        },
+        "profiles": ["debug"],
+        "entrypoint": [
+            "/bin/bash",
+            "-c"
+        ],
+        "environment": {
+            "HEIGHT": "${HEIGHT:-latest}",
+            "CL_NODES": "${CL_NODES:-" + ",".join([n + "-consensus" for n in nodes]) + "}"
+        },
+        "command": [
+            """
+            source ./functions.sh
+            info $$HEIGHT
+            """
+            ],
+        "networks": {f"{n}-internal": None for n in nodes}
+        | {
+            "p2p": None,
+        },
+    }
+
 
 # ############################################################################# #
 # SERVICE SPECIFICATIONS
@@ -567,6 +575,7 @@ def debug(nodes: list[str]) -> Service: return {
 
 # ############################################################################# #
 # Chainweb Node Service
+
 
 # A chainweb node consists of the the following service components:
 #
@@ -590,30 +599,28 @@ def chainweb_node(
     node_name,
     evm_cids,
     pact_cids,
-    is_bootnode : bool = False,
-    mining_mode : str|None = None,
-    exposed : bool = False,
+    is_bootnode: bool = False,
+    mining_mode: str|None = None,
+    exposed: bool = False,
 ) -> Spec: 
     jwtsecret_config(node_name)
     payload_provider_config(node_name, evm_cids, pact_cids)
-    result : Spec = {
+    result: Spec = {
         "name": f"{node_name}",
         "secrets": {
-            f"{node_name}-jwtsecret": {
-                "file": f"./config/{node_name}/jwtsecret"
-            }
+            f"{node_name}-jwtsecret": {"file": f"./config/{node_name}/jwtsecret"}
         },
         "configs": {
-            f"{node_name}-consensus-config": {
-                "file": "./config/consensus-config.yaml"
-            },
+            f"{node_name}-consensus-config": {"file": "./config/consensus-config.yaml"},
             f"{node_name}-payload-providers": {
                 "file": f"./config/{node_name}/payload-providers.yaml"
+            },
+        }
+        | {
+            f"{node_name}-chain-spec-{cid}": {
+                "file": f"chain-specs/chain-spec-{cid}.json"
             }
-        } | { 
-            f"{node_name}-chain-spec-{cid}": { 
-                "file": f"chain-specs/chain-spec-{cid}.json" 
-            } for cid in evm_cids
+            for cid in evm_cids
         },
         "networks": {
             f"{node_name}-internal": None,
@@ -621,56 +628,60 @@ def chainweb_node(
         "volumes": {
             f"{node_name}-consensus_data": None,
             f"{node_name}_logs": None,
-        } | {
-            f"{node_name}-evm-{cid}_data": None for cid in evm_cids
-        },
+        }
+        | {f"{node_name}-evm-{cid}_data": None for cid in evm_cids},
         "services": {
             f"{node_name}-consensus": chainweb_consensus_service(
                 node_name,
                 evm_cids,
-                is_bootnode = is_bootnode,
-                mining = False if mining_mode is None else True,
-                exposed = exposed,
+                is_bootnode=is_bootnode,
+                mining=False if mining_mode is None else True,
+                exposed=exposed,
             )
-        } | { 
+        }
+        | {
             f"{node_name}-evm-{cid}": evm_chain(
                 node_name,
-                cid, 
-                is_bootnode = is_bootnode,
-                exposed = exposed,
-            ) for cid in evm_cids
+                cid,
+                is_bootnode=is_bootnode,
+                exposed=exposed,
+            )
+            for cid in evm_cids
         },
     }
 
     if is_bootnode:
         result["secrets"] |= {
-            f"{node_name}-evm-{cid}-p2p-secret": { 
-                "file": f"./config/{node_name}/evm-{cid}-p2p-secret" 
-            } for cid in evm_cids
+            f"{node_name}-evm-{cid}-p2p-secret": {
+                "file": f"./config/{node_name}/evm-{cid}-p2p-secret"
+            }
+            for cid in evm_cids
         } | {
             f"{node_name}-consensus-p2p-key": {
                 "file": f"./config/{node_name}-consensus-p2p.key.pem"
             },
             f"{node_name}-consensus-p2p-certificate": {
                 "file": f"./config/{node_name}-consensus-p2p.cert.pem"
-            }
+            },
         }
 
-    if mining_mode is not None: 
+    if mining_mode is not None:
         result["services"] |= {
             f"{node_name}-mining-client": chainweb_mining_client(
                 node_name,
-                exposed = exposed,
-                mode = mining_mode,
+                exposed=exposed,
+                mode=mining_mode,
             )
         }
 
     return result
 
+
 # ############################################################################# #
 # Project
 
-def other_services(nodes: list[str]) -> Spec: 
+
+def other_services(nodes: list[str]) -> Spec:
     return {
         "name": "other-services",
         "services": {
@@ -684,9 +695,11 @@ def other_services(nodes: list[str]) -> Spec:
         "secrets": {},
     }
 
+
 # ############################################################################# #
 # COMPOSE PROJECT DEFINITIONS
 # ############################################################################# #
+
 
 # A minimal project setup. It runs a single exposed bootnode that has mining
 # enabled.
@@ -694,7 +707,7 @@ def other_services(nodes: list[str]) -> Spec:
 # It also includes the definition of curl container for easy to internal APIs
 # for debugging.
 #
-def minimal_project() -> Spec: 
+def minimal_project() -> Spec:
     # Create boostrap information
     evm_cids = list(range(20, 25))
     pact_cids = list(range(0, 20))
@@ -702,9 +715,9 @@ def minimal_project() -> Spec:
     # Create bootstrap node IDs
     evm_bootnodes("bootnode", evm_cids)
 
-    top : Spec = spec
+    top: Spec = spec
     top["name"] = "chainweb-evm"
-    top["networks"] = { f"p2p": None }
+    top["networks"] = {f"p2p": None}
     top["services"] = {
         "curl": curl(["bootnode"]),
     }
@@ -724,7 +737,7 @@ def minimal_project() -> Spec:
 # A project for testing and debugging chainweb-node itself. It runs several
 # nodes in different configurations.
 #
-def kadena_dev_project() -> Spec: 
+def kadena_dev_project() -> Spec:
 
     nodes = ["bootnode", "appdev", "miner-1", "miner-2"]
 
@@ -735,9 +748,9 @@ def kadena_dev_project() -> Spec:
     # Create bootstrap node IDs
     evm_bootnodes("bootnode", evm_cids)
 
-    top : Spec = spec
+    top: Spec = spec
     top["name"] = "chainweb-evm"
-    top["networks"] = { f"p2p": None }
+    top["networks"] = {f"p2p": None}
 
     return join_specs([
         top,
@@ -784,7 +797,7 @@ def kadena_dev_project() -> Spec:
 # * Blocks are produced at a fixed rate of 2 seconds per chain.
 # * There is a single bootstrap node that is also a miner.
 #
-def app_dev_project(exposed_evm_chains, exposed_pact_chains) -> Spec: 
+def app_dev_project(exposed_evm_chains, exposed_pact_chains) -> Spec:
 
     nodes = ["bootnode", "appdev"]
 
@@ -795,9 +808,9 @@ def app_dev_project(exposed_evm_chains, exposed_pact_chains) -> Spec:
     # Create bootstrap node IDs
     evm_bootnodes("bootnode", evm_cids)
 
-    top : Spec = spec
+    top: Spec = spec
     top["name"] = "chainweb-evm"
-    top["networks"] = { f"p2p": None }
+    top["networks"] = {f"p2p": None}
 
     return join_specs([
         top,
@@ -825,7 +838,7 @@ def app_dev_project(exposed_evm_chains, exposed_pact_chains) -> Spec:
 #
 # FIXME: this is work in progress
 #
-def pact_project(pact_chains) -> Spec: 
+def pact_project(pact_chains) -> Spec:
 
     nodes = ["bootnode", "appdev"]
 
@@ -835,9 +848,9 @@ def pact_project(pact_chains) -> Spec:
     # Create bootstrap node IDs
     evm_bootnodes("bootnode", evm_cids)
 
-    top : Spec = spec
+    top: Spec = spec
     top["name"] = "chainweb-evm"
-    top["networks"] = { f"p2p": None }
+    top["networks"] = {f"p2p": None}
 
     return join_specs([
         top,
@@ -877,14 +890,12 @@ def mining_pool_project() -> Spec:
     # Create bootstrap node IDs
     evm_bootnodes("bootnode", evm_cids)
 
-    top : Spec = spec
+    top: Spec = spec
     top["name"] = "chainweb-evm"
-    top["networks"] = { f"p2p": None }
+    top["networks"] = {f"p2p": None}
 
     return join_specs([
         top,
-
-        # TODO configure miner and expose the stratum server port.
         chainweb_node(
             "bootnode",
             evm_cids,
@@ -899,15 +910,15 @@ def mining_pool_project() -> Spec:
 # #############################################################################
 # main
 
-parser=argparse.ArgumentParser()
+parser = argparse.ArgumentParser()
 parser.add_argument("--exposed-chains")
-parser.add_argument("--project") # TODO
-args=parser.parse_args()
+parser.add_argument("--project")  # TODO
+args = parser.parse_args()
 
 # All available EVM chains
 if args.exposed_chains is None:
-    exposed_evm_chains = list(range(20,25))
-    exposed_pact_chains = list(range(0,20))
+    exposed_evm_chains = list(range(20, 25))
+    exposed_pact_chains = list(range(0, 20))
 else:
     exposed_cids = list(map(int, args.evm_chains.split(",")))
     exposed_evm_chains = [i for i in range(20, 25) if i in exposed_cids]
@@ -927,4 +938,3 @@ match args.project:
         print(json.dumps(mining_pool_project(), indent=4))
     case _:
         print(json.dumps(minimal_project(), indent=4))
-

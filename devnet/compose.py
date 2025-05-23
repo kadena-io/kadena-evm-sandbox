@@ -521,6 +521,9 @@ def curl(nodes: list[str]) -> Service: return {
     } | {
         "p2p": None,
     },
+    "environment": {
+        "CL_NODES": "${CL_NODES:-" + ",".join([n + "-consensus" for n in nodes]) + "}"
+    },
 }
 
 # example usages
@@ -542,7 +545,8 @@ def debug(nodes: list[str]) -> Service: return {
         "-c"
     ],
     "environment": {
-        "HEIGHT": "${HEIGHT:-latest}"
+        "HEIGHT": "${HEIGHT:-latest}",
+        "CL_NODES": "${CL_NODES:-" + ",".join([n + "-consensus" for n in nodes]) + "}"
     },
     "command": [
         """
@@ -722,7 +726,7 @@ def minimal_project() -> Spec:
 #
 def kadena_dev_project() -> Spec: 
 
-    nodes = ["bootnode", "appdev"]
+    nodes = ["bootnode", "appdev", "miner-1", "miner-2"]
 
     # Create boostrap information
     evm_cids = list(range(20, 25))
@@ -864,7 +868,7 @@ def pact_project(pact_chains) -> Spec:
 # FIXME: this is work in progress
 #
 def mining_pool_project() -> Spec:
-    nodes = ["bootnode", "appdev"]
+    nodes = ["bootnode"]
 
     # Create boostrap information
     evm_cids = list(range(20, 25))

@@ -8,7 +8,7 @@ services:
       file: ./services/databases.yml
       service: db-init
     networks:
-      - database-network  
+      - service-network  
 
   db:
     depends_on:
@@ -18,14 +18,14 @@ services:
       file: ./services/databases.yml
       service: db
     networks:
-      - database-network  
+      - service-network  
 
   stats-db-init:
     extends:
       file: ./services/databases.yml
       service: stats-db-init
     networks:
-      - database-network  
+      - service-network  
 
 
   stats-db:
@@ -36,20 +36,34 @@ services:
       file: ./services/databases.yml
       service: stats-db
     networks:
-      - database-network  
+      - service-network  
 
   visualizer:
     extends:
       file: ./services/visualizer.yml
       service: visualizer
     networks:
-      - proxy-network       
+      - proxy-network   
+
+  sig-provider:
+    extends:
+      file: ./services/sig-provider.yml
+      service: sig-provider
+    networks:
+      - service-network          
+
+  smart-contract-verifier:
+    extends:
+      file: ./services/smart-contract-verifier.yml
+      service: smart-contract-verifier
+    networks:
+      - service-network       
 
 
 
 networks:
-  database-network:
-    name: database-network
+  service-network:
+    name: service-network
     driver: bridge
 
   proxy-network:

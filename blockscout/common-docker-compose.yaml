@@ -17,14 +17,14 @@ services:
       file: ./services/create-db.yml
       service: create-blockscout-db
     networks:
-      - database-network  
+      - service-network  
 
   create-stats-db:
     extends:
       file: ./services/create-db.yml
       service: create-stats-db
     networks:
-      - database-network     
+      - service-network     
 
       
 
@@ -45,15 +45,8 @@ services:
       - ETHEREUM_JSONRPC_TRACE_URL=${ETHEREUM_JSONRPC_TRACE_URL?}
       - DATABASE_URL=${BLOCKSCOUT_DB_URL}
     networks:
-      - database-network 
-      - default   
-
-  sig-provider:
-    extends:
-      file: ./services/sig-provider.yml
-      service: sig-provider
-    networks:
-      - default   
+      - service-network 
+      - default     
 
   frontend:
     depends_on:
@@ -87,7 +80,7 @@ services:
       file: ./services/stats.yml
       service: stats
     networks:
-      - database-network 
+      - service-network 
       - default      
 
   user-ops-indexer:
@@ -106,18 +99,9 @@ services:
       - USER_OPS_INDEXER__INDEXER__RPC_URL=${USER_OPS_INDEXER__INDEXER__RPC_URL}
       - USER_OPS_INDEXER__DATABASE__CONNECT__URL=${BLOCKSCOUT_DB_URL}  
     networks:
-      - database-network  
+      - service-network  
       - default  
-  
-  smart-contract-verifier:
-    extends:
-      file: ./services/smart-contract-verifier.yml
-      service: smart-contract-verifier
-    depends_on:
-      - backend
-      - frontend
-    networks:
-      - default   
+ 
   
   proxy:
     restart: on-failure
@@ -140,6 +124,6 @@ networks:
     external: true
     name: proxy-network  
 
-  database-network:
+  service-network:
     external: true
-    name: database-network
+    name: service-network

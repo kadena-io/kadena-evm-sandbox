@@ -203,6 +203,127 @@ def evm_bootnodes(node_name, evm_cids):
             print(f"enode://{pk.hex()}@{node_name}-evm-{cid}:{30303 + cid}", file=f)
 
 
+# ############################################################################# #
+# Nginx Reverse Proxy
+
+
+def nginx_index_html(node_name, evm_cids):
+    pact_chains = [i for i in range(0, 20)]
+    dir = f"config/{node_name}"
+    os.makedirs(dir, exist_ok=True)
+
+    with open(f"{dir}/index.html", "w") as f:
+        f.write(
+            f"""
+<script src="https://cdn.jsdelivr.net/npm/@webcomponents/webcomponentsjs@2/webcomponents-loader.min.js"></script>
+<script type="module" src="https://cdn.jsdelivr.net/gh/zerodevx/zero-md@1/src/zero-md.min.js"></script>
+    <zero-md>
+      <script type="text/markdown">
+        # Nginx proxy
+
+        This proxy provides a reverse proxy for the Kadena EVM development network.
+        It allows you to access the EVM development network via a single endpoint.
+        
+        ## Usage
+        You can access the EVM development network via the following URL:
+        ```
+        <current-host>/chainweb/0.0/evm-development/
+        <current-host>/chainweb/0.0/evm-development/chain/{{cid}}/evm
+        <current-host>/chainweb/0.0/evm-development/chain/{{cid}}/pact/api/v1
+        ```
+
+        ## Links
+        - [/chainweb/0.0/evm-development/cut](http://localhost:8081/chainweb/0.0/evm-development/cut)
+        - [/chainweb/0.0/evm-development/chain/0/pact/api/v1](http://localhost:8081/chainweb/0.0/evm-development/chain/0/pact/api/v1)
+        - [/chainweb/0.0/evm-development/chain/20/evm](http://localhost:8081/chainweb/0.0/evm-development/chain/20/evm)
+        
+        ## Endpoints
+        The following endpoints are available. They all start with prefix
+        `http://localhost:8081/chainweb/0.0/evm-development/`:
+
+        - [Consensus API /cut](http://localhost:8081/chainweb/0.0/evm-development/cut)
+
+        <details>
+        <summary>Pact API</summary>
+            <zero-md>
+            <script type="text/markdown">
+        {''.join(
+            f'- [Pact API <prefix>/chain/{cid}/pact/api/v1](http://localhost:8081/chainweb/0.0/evm-development/chain/{cid}/pact/api/v1)\n'
+            for cid in pact_chains
+        )}
+                </script>
+            </zero-md>
+        </details>
+        <details>
+        <summary>EVM RPC</summary>
+        <zero-md>
+            <script type="text/markdown">
+        {''.join(
+            f'- [EVM RPC <prefix>/chain/{cid}/evm](http://localhost:8081/chainweb/0.0/evm-development/chain/{cid}/evm)\n'
+            for cid in evm_cids
+        )}
+                </script>
+            </zero-md>
+        </details>
+      </script>
+    </zero-md>
+    """
+        )
+
+
+# All endpoints for Kadena
+# - consensus APIs (the same as api.chainweb.com/openapi)
+#   - https://hostname/chainweb/0.0/{networkName}/...  -> bootnode-consensus:1848
+# - pact service api (for each pact chain)
+#   - https://hostname/chainweb/0.0/{networkName}/chain/{chainId}/pact/api/v1/... -> bootnode-consensus:1848
+# - evm RPC endpoint  (for each evm chain)
+#   - https://hostname/chainweb/0.0/{networkName}/chain/{chainId}/evm  = rpc endpoint
+
+
+def nginx_proxy_config(node_name):
+    dir = f"config/{node_name}"
+    os.makedirs(dir, exist_ok=True)
+
+    with open(f"{dir}/nginx.conf", "w") as f:
+        f.write(
+            f"""
+worker_processes 1;
+events {{
+    worker_connections 1024;
+}}
+http {{
+    include       mime.types;
+    default_type  application/octet-stream;
+
+    sendfile        on;
+    keepalive_timeout  65;
+
+    server {{
+        listen 80;
+        server_name {node_name}-frontend;
+
+        location / {{
+            root /usr/share/nginx/html;
+            index index.html;
+        }}
+
+        location /chainweb/0.0/evm-development/ {{
+            proxy_pass http://{node_name}-consensus:1848;
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto $scheme;
+        }}
+
+        location /chainweb/0.0/evm-development/chain/(\\d*)/evm {{
+            proxy_pass http://{node_name}-evm-$2:8545/;
+        }}
+    }}
+}}
+"""
+        )
+
+
 # #############################################################################
 # Simulate port forwarding
 #
@@ -217,6 +338,56 @@ def evm_bootnodes(node_name, evm_cids):
 # #############################################################################
 # SERVICES COMPONENTS
 # #############################################################################
+
+
+# ############################################################################# #
+# Nginx Reverse Proxy
+
+
+# All endpoints for Kadena
+# - consensus APIs (the same as api.chainweb.com/openapi)
+#   - https://api.chainweb.com/chainweb/0.0/mainnet01/...  -> bootnode-consensus:1848
+# - pact service api (for each pact chain)
+#   - https://api.chainweb.com/chainweb/{apiVersion}/mainnet01/chain/{chainId}/pact/api/v1/... -> bootnode-consensus:1848
+# - evm RPC endpoint  (for each evm chain)
+#   - https://api.chainweb.com/chainweb/{apiVersion}/mainnet01/chain/{chainId}/evm/api/v1/... -> bootnode-evm-{cid}:8545
+
+
+def nginx_reverse_proxy(node_name: str, evm_cids: list[int]) -> Service:
+    result: Service = {
+        "container_name": f"{node_name}-frontend",
+        "hostname": f"{node_name}-frontend",
+        "image": "${NGINX_IMAGE:-nginx:latest}",
+        "restart": "unless-stopped",
+        "networks": {
+            f"{node_name}-internal": None,
+            "p2p": None,
+        },
+        "volumes": [f"{node_name}_logs:/var/log/nginx"],
+        "configs": [
+            {
+                "source": f"{node_name}-nginx-config",
+                "target": "/etc/nginx/nginx.conf",
+                "mode": "0440",
+            },
+            {
+                "source": f"{node_name}-nginx-html",
+                "target": "/usr/share/nginx/html/index.html",
+                "mode": "0440",
+            },
+        ],
+        "ports": ["8081:80"],
+        "depends_on": {
+            f"{node_name}-consensus": {"condition": "service_healthy"},
+            **{
+                f"{node_name}-evm-{cid}": {"condition": "service_started"}
+                for cid in evm_cids
+            },
+        },
+    }
+
+    return result
+
 
 # ############################################################################# #
 # Chainweb Consensus
@@ -578,6 +749,7 @@ def debug(nodes: list[str]) -> Service:
 # SERVICE SPECIFICATIONS
 # ############################################################################# #
 
+
 # ############################################################################# #
 # Chainweb Node Service
 
@@ -620,6 +792,8 @@ def chainweb_node(
             f"{node_name}-payload-providers": {
                 "file": f"./config/{node_name}/payload-providers.yaml"
             },
+            f"{node_name}-nginx-config": {"file": f"./config/{node_name}/nginx.conf"},
+            f"{node_name}-nginx-html": {"file": f"./config/{node_name}/index.html"},
         }
         | {
             f"{node_name}-chain-spec-{cid}": {
@@ -642,7 +816,11 @@ def chainweb_node(
                 is_bootnode=is_bootnode,
                 mining=False if mining_mode is None else True,
                 exposed=exposed,
-            )
+            ),
+            f"{node_name}-frontend": nginx_reverse_proxy(
+                node_name,
+                evm_cids,
+            ),
         }
         | {
             f"{node_name}-evm-{cid}": evm_chain(
@@ -719,6 +897,10 @@ def minimal_project() -> Spec:
 
     # Create bootstrap node IDs
     evm_bootnodes("bootnode", evm_cids)
+
+    # Create nginx reverse proxy configuration
+    nginx_proxy_config("bootnode")
+    nginx_index_html("bootnode", evm_cids)
 
     top: Spec = spec
     top["name"] = "chainweb-evm"

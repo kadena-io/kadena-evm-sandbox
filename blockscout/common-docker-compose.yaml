@@ -48,13 +48,6 @@ services:
       - database-network 
       - default   
 
-  visualizer:
-    extends:
-      file: ./services/visualizer.yml
-      service: visualizer
-    networks:
-      - default   
-
   sig-provider:
     extends:
       file: ./services/sig-provider.yml
@@ -73,10 +66,13 @@ services:
 
       # Kinda sucks. Why does this communicate via the host network? 
       # I think because this urls will be used in the browser so they should target the host not the container
-      - NEXT_PUBLIC_STATS_API_HOST=http://localhost:${PROXY_STATS_PORT}
-      - NEXT_PUBLIC_VISUALIZE_API_HOST=http://localhost:${PROXY_VISUALIZER_PORT}
-      - NEXT_PUBLIC_API_HOST=localhost:${PROXY_UI_PORT}
-      - NEXT_PUBLIC_APP_HOST=localhost:${PROXY_UI_PORT}
+      - NEXT_PUBLIC_STATS_API_HOST=${NEXT_PUBLIC_STATS_API_HOST}
+      - NEXT_PUBLIC_VISUALIZE_API_HOST=${NEXT_PUBLIC_VISUALIZE_API_HOST}
+      - NEXT_PUBLIC_APP_HOST=${NEXT_PUBLIC_APP_HOST}
+      - NEXT_PUBLIC_APP_PORT=${NEXT_PUBLIC_APP_PORT}
+      - NEXT_PUBLIC_API_HOST=${NEXT_PUBLIC_API_HOST}
+      - NEXT_PUBLIC_API_PORT=${NEXT_PUBLIC_API_PORT}
+      - NEXT_PUBLIC_NETWORK_NAME=${NEXT_PUBLIC_NETWORK_NAME}
     networks:
       - default   
 
@@ -134,10 +130,15 @@ services:
       service: proxy
     networks:
      - default    
+     - proxy-network
 
 networks:
   default:
     driver: bridge
+
+  proxy-network:
+    external: true
+    name: proxy-network  
 
   database-network:
     external: true

@@ -38,11 +38,22 @@ services:
     networks:
       - database-network  
 
+  visualizer:
+    extends:
+      file: ./services/visualizer.yml
+      service: visualizer
+    networks:
+      - proxy-network       
+
 
 
 networks:
   database-network:
     name: database-network
     driver: bridge
+
+  proxy-network:
+    name: proxy-network
+    driver: bridge   
 
 

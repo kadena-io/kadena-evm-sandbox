@@ -6,13 +6,3 @@ services:
       - 'host.docker.internal:host-gateway'
     volumes:
       - "../proxy:/etc/nginx/templates"
-    ports:
-      # UI
-      - target: 80
-        published: ${PROXY_UI_PORT?}
-      # Stats
-      - target: 8080
-        published: ${PROXY_STATS_PORT?}
-      # visualizer
-      - target: 8081
-        published: ${PROXY_VISUALIZER_PORT?}

@@ -1,0 +1,18 @@
+services:
+  gateway:
+    image: nginx
+    restart: always
+    extra_hosts:
+      - 'host.docker.internal:host-gateway'
+    volumes:
+      - "../proxy/gateway:/etc/nginx/templates"
+    ports:
+      # UI
+      - target: 80
+        published: 8000
+      # Stats
+      - target: 8080
+        published: 8080
+      # visualizer
+      - target: 8081
+        published: 8081

@@ -45,50 +45,80 @@ export async function startNetwork() {
   console.log('starting network...');
   await $devnet`docker compose -f ${DOCKER_COMPOSE_FILE} up -d`;
 }
+
+interface DevnetChainStatus {
+  chainId: number;
+  height: number;
+  hash: string;
+  type: string;
+}
+
+interface DevnetStatus {
+  chains: DevnetChainStatus[];
+  cutHeight: number;
+}
+
+export function parseDevnetStatusOutput(output: string): DevnetStatus {
+  const lines = output.trim().split('\n');
+  const chains: DevnetChainStatus[] = [];
+  let cutHeight = 0;
+
+  for (const line of lines) {
+    if (/^\d+\s+\d+\s+\S+\s+\S+/.test(line)) {
+      const [chainId, height, hash, type] = line.trim().split(/\s+/) as [
+        string,
+        string,
+        string,
+        string
+      ];
+      chains.push({
+        chainId: parseInt(chainId, 10),
+        height: parseInt(height, 10),
+        hash,
+        type,
+      });
+    } else if (line.startsWith('cut-height')) {
+      cutHeight = parseInt((line.split(':') as [string, string])[1].trim(), 10);
+    }
+  }
+
+  return { chains, cutHeight };
+}
+
 export async function getDevnetStatus() {
   const devnetStatusOut = (await $root`./network devnet status`).stdall;
 
-  const res = devnetStatusOut
-    .split('\n')
-    .filter((line) => line.match(/^\d/))
-    .map((line) => line.trim().split(/\s+/))
-    .map(([chainId, height, hash, type]) => ({
-      chainId: parseInt(chainId!),
-      height: parseInt(height!),
-      hash,
-      type,
-    }));
-
-  console.log('devnet status:', res);
-
-  return res;
+  return parseDevnetStatusOutput(devnetStatusOut);
 }
-export async function waitForCutHeight(
-  cutHeight: number
-): Promise<number | undefined> {
-  console.log(`wait for cut-height of ${cutHeight}`);
-  let firstCutHeight: number | undefined = undefined;
+
+export async function waitFor(
+  checkFn: (devnetStatus: DevnetStatus) => boolean | Promise<boolean>,
+  options: { intervalSeconds?: number; timeoutSeconds?: number } = {}
+): Promise<void> {
+  const { intervalSeconds = 4, timeoutSeconds = 120 } = options;
+  const start = Date.now();
   let iteration = 0;
-  return new Promise(async (resolve, reject) => {
-    let currentHeight = 0;
-    while (currentHeight < cutHeight) {
-      const devnetStatus = (await $root`./network devnet status`).stdall;
-      currentHeight = parseInt(
-        devnetStatus
-          .split('\n')
-          .find((line) => line.startsWith('cut-height'))!
-          .split(':')[1]!
-          .trim()
-      );
-      if (firstCutHeight === undefined) firstCutHeight = currentHeight;
-      if (currentHeight === firstCutHeight && iteration > 0) {
-        reject('cut-height not increasing');
-      }
-      console.log(`cut-height: ${currentHeight}, waiting for ${cutHeight}`);
-      if (currentHeight < cutHeight) await waitSeconds(4);
-      iteration++;
+
+  while (true) {
+    const devnetStatus = await getDevnetStatus();
+    if (await checkFn(devnetStatus)) {
+      return;
     }
-    console.log(`cut-height ${currentHeight} > ${cutHeight} reached`);
-    resolve(currentHeight);
-  });
+    if ((Date.now() - start) / 1000 > timeoutSeconds) {
+      throw new Error('waitFor: timeout exceeded');
+    }
+    await waitSeconds(intervalSeconds);
+    iteration++;
+  }
+}
+
+export async function waitForCutHeight(
+  cutHeight: number,
+  options?: { intervalSeconds?: number; timeoutSeconds?: number }
+): Promise<void> {
+  await waitFor((devnetStatus) => {
+    const currentHeight = devnetStatus.cutHeight;
+    console.log(`cut-height: ${currentHeight}, waiting for ${cutHeight}`);
+    return currentHeight >= cutHeight;
+  }, options);
 }

@@ -217,56 +217,85 @@ def nginx_index_html(node_name, evm_cids):
             f"""
 <script src="https://cdn.jsdelivr.net/npm/@webcomponents/webcomponentsjs@2/webcomponents-loader.min.js"></script>
 <script type="module" src="https://cdn.jsdelivr.net/gh/zerodevx/zero-md@1/src/zero-md.min.js"></script>
+<zero-md>
+    <script type="text/markdown">
+    # Nginx proxy
+
+    This proxy provides a reverse proxy for the Kadena EVM development network.
+    It allows you to access the EVM development network via a single endpoint.
+    
+    ## Usage
+    You can access the EVM development network via the following URL:
+    ```
+    <current-host>/chainweb/0.0/evm-development/
+    <current-host>/chainweb/0.0/evm-development/chain/{{cid}}/evm/rpc
+    <current-host>/chainweb/0.0/evm-development/chain/{{cid}}/pact/api/v1
+    ```
+
+    ## Links
+    - [/chainweb/0.0/evm-development/cut](http://localhost:8081/chainweb/0.0/evm-development/cut)
+    - [/chainweb/0.0/evm-development/chain/0/pact/api/v1](http://localhost:8081/chainweb/0.0/evm-development/chain/0/pact/api/v1)
+    - [/chainweb/0.0/evm-development/chain/20/evm/rpc](http://localhost:8081/chainweb/0.0/evm-development/chain/20/evm/rpc)
+    
+    ## Endpoints
+    The following endpoints are available. They all start with prefix
+    `http://localhost:8081/chainweb/0.0/evm-development/`:
+
+    - [Consensus API /cut](http://localhost:8081/chainweb/0.0/evm-development/cut)
+
+    </script>
+</zero-md>
+
+<details>
+<summary>Pact API</summary>
     <zero-md>
-      <script type="text/markdown">
-        # Nginx proxy
-
-        This proxy provides a reverse proxy for the Kadena EVM development network.
-        It allows you to access the EVM development network via a single endpoint.
-        
-        ## Usage
-        You can access the EVM development network via the following URL:
-        ```
-        <current-host>/chainweb/0.0/evm-development/
-        <current-host>/chainweb/0.0/evm-development/chain/{{cid}}/evm
-        <current-host>/chainweb/0.0/evm-development/chain/{{cid}}/pact/api/v1
-        ```
-
-        ## Links
-        - [/chainweb/0.0/evm-development/cut](http://localhost:8081/chainweb/0.0/evm-development/cut)
-        - [/chainweb/0.0/evm-development/chain/0/pact/api/v1](http://localhost:8081/chainweb/0.0/evm-development/chain/0/pact/api/v1)
-        - [/chainweb/0.0/evm-development/chain/20/evm](http://localhost:8081/chainweb/0.0/evm-development/chain/20/evm)
-        
-        ## Endpoints
-        The following endpoints are available. They all start with prefix
-        `http://localhost:8081/chainweb/0.0/evm-development/`:
-
-        - [Consensus API /cut](http://localhost:8081/chainweb/0.0/evm-development/cut)
-
-        <details>
-        <summary>Pact API</summary>
-            <zero-md>
-            <script type="text/markdown">
-        {''.join(
-            f'- [Pact API <prefix>/chain/{cid}/pact/api/v1](http://localhost:8081/chainweb/0.0/evm-development/chain/{cid}/pact/api/v1)\n'
-            for cid in pact_chains
-        )}
-                </script>
-            </zero-md>
-        </details>
-        <details>
-        <summary>EVM RPC</summary>
-        <zero-md>
-            <script type="text/markdown">
-        {''.join(
-            f'- [EVM RPC <prefix>/chain/{cid}/evm](http://localhost:8081/chainweb/0.0/evm-development/chain/{cid}/evm)\n'
-            for cid in evm_cids
-        )}
-                </script>
-            </zero-md>
-        </details>
-      </script>
+    <script type="text/markdown">
+{''.join(
+    f'- [Pact API <prefix>/chain/{cid}/pact/api/v1](http://localhost:8081/chainweb/0.0/evm-development/chain/{cid}/pact/api/v1)\n'
+    for cid in pact_chains
+)}
+        </script>
     </zero-md>
+</details>
+<details>
+    <summary>EVM RPC</summary>
+    <zero-md>
+        <script type="text/markdown">
+    {''.join(
+        f'- [EVM RPC <prefix>/chain/{cid}/evm/rpc](http://localhost:8081/chainweb/0.0/evm-development/chain/{cid}/evm/rpc)\n'
+        for cid in evm_cids
+    )}
+        </script>
+    </zero-md>
+</details>
+
+<zero-md>
+    <script type="text/markdown">
+## Hardhat config
+```
+{
+    json.dumps({
+        "chainweb": {
+            "devnet": {
+                "chains": len(evm_cids),
+                "type": 'external',
+                "chainwebChainIdOffset": 20,
+                "chainIdOffset": 1789,
+                "accounts": [ 
+                    "0xe711c50150f500fdebec57e5c299518c2f7b36271c138c55759e5b4515dc7161",
+                    "0xb332ddc4e0801582e154d10cad8b672665656cbf0097f2b47483c0cfe3261299",
+                    "0x28536b3ec112d99faeceb6cfaccd4b2b920fcb7cd6689ed3b2f842142ce196cb",
+                    "0x9ff14f986d2e7c49c6b1f598aa55b8d79adfebb3e1c094abad8bd515ddcb1d6a",
+                    "0x14fcd41cf1adc5ac71e1da6e8463a293520be53a1a0059d9730a01fc5aee5cb2"
+                ],
+                "externalHostUrl": 'http://localhost:8081/chainweb/0.0/evm-development/',
+            },
+        },
+    }, indent=2)
+} 
+```
+</script>
+</zero-md>
     """
         )
 
@@ -280,7 +309,7 @@ def nginx_index_html(node_name, evm_cids):
 #   - https://hostname/chainweb/0.0/{networkName}/chain/{chainId}/evm  = rpc endpoint
 
 
-def nginx_proxy_config(node_name):
+def nginx_proxy_config(node_name, evm_cids):
     dir = f"config/{node_name}"
     os.makedirs(dir, exist_ok=True)
 
@@ -314,10 +343,14 @@ http {{
             proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
             proxy_set_header X-Forwarded-Proto $scheme;
         }}
-
-        location /chainweb/0.0/evm-development/chain/(\\d*)/evm {{
-            proxy_pass http://{node_name}-evm-$2:8545/;
+    {''.join(
+        f"""
+        location /chainweb/0.0/evm-development/chain/{cid}/evm/rpc {{
+            proxy_pass http://{node_name}-evm-{cid}:8545/;
         }}
+        """
+        for cid in evm_cids
+    )}
     }}
 }}
 """
@@ -899,7 +932,7 @@ def minimal_project() -> Spec:
     evm_bootnodes("bootnode", evm_cids)
 
     # Create nginx reverse proxy configuration
-    nginx_proxy_config("bootnode")
+    nginx_proxy_config("bootnode", evm_cids)
     nginx_index_html("bootnode", evm_cids)
 
     top: Spec = spec

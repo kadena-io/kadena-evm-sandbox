@@ -5,7 +5,7 @@ describe('Pact in evm-development', async () => {
   it('accepts a transaction', async () => {
     const kadena = createClient(
       ({ chainId, networkId }) =>
-        `http://localhost:8081/chainweb/0.0/${networkId}/chain/${chainId}/pact`
+        `http://localhost:1848/chainweb/0.0/${networkId}/chain/${chainId}/pact`
     );
 
     const res = await kadena.dirtyRead(

@@ -25,7 +25,7 @@ const config: HardhatUserConfig = {
       chainwebChainIdOffset: 20,
       chainIdOffset: 1789,
       accounts: devnetAccounts.accounts.map((account) => account.privateKey),
-      externalHostUrl: 'http://localhost:8081/chainweb/0.0/evm-development/',
+      externalHostUrl: 'http://localhost:1848/chainweb/0.0/evm-development/',
     },
   },
 };

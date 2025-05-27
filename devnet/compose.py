@@ -207,7 +207,7 @@ def evm_bootnodes(node_name, evm_cids):
 # Nginx Reverse Proxy
 
 
-def nginx_index_html(node_name, evm_cids):
+def nginx_index_html(node_name, evm_cids, port=1848):
     pact_chains = [i for i in range(0, 20)]
     dir = f"config/{node_name}"
     os.makedirs(dir, exist_ok=True)
@@ -233,15 +233,15 @@ def nginx_index_html(node_name, evm_cids):
     ```
 
     ## Links
-    - [/chainweb/0.0/evm-development/cut](http://localhost:8081/chainweb/0.0/evm-development/cut)
-    - [/chainweb/0.0/evm-development/chain/0/pact/api/v1](http://localhost:8081/chainweb/0.0/evm-development/chain/0/pact/api/v1)
-    - [/chainweb/0.0/evm-development/chain/20/evm/rpc](http://localhost:8081/chainweb/0.0/evm-development/chain/20/evm/rpc)
-    
+    - [/chainweb/0.0/evm-development/cut](http://localhost:{port}/chainweb/0.0/evm-development/cut)
+    - [/chainweb/0.0/evm-development/chain/0/pact/api/v1](http://localhost:{port}/chainweb/0.0/evm-development/chain/0/pact/api/v1)
+    - [/chainweb/0.0/evm-development/chain/20/evm/rpc](http://localhost:{port}/chainweb/0.0/evm-development/chain/20/evm/rpc)
+
     ## Endpoints
     The following endpoints are available. They all start with prefix
-    `http://localhost:8081/chainweb/0.0/evm-development/`:
+    `http://localhost:{port}/chainweb/0.0/evm-development/`:
 
-    - [Consensus API /cut](http://localhost:8081/chainweb/0.0/evm-development/cut)
+    - [Consensus API /cut](http://localhost:{port}/chainweb/0.0/evm-development/cut)
 
     </script>
 </zero-md>
@@ -251,7 +251,7 @@ def nginx_index_html(node_name, evm_cids):
     <zero-md>
     <script type="text/markdown">
 {''.join(
-    f'- [Pact API <prefix>/chain/{cid}/pact/api/v1](http://localhost:8081/chainweb/0.0/evm-development/chain/{cid}/pact/api/v1)\n'
+    f'- [Pact API <prefix>/chain/{cid}/pact/api/v1](http://localhost:{port}/chainweb/0.0/evm-development/chain/{cid}/pact/api/v1)\n'
     for cid in pact_chains
 )}
         </script>
@@ -262,7 +262,7 @@ def nginx_index_html(node_name, evm_cids):
     <zero-md>
         <script type="text/markdown">
     {''.join(
-        f'- [EVM RPC <prefix>/chain/{cid}/evm/rpc](http://localhost:8081/chainweb/0.0/evm-development/chain/{cid}/evm/rpc)\n'
+        f'- [EVM RPC <prefix>/chain/{cid}/evm/rpc](http://localhost:{port}/chainweb/0.0/evm-development/chain/{cid}/evm/rpc)\n'
         for cid in evm_cids
     )}
         </script>
@@ -288,7 +288,7 @@ def nginx_index_html(node_name, evm_cids):
                     "0x9ff14f986d2e7c49c6b1f598aa55b8d79adfebb3e1c094abad8bd515ddcb1d6a",
                     "0x14fcd41cf1adc5ac71e1da6e8463a293520be53a1a0059d9730a01fc5aee5cb2"
                 ],
-                "externalHostUrl": 'http://localhost:8081/chainweb/0.0/evm-development/',
+                "externalHostUrl": f"http://localhost:{port}/chainweb/0.0/evm-development/",
             },
         },
     }, indent=2)
@@ -418,7 +418,7 @@ def nginx_reverse_proxy(node_name: str, evm_cids: list[int]) -> Service:
                 "mode": "0440",
             },
         ],
-        "ports": ["8081:80"],
+        "ports": ["1848:80"],
         "depends_on": {
             f"{node_name}-consensus": {"condition": "service_healthy"},
             **{
@@ -532,7 +532,7 @@ def chainweb_consensus_service(
     }
 
     if exposed:
-        result["ports"] += ["1848:1848"]
+        result["ports"] += ["11848:11848"]
 
     if is_bootnode:
         result["entrypoint"] += [

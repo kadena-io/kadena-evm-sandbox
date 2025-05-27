@@ -331,8 +331,15 @@ http {{
         listen 80;
         server_name {node_name}-frontend;
 
+        location /info {{
+            add_header Content-Type application/json;
+            add_header Access-Control-Allow-Origin *;
+            return 200 '{{"nodeVersion": "evm-development"}}';
+        }}
+
         location / {{
             root /usr/share/nginx/html;
+            add_header Access-Control-Allow-Origin *;
             index index.html;
         }}
 
@@ -342,10 +349,12 @@ http {{
             proxy_set_header X-Real-IP $remote_addr;
             proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
             proxy_set_header X-Forwarded-Proto $scheme;
+            add_header Access-Control-Allow-Origin *;
         }}
     {''.join(
         f"""
         location /chainweb/0.0/evm-development/chain/{cid}/evm/rpc {{
+            add_header Access-Control-Allow-Origin *;
             proxy_pass http://{node_name}-evm-{cid}:8545/;
         }}
         """

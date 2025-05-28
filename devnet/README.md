@@ -2,17 +2,20 @@
 
 ## Github Container Registry
 
-Create a GITHUB_TOKEN env var with token with packages:read permission to access
-the private docker images. Then run:
+Create a `GITHUB_TOKEN` env var with token with `packages:read` permission to
+access the docker images. Then run:
 
 ```sh
-echo "$GITHUB_TOKEN" |docker login ghcr.io -u <GITHUB_USERNAME> --password-stdin
+# when using `gh`
+gh auth token | docker login ghcr.io --username YOUR_USERNAME --password-stdin
+# or manual token
+echo "ghp<token>" |docker login ghcr.io -u <GITHUB_USERNAME> --password-stdin
 ```
 
 ## Run the project
 
 From root of the repo cd to `devnet` directory, then with
-(`uv`)[https://docs.astral.sh/uv/getting-started/installation]
+(uv)[https://docs.astral.sh/uv/getting-started/installation]
 
 ```sh
 cd devnet

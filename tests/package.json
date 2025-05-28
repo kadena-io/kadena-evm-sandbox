@@ -1,0 +1,22 @@
+{
+  "name": "tests",
+  "private": true,
+  "scripts": {
+    "test": "bun test --timeout 300000"
+  },
+  "devDependencies": {
+    "@types/bun": "latest"
+  },
+  "peerDependencies": {
+    "typescript": "^5"
+  },
+  "dependencies": {
+    "@kadena/client": "^1.17.1",
+    "@kadena/hardhat-chainweb": "^1.4.8",
+    "@kadena/hardhat-kadena-create2": "^1.0.2",
+    "@nomicfoundation/hardhat-toolbox": "^5.0.0",
+    "@nomicfoundation/hardhat-verify": "^2.0.14",
+    "hardhat": "2.22.18",
+    "zx": "^8.5.4"
+  }
+}

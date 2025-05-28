@@ -1,0 +1,27 @@
+chainweb:
+  chainwebVersion: evm-development
+  throttling:
+    global: 500
+    mempool: 20
+    putPeer: 55
+  serviceApi:
+    interface: '*'
+    port: 1848
+  p2p:
+    peer:
+      hostaddress:
+        port: 1789
+    ignoreBootstrapNodes: true
+    maxSessionCount: 2
+
+logging:
+  logger:
+    log_level: warn
+  backend:
+    format: text
+    color: 'true'
+  telemetryBackend:
+    enabled: true
+    configuration:
+      format: text
+      color: 'true'

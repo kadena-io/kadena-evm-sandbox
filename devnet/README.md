@@ -12,7 +12,7 @@ echo "$GITHUB_TOKEN" |docker login ghcr.io -u <GITHUB_USERNAME> --password-stdin
 ## Run the project
 
 From root of the repo cd to `devnet` directory, then with
-(`uv`)[https://docs.astral.sh/uv/getting-started/installation])
+(`uv`)[https://docs.astral.sh/uv/getting-started/installation]
 
 ```sh
 cd devnet

@@ -3,6 +3,18 @@ volumes:
   logs:
   dets:
 
+networks:
+  default:
+    driver: bridge
+
+  proxy-network:
+    external: true
+    name: proxy-network  
+
+  service-network:
+    external: true
+    name: service-network
+
 services:
   redis-db:
     extends:
@@ -116,14 +128,3 @@ services:
      - default    
      - proxy-network
 
-networks:
-  default:
-    driver: bridge
-
-  proxy-network:
-    external: true
-    name: proxy-network  
-
-  service-network:
-    external: true
-    name: service-network

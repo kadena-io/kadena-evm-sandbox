@@ -6,12 +6,16 @@ import {
   generateDockerComposeAndStartNetwork,
   getDevnetStatus,
   stopAndRemoveNetwork,
+  waitFor,
   waitForCutHeight,
 } from './devnet-utils';
 import { DOCKER_COMPOSE_FILE } from './devnet-utils';
-
+import { createLogger } from './utils';
 import { fs, $ } from 'zx';
+
 $.verbose = CONFIG.VERBOSE;
+
+const log = createLogger({});
 
 describe(`verify ${DOCKER_COMPOSE_FILE} generation`, () => {
   it(`generate ${DOCKER_COMPOSE_FILE}`, async () => {
@@ -40,20 +44,29 @@ describe('start network, stop node, restart node', () => {
   test(`generate ${DOCKER_COMPOSE_FILE}`, async () => {
     await generateDockerComposeAndStartNetwork();
 
-    await waitForCutHeight(98);
+    await waitFor(({ chains }) => {
+      const evm20 = chains.find((chain) => chain.chainId === 20)!;
+      log('evm-20 height:', evm20.height);
+
+      return evm20.height > 0;
+    });
 
     console.log('stopping bootnode-evm-20...');
     await $devnet`docker compose -f ${DOCKER_COMPOSE_FILE} stop bootnode-evm-20`;
-    console.log('bootnode-evm-20 stopped');
+    log('bootnode-evm-20 stopped');
+
+    await waitForCutHeight(98);
 
     console.log('verifying lowest chain-height is evm-20...');
     const devnetStatus = await getDevnetStatus();
 
-    const evm20 = devnetStatus.find((chain) => chain.chainId === 20);
+    const evm20 = devnetStatus.chains.find((chain) => chain.chainId === 20);
     if (!evm20) {
       throw new Error('evm-20 not found in devnet status');
     }
-    const lowestHeight = devnetStatus.sort((a, b) => a.height - b.height)[0];
+    const lowestHeight = devnetStatus.chains.sort(
+      (a, b) => a.height - b.height
+    )[0];
 
     console.log(`expecting lowest height to be evm-20: ${evm20.height}`);
     expect(lowestHeight).toEqual(evm20);
@@ -65,11 +78,11 @@ describe('start network, stop node, restart node', () => {
     console.log('waiting for cut-height to catch up...');
     try {
       await waitForCutHeight(
-        devnetStatus.reduce((acc, chain) => acc + chain.height, 0) + 10
+        devnetStatus.chains.reduce((acc, chain) => acc + chain.height, 0) + 10
       );
     } catch (e) {
       console.log('cut-height not increasing');
-      const newEvm20 = (await getDevnetStatus()).find(
+      const newEvm20 = (await getDevnetStatus()).chains.find(
         (chain) => chain.chainId === 20
       )!;
       if (newEvm20.height === evm20.height) {

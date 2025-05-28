@@ -51,16 +51,16 @@ module.exports = {
   defaultNetwork: "kadena_devnet0",
   networks: {
     kadena_devnet0: {
-      url: 'http://localhost:8545',
+      url: 'http://localhost:1848/chainweb/0.0/evm-development/chain/20/evm/rpc',
       chainId: 1789,
       accounts: devnetAccounts.accounts.map(account => account.privateKey),
-      chainwebChainId: 0,
+      chainwebChainId: 20,
     },
     kadena_devnet1: {
-      url: 'http://localhost:8555',
+      url: 'http://localhost:1848/chainweb/0.0/evm-development/chain/21/evm/rpc',
       chainId: 1790,
       accounts: devnetAccounts.accounts.map(account => account.privateKey),
-      chainwebChainId: 1,
+      chainwebChainId: 21,
     },
   },
   sourcify: {

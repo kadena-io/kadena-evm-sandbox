@@ -1,10 +1,9 @@
 #!/usr/bin/env bash
 
-export NODE=${1:-chainweb-node}
-export EVMNODE=${2:-chainweb-evm-chain}
+export NODE=${1:-bootnode-consensus}
 
 function get_summary_json() {
-    docker compose run -ti --rm curl -skL "https://${NODE}:1789/chainweb/0.0/evm-development/cut" |
+    docker compose run -i --rm curl -skL "https://${NODE}:1789/chainweb/0.0/evm-development/cut" |
     jq '{ 
         node: env.NODE,
         chain_0: .hashes."0".height,
@@ -15,7 +14,7 @@ function get_summary_json() {
 }
 
 function get_summary() {
-    docker compose run -ti --rm curl -skL "https://${NODE}:1789/chainweb/0.0/evm-development/cut" |
+    docker compose run -i --rm curl -skL "https://${NODE}:1789/chainweb/0.0/evm-development/cut" |
     jq -r '
         .height as $ch
         |
@@ -25,9 +24,7 @@ function get_summary() {
             { chain: .key|tonumber
             , height: .value.height
             , hash: .value.hash
-            , type: (if ((.key|tonumber) < 2) then "evm" else "default" end)
-            , provider_uri: (if ((.key|tonumber) < 2) then ("http://" + env.EVMNODE + "-" + .key + ":8551") else "--" end)
-            # , URI: ("http://" + env.NODE + ":1848/chainweb/0.0/evm-development/chain/" + .key + "/header/" + .value.hash)
+            , type: (if ((.key|tonumber) > 19 and (.key|tonumber) < 40) then "evm" else "default" end)
             } 
         | with_entries (.key |= ascii_downcase)
         ]
@@ -39,5 +36,6 @@ function get_summary() {
     column -t
 }
 
+echo Node: ${NODE}
 get_summary
 

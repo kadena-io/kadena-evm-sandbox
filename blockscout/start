@@ -1,6 +1,12 @@
 #!/bin/bash
 
 echo ""
+echo "Creating network..."
+echo "==============================="
+docker network create --driver bridge service-network
+docker network create --driver bridge proxy-network
+
+echo ""
 echo "Starting general containers..."
 echo "==============================="
 docker compose -p bs_general  -f general-docker-compose.yaml up -d  

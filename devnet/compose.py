@@ -579,10 +579,6 @@ def evm_chain(node_name: str, cid: int, *, is_bootnode=False, exposed=False) -> 
         "hostname": f"{node_name}-evm-{cid}",
         "restart": "unless-stopped",
         "image": "${EVM_IMAGE:-ghcr.io/kadena-io/evm-devnet-kadena-reth:latest}",
-        "build": {
-            "context": "../rust",
-            "dockerfile": "Dockerfile",
-        },
         "secrets": [
             {
                 "source": f"{node_name}-jwtsecret",

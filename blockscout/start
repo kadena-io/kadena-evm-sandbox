@@ -5,7 +5,16 @@ echo "Starting general containers..."
 echo "==============================="
 docker compose -p bs_general  -f general-docker-compose.yaml up -d  
 
-./start-chains
+
+for i in {20..24}; do
+  echo "Starting chain $i ..."
+  echo "=============================="
+  CHAIN_ID=$((i + 1789)) CHAINWEB_CHAIN_ID=$i docker compose -p bs_chain_${i} \
+    --env-file ./envs/chain-common.env \
+    -f common-docker-compose.yaml up -d
+  echo ""
+done
+
 
 echo ""
 echo "Starting gateway proxy..."

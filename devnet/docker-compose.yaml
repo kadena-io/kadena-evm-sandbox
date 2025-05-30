@@ -2,22 +2,22 @@
     "name": "chainweb-evm",
     "secrets": {
         "bootnode-jwtsecret": {
-            "file": "./config/bootnode/jwtsecret"
+            "file": "./config/default/bootnode/jwtsecret"
         },
         "bootnode-evm-20-p2p-secret": {
-            "file": "./config/bootnode/evm-20-p2p-secret"
+            "file": "./config/default/bootnode/evm-20-p2p-secret"
         },
         "bootnode-evm-21-p2p-secret": {
-            "file": "./config/bootnode/evm-21-p2p-secret"
+            "file": "./config/default/bootnode/evm-21-p2p-secret"
         },
         "bootnode-evm-22-p2p-secret": {
-            "file": "./config/bootnode/evm-22-p2p-secret"
+            "file": "./config/default/bootnode/evm-22-p2p-secret"
         },
         "bootnode-evm-23-p2p-secret": {
-            "file": "./config/bootnode/evm-23-p2p-secret"
+            "file": "./config/default/bootnode/evm-23-p2p-secret"
         },
         "bootnode-evm-24-p2p-secret": {
-            "file": "./config/bootnode/evm-24-p2p-secret"
+            "file": "./config/default/bootnode/evm-24-p2p-secret"
         },
         "bootnode-consensus-p2p-key": {
             "file": "./config/bootnode-consensus-p2p.key.pem"
@@ -31,13 +31,7 @@
             "file": "./config/consensus-config.yaml"
         },
         "bootnode-payload-providers": {
-            "file": "./config/bootnode/payload-providers.yaml"
-        },
-        "bootnode-nginx-config": {
-            "file": "./config/bootnode/nginx.conf"
-        },
-        "bootnode-nginx-html": {
-            "file": "./config/bootnode/index.html"
+            "file": "./config/default/bootnode/payload-providers.yaml"
         },
         "bootnode-chain-spec-20": {
             "file": "chain-specs/chain-spec-20.json"
@@ -53,11 +47,18 @@
         },
         "bootnode-chain-spec-24": {
             "file": "chain-specs/chain-spec-24.json"
+        },
+        "bootnode-nginx-config": {
+            "file": "./config/default/bootnode/nginx.conf"
+        },
+        "bootnode-nginx-html": {
+            "file": "./config/default/bootnode/index.html"
         }
     },
     "networks": {
         "p2p": null,
-        "bootnode-internal": null
+        "bootnode-internal": null,
+        "bootnode-frontend": null
     },
     "volumes": {
         "bootnode-consensus_data": null,
@@ -110,7 +111,7 @@
                 "1848"
             ],
             "ports": [
-                "11848:11848"
+                "11848:1848"
             ],
             "secrets": [
                 {
@@ -201,63 +202,11 @@
                 "start_period": "2m"
             }
         },
-        "bootnode-frontend": {
-            "container_name": "bootnode-frontend",
-            "hostname": "bootnode-frontend",
-            "image": "${NGINX_IMAGE:-nginx:latest}",
-            "restart": "unless-stopped",
-            "networks": {
-                "bootnode-internal": null,
-                "p2p": null
-            },
-            "volumes": [
-                "bootnode_logs:/var/log/nginx"
-            ],
-            "configs": [
-                {
-                    "source": "bootnode-nginx-config",
-                    "target": "/etc/nginx/nginx.conf",
-                    "mode": "0440"
-                },
-                {
-                    "source": "bootnode-nginx-html",
-                    "target": "/usr/share/nginx/html/index.html",
-                    "mode": "0440"
-                }
-            ],
-            "ports": [
-                "1848:80"
-            ],
-            "depends_on": {
-                "bootnode-consensus": {
-                    "condition": "service_healthy"
-                },
-                "bootnode-evm-20": {
-                    "condition": "service_started"
-                },
-                "bootnode-evm-21": {
-                    "condition": "service_started"
-                },
-                "bootnode-evm-22": {
-                    "condition": "service_started"
-                },
-                "bootnode-evm-23": {
-                    "condition": "service_started"
-                },
-                "bootnode-evm-24": {
-                    "condition": "service_started"
-                }
-            }
-        },
         "bootnode-evm-20": {
             "container_name": "bootnode-evm-20",
             "hostname": "bootnode-evm-20",
             "restart": "unless-stopped",
             "image": "${EVM_IMAGE:-ghcr.io/kadena-io/evm-devnet-kadena-reth:latest}",
-            "build": {
-                "context": "../rust",
-                "dockerfile": "Dockerfile"
-            },
             "secrets": [
                 {
                     "source": "bootnode-jwtsecret",
@@ -335,10 +284,6 @@
             "hostname": "bootnode-evm-21",
             "restart": "unless-stopped",
             "image": "${EVM_IMAGE:-ghcr.io/kadena-io/evm-devnet-kadena-reth:latest}",
-            "build": {
-                "context": "../rust",
-                "dockerfile": "Dockerfile"
-            },
             "secrets": [
                 {
                     "source": "bootnode-jwtsecret",
@@ -416,10 +361,6 @@
             "hostname": "bootnode-evm-22",
             "restart": "unless-stopped",
             "image": "${EVM_IMAGE:-ghcr.io/kadena-io/evm-devnet-kadena-reth:latest}",
-            "build": {
-                "context": "../rust",
-                "dockerfile": "Dockerfile"
-            },
             "secrets": [
                 {
                     "source": "bootnode-jwtsecret",
@@ -497,10 +438,6 @@
             "hostname": "bootnode-evm-23",
             "restart": "unless-stopped",
             "image": "${EVM_IMAGE:-ghcr.io/kadena-io/evm-devnet-kadena-reth:latest}",
-            "build": {
-                "context": "../rust",
-                "dockerfile": "Dockerfile"
-            },
             "secrets": [
                 {
                     "source": "bootnode-jwtsecret",
@@ -578,10 +515,6 @@
             "hostname": "bootnode-evm-24",
             "restart": "unless-stopped",
             "image": "${EVM_IMAGE:-ghcr.io/kadena-io/evm-devnet-kadena-reth:latest}",
-            "build": {
-                "context": "../rust",
-                "dockerfile": "Dockerfile"
-            },
             "secrets": [
                 {
                     "source": "bootnode-jwtsecret",
@@ -653,6 +586,57 @@
                 "32545:8545",
                 "32546:8546"
             ]
+        },
+        "bootnode-frontend": {
+            "container_name": "bootnode-frontend",
+            "hostname": "bootnode-frontend",
+            "image": "${NGINX_IMAGE:-nginx:latest}",
+            "restart": "unless-stopped",
+            "networks": {
+                "bootnode-internal": null,
+                "bootnode-frontend": null
+            },
+            "volumes": [
+                "bootnode_logs:/var/log/nginx"
+            ],
+            "configs": [
+                {
+                    "source": "bootnode-nginx-config",
+                    "target": "/etc/nginx/nginx.conf",
+                    "mode": "0440"
+                },
+                {
+                    "source": "bootnode-nginx-html",
+                    "target": "/usr/share/nginx/html/index.html",
+                    "mode": "0440"
+                }
+            ],
+            "expose": [
+                "1848"
+            ],
+            "ports": [
+                "1848:1848"
+            ],
+            "depends_on": {
+                "bootnode-consensus": {
+                    "condition": "service_healthy"
+                },
+                "bootnode-evm-20": {
+                    "condition": "service_started"
+                },
+                "bootnode-evm-21": {
+                    "condition": "service_started"
+                },
+                "bootnode-evm-22": {
+                    "condition": "service_started"
+                },
+                "bootnode-evm-23": {
+                    "condition": "service_started"
+                },
+                "bootnode-evm-24": {
+                    "condition": "service_started"
+                }
+            }
         },
         "bootnode-mining-client": {
             "container_name": "bootnode-mining-client",

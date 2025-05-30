@@ -985,9 +985,6 @@ def default_project() -> Spec:
     top: Spec = spec
     top["name"] = "chainweb-evm"
     top["networks"] = {"p2p": None}
-    top["services"] = {
-        "curl": curl(["bootnode"]),
-    }
 
     return join_specs(
         [
@@ -1002,6 +999,7 @@ def default_project() -> Spec:
                 exposed=True,
                 has_frontend=True,
             ),
+            other_services(['bootnode']),
         ]
     )
 

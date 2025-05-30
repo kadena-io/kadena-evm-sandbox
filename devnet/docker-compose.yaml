@@ -70,23 +70,6 @@
         "bootnode-evm-24_data": null
     },
     "services": {
-        "curl": {
-            "labels": {
-                "com.chainweb.devnet.description": "Curl Into Network",
-                "com.chainweb.devnet.debug": ""
-            },
-            "image": "curlimages/curl:latest",
-            "profiles": [
-                "debug"
-            ],
-            "networks": {
-                "bootnode-internal": null,
-                "p2p": null
-            },
-            "environment": {
-                "CL_NODES": "${CL_NODES:-bootnode-consensus}"
-            }
-        },
         "bootnode-consensus": {
             "container_name": "bootnode-consensus",
             "hostname": "bootnode-consensus",
@@ -666,6 +649,66 @@
             "ports": [
                 "1917:1917"
             ]
+        },
+        "allocations": {
+            "container_name": "bootnode-allocations",
+            "image": "${ALLOCATIONS_IMAGE:-ghcr.io/kadena-io/evm-devnet-allocations:latest}",
+            "build": {
+                "context": "../allocations",
+                "dockerfile": "Dockerfile"
+            },
+            "depends_on": {
+                "bootnode-evm-20": {
+                    "condition": "service_started"
+                }
+            },
+            "environment": [
+                "RPC_URL=http://bootnode-evm-20:8545"
+            ],
+            "networks": {
+                "bootnode-internal": null
+            }
+        },
+        "curl": {
+            "labels": {
+                "com.chainweb.devnet.description": "Curl Into Network",
+                "com.chainweb.devnet.debug": ""
+            },
+            "image": "curlimages/curl:latest",
+            "profiles": [
+                "debug"
+            ],
+            "networks": {
+                "bootnode-internal": null,
+                "p2p": null
+            },
+            "environment": {
+                "CL_NODES": "${CL_NODES:-bootnode-consensus}"
+            }
+        },
+        "debug": {
+            "build": {
+                "context": "./debug",
+                "dockerfile": "Dockerfile"
+            },
+            "profiles": [
+                "debug"
+            ],
+            "entrypoint": [
+                "/bin/bash",
+                "-c"
+            ],
+            "environment": {
+                "HEIGHT": "${HEIGHT:-latest}",
+                "CL_NODES": "${CL_NODES:-bootnode-consensus}"
+            },
+            "command": [
+                "\n            source ./functions.sh\n            info $$HEIGHT\n            "
+            ],
+            "networks": {
+                "bootnode-internal": null,
+                "p2p": null
+            }
         }
     }
 }

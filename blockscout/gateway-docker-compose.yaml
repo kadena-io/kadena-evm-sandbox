@@ -1,0 +1,19 @@
+volumes:
+  blockscout-db-data:
+  stats-db-data:
+
+services:
+  gateway:
+    restart: on-failure
+    extends:
+      file: ./services/nginx-gateway.yml
+      service: gateway
+    networks:  
+     - proxy-network     
+
+networks:
+  proxy-network:
+    external: true
+    name: proxy-network  
+
+

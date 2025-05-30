@@ -1,10 +1,29 @@
 #!/bin/bash
 echo ""
-echo "/Stopping chain 0 containers..."
+echo "Starting chain 0 ..."
 echo "=============================="
-docker compose -p bs_chain_0  --env-file ./envs/chain-0.env --env-file ./envs/chain-common.env -f common-docker-compose.yaml down
+docker compose -p bs_chain_20  --env-file ./envs/chain-0.env  --env-file ./envs/chain-common.env  -f common-docker-compose.yaml down
 
 echo ""
-echo "Stopping chain 1 containers..."
+echo "Starting chain 1 ..."
 echo "=============================="
-docker compose -p bs_chain_1  --env-file ./envs/chain-1.env --env-file ./envs/chain-common.env -f common-docker-compose.yaml down
+docker compose -p bs_chain_21  --env-file ./envs/chain-1.env  --env-file ./envs/chain-common.env  -f common-docker-compose.yaml down
+
+
+
+echo ""
+echo "Stoping chain 2 ..."
+echo "=============================="
+docker compose -p bs_chain_22  --env-file ./envs/chain-2.env  --env-file ./envs/chain-common.env  -f common-docker-compose.yaml down
+
+
+echo ""
+echo "Starting chain 3 ..."
+echo "=============================="
+docker compose -p bs_chain_23  --env-file ./envs/chain-3.env  --env-file ./envs/chain-common.env  -f common-docker-compose.yaml down
+
+
+echo ""
+echo "Starting chain 4 ..."
+echo "=============================="
+docker compose -p bs_chain_24  --env-file ./envs/chain-4.env  --env-file ./envs/chain-common.env  -f common-docker-compose.yaml down

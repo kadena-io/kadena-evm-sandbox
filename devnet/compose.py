@@ -406,6 +406,7 @@ def nginx_reverse_proxy(node_name: str, evm_cids: list[int], exposed: bool = Fal
         "container_name": f"{node_name}-frontend",
         "hostname": f"{node_name}-frontend",
         "image": "${NGINX_IMAGE:-nginx:latest}",
+        "platform": "linux/amd64",
         "restart": "unless-stopped",
         "networks": {
             f"{node_name}-internal": None,

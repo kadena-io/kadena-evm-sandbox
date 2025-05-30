@@ -591,6 +591,7 @@
             "container_name": "bootnode-frontend",
             "hostname": "bootnode-frontend",
             "image": "${NGINX_IMAGE:-nginx:latest}",
+            "platform": "linux/amd64",
             "restart": "unless-stopped",
             "networks": {
                 "bootnode-internal": null,

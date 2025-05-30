@@ -144,6 +144,12 @@ To download and install the Chainweb EVM preview:
    ```
 
    You can call the `./network devnet status` command repeatedly to verify that the block height and cut height values are increasing.
+   This can also be viewed at http://localhost:1848/chainweb/0.0/evm-development/cut
+
+   The network takes about 10 minutes to mine the first block for each chain 
+   after genesis
+
+2. You can now go to http://localhost:1848 to view the Chainweb service API for the development network.
 
 ### Test the simple token contract
 

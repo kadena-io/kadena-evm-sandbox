@@ -70,6 +70,8 @@ class ChainwebVersion(Enum):
     TESTNET = "testnet04"
     DEVNET = "development"
     EVM_DEVNET = "evm-development"
+    EVM_DEVNET_SINGLETON = "evm-development-singleton"
+    EVM_DEVNET_PAIR = "evm-development-pair"
 
 
 @dataclass(frozen=True)
@@ -140,9 +142,13 @@ async def get_branch_hashes(
 
 # Concurrenlty query latest cut from each node
 #
-async def cuts(session, nodes: frozenset[Node]) -> dict[Node, Cut]:
+async def cuts(
+    session, 
+    nodes: frozenset[Node],
+    version: str = "evm-development"
+) -> dict[Node, Cut]:
     async def run(n):
-        c = await get_cut(session, n)
+        c = await get_cut(session, n, version=version)
         return n, c
 
     jobs = [run(n) for n in nodes]
@@ -201,10 +207,17 @@ async def get_branches_for_all_nodes(
 # Find forks per chain:
 #
 def forks(x: dict[Node, list[RankedBlockHash]]) -> Forks:
+    # reverse the order of blocks to start from lowest height
     # O(n * m)
     a = {k: v[::-1] for k, v in x.items()}
-    min_rank = min([v[0][0] for v in a.values() if len(v) > 0])
-    cur_rank = min_rank
+
+    # O(n * m)
+    # start with the lowest block for which we have blocks on all nodes
+    max_min_rank = max([v[0][0] for v in a.values() if len(v) > 0])
+    # for node, hashes in a.items():
+    #     if [ h for h, _ in hashes if h == max_min_rank ] == []:
+
+    cur_rank = max_min_rank
     levels: dict[BlockHeight, dict[Node, BlockHash | None]] = {}
     done = False
     while not done:
@@ -242,16 +255,25 @@ def fork_points(a: Forks) -> ForkPoints:
 
 
 def branches_for_chain(
-    branches: dict[Node, dict[ChainId, list[RankedBlockHash]]], cid: ChainId
+    branches: dict[Node, dict[ChainId, list[RankedBlockHash]]],
+    cid: ChainId
 ) -> dict[Node, list[RankedBlockHash]]:
     return {k: v[cid] for k, v in branches.items()}
 
 
 async def get_fork_points(
-    nodes: frozenset[Node], *, chains: list[ChainId] | None = None
+    nodes: frozenset[Node],
+    *,
+    chains: list[ChainId] | None = None,
+    version: str = "evm-development"
 ) -> dict[ChainId, ForkPoints]:
     async with aiohttp.ClientSession() as session:
-        branches = await get_branches_for_all_nodes(session, nodes, chains=chains)
+        branches = await get_branches_for_all_nodes(
+            session,
+            nodes,
+            chains=chains,
+            version=version
+        )
         cids = frozenset(
             [
                 cid
@@ -265,10 +287,17 @@ async def get_fork_points(
 
 
 async def get_forks(
-    nodes: frozenset[Node], *, chains: list[ChainId] | None = None
+    nodes: frozenset[Node], *,
+    chains: list[ChainId] | None = None,
+    version: str = "evm-development"
 ) -> dict[ChainId, Forks]:
     async with aiohttp.ClientSession() as session:
-        branches = await get_branches_for_all_nodes(session, nodes, chains=chains)
+        branches = await get_branches_for_all_nodes(
+            session,
+            nodes,
+            chains=chains,
+            version=version
+        )
         cids = frozenset(
             [
                 cid
@@ -305,9 +334,9 @@ def get_docker_project_nodes() -> frozenset[Node]:
 # Summary
 
 
-async def summary(nodes: frozenset[Node]):
+async def summary(nodes: frozenset[Node], version: str = "evm-development"):
     async with aiohttp.ClientSession() as session:
-        cs = await cuts(session, nodes)
+        cs = await cuts(session, nodes, version=version)
 
         def info(n):
             hs = [h for h, _ in cs[n].hashes.values()]
@@ -326,14 +355,14 @@ async def summary(nodes: frozenset[Node]):
 # Main
 
 
-async def main(nodes: frozenset[Node], forks: bool):
-    if args.chains is not None:
-        chains = [int(c) for c in args.chains.split(",")]
-    else:
-        chains = None
-
+async def main(
+    nodes: frozenset[Node],
+    chains: list[ChainId] | None = None,
+    forks: bool = False,
+    version: str = "evm-development"
+):
     if forks:
-        cfs = await get_forks(nodes, chains=chains)
+        cfs = await get_forks(nodes, chains=chains, version=version)
         print(
             json.dumps(
                 {
@@ -353,7 +382,7 @@ async def main(nodes: frozenset[Node], forks: bool):
             )
         )
     else:
-        fps = await get_fork_points(nodes, chains=chains)
+        fps = await get_fork_points(nodes, chains=chains, version=version)
         print(
             json.dumps(
                 {
@@ -375,6 +404,7 @@ if __name__ == "__main__":
 
     # TODO use the given docker project or the local project
     parser.add_argument("--project-name")  # TODO
+    parser.add_argument("--chainweb-version")  # TODO
     parser.add_argument("--chains")
     parser.add_argument("--nodes")
     parser.add_argument(
@@ -387,6 +417,8 @@ if __name__ == "__main__":
     )
     args = parser.parse_args()
 
+    version = args.chainweb_version or "evm-development"
+
     if args.nodes is not None:
         node_args = args.nodes.split(",")
         nodes = frozenset([f"{n}:1848" if ":" not in n else n for n in node_args])
@@ -397,11 +429,16 @@ if __name__ == "__main__":
         nodes = get_docker_project_nodes()
         print(f"Found nodes: {nodes}")
 
+    if args.chains is not None:
+        chains = [int(c) for c in args.chains.split(",")]
+    else:
+        chains = None
+
     if args.summary:
-        asyncio.run(summary(nodes))
+        asyncio.run(summary(nodes, version))
         exit(0)
     else:
-        asyncio.run(main(nodes, args.forks))
+        asyncio.run(main(nodes, chains, args.forks, version=version))
 
 # ############################################################################ #
 

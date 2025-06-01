@@ -966,6 +966,20 @@ def other_services(nodes: list[str]) -> Spec:
     }
 
 
+def debug_services(nodes: list[str]) -> Spec:
+    return {
+        "name": "other-services",
+        "services": {
+            "curl": curl(nodes),
+            "debug": debug(nodes),
+        },
+        "networks": {},
+        "volumes": {},
+        "configs": {},
+        "secrets": {},
+    }
+
+
 # ############################################################################# #
 # COMPOSE PROJECT DEFINITIONS
 # ############################################################################# #
@@ -1107,6 +1121,65 @@ def kadena_dev_project() -> Spec:
             other_services(nodes),
         ]
     )
+
+
+def kadena_dev_singleton_evm_project() -> Spec:
+    project_name = "kadena-dev-singleton-evm"
+    nodes = ["bootnode", "miner-1", "miner-2"]
+
+    # Create boostrap information
+    evm_cids = list(range(1))
+    pact_cids = []
+
+    # Create bootstrap node IDs
+    evm_bootnodes(project_name, "bootnode", evm_cids)
+
+    top: Spec = spec
+    top["name"] = "chainweb-evm"
+    top["networks"] = {"p2p": None}
+
+    specs = join_specs(
+        [
+            top,
+            chainweb_node(
+                project_name,
+                "bootnode",
+                evm_cids,
+                pact_cids,
+                is_bootnode=True,
+                mining_mode=None,
+                exposed=False,
+                has_frontend=False,
+            ),
+            chainweb_node(
+                project_name,
+                "miner-1",
+                evm_cids,
+                pact_cids,
+                is_bootnode=False,
+                mining_mode="simulation",
+                exposed=False,
+                has_frontend=False,
+            ),
+            chainweb_node(
+                project_name,
+                "miner-2",
+                evm_cids,
+                pact_cids,
+                is_bootnode=False,
+                mining_mode="simulation",
+                exposed=False,
+                has_frontend=False,
+            ),
+            debug_services(nodes),
+        ]
+    )
+
+    for n in nodes:
+        specs["services"][f"{n}-consensus"]["entrypoint"] += [
+            "--chainweb-version=evm-development-singleton",
+        ]
+    return specs
 
 
 # A project setup for DApp development. It runs a single full bootstrap nodes
@@ -1267,6 +1340,8 @@ match args.project:
         print(json.dumps(minimal_project(), indent=4))
     case "kadena-dev":
         print(json.dumps(kadena_dev_project(), indent=4))
+    case "kadena-dev-singleton-evm":
+        print(json.dumps(kadena_dev_singleton_evm_project(), indent=4))
     case "appdev":
         print(
             json.dumps(

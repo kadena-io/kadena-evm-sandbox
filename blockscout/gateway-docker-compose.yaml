@@ -9,7 +9,8 @@ services:
       file: ./services/nginx-gateway.yml
       service: gateway
     networks:  
-     - proxy-network     
+     - proxy-network
+         
 
 networks:
   proxy-network:

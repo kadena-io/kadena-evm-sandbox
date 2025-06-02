@@ -1,20 +1,11 @@
 #!/bin/bash
-compose_action="${*}"
+source ./scripts/utils/init_chain_vars.sh "$@"
 
-run() {
-  local cmd="$*"
-  echo ""
-  echo "$cmd"
-  echo "========================================="
-  eval "$cmd"
-}
-
-
-echo "Stopping using: 'docker compose down $compose_action'"
+echo "Stopping using: docker compose down $compose_action"
 
 run "docker compose -p bs_gateway -f gateway-docker-compose.yaml down $compose_action"
 
-for i in {20..24}; do
+for ((i = start; i <= end; i++)); do
   run "CHAIN_ID=$((i + 1789)) CHAINWEB_CHAIN_ID=$i docker compose -p bs_chain_${i} --env-file ./envs/chain-common.env -f common-docker-compose.yaml down $compose_action"
 done
 

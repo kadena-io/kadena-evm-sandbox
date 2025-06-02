@@ -1,0 +1,30 @@
+#!/bin/bash
+
+# Check if at least one argument is passed
+if [ $# -lt 1 ]; then
+  echo "Usage: $0 {start|stop|remove} [args...]"
+  exit 1
+fi
+
+# Get the first argument as command
+cmd="$1"
+shift  # Remove the first argument so $@ is the rest
+
+command_dir="./scripts/commands"
+
+case "$cmd" in
+  start)
+    $command_dir/start "$@"
+    ;;
+  stop)
+    $command_dir/stop "$@"
+    ;;
+  remove)
+    $command_dir/remove "$@"
+    ;;
+  *)
+    echo "Unknown command: $cmd"
+    echo "Usage: $0 {start|stop|remove} [args...]"
+    exit 1
+    ;;
+esac

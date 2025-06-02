@@ -14,7 +14,7 @@ map $http_upgrade $connection_upgrade {
 
 server {
     listen 80;
-    server_name ~^chain-(2[0-4])\.evm\.kadena\.io$;
+    server_name ~^chain-(\d+)\.evm\.kadena\.io$;
 
     location / {
         add_header 'Access-Control-Allow-Origin' '*';
@@ -42,7 +42,7 @@ server {
 
 server {
     listen 8080;
-    server_name ~^chain-(2[0-4])\.evm\.kadena\.io$;
+    server_name ~^chain-(\d+)\.evm\.kadena\.io$;
 
     location / {
         add_header 'Access-Control-Allow-Origin' '*';

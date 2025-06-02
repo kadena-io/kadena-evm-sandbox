@@ -14,5 +14,3 @@ end=$((chainwebChainIdOffset + numberOfChains - 1)) # -1 so numberOfChains is ac
 # Generate chains_meta
 chains_meta=$(generate_chains_meta "$start" "$end")
 export CHAINS_META="$chains_meta"
-export CHAIN_ID_START="$start"
-export CHAIN_ID_END="$end"

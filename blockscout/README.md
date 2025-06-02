@@ -20,26 +20,24 @@ Assuming the current working dir is the root of the repository,
 1.  run the Chainweb devnet:
 
     ```sh
-    cd compose
-    docker compose up -d
+    ./network devnet up
     ```
 
 2.  switch to the Blockscout project folder:
 
     ```sh
-    cd ../blockscout-compose
+    cd ../blockscout
     ```
 
 3.  start Blockscout instances:
 
     ```sh
-    ./start
+    ./bs start
     ```
 
 5.  Navigate to the Blockscout UI:
 
-    *   open [site for chain 0](http://localhost:8000)
-    *   open [site for chain 1](http://localhost:8001)
+    *   open [explorer for chain 20](http://localhost:8000)
 
     If you get 502 status code, wait a while and rety. In particular on macos,
     docker networking can sometimes cause long latencies on DNS lookups for
@@ -47,10 +45,30 @@ Assuming the current working dir is the root of the repository,
     component. It can help to reverse the order above and first start the
     Blockscout instances before starting the Chainweb Devnet.
 
-# Shutting down
+6. Open other chains url
+
+    ```sh
+    ./bs add-domains
+    ```
+
+   this will add the following records to /etc/host 
+
+   - 127.0.0.1       chain-20.evm.kadena.io
+   - 127.0.0.1       chain-21.evm.kadena.io
+   - 127.0.0.1       chain-22.evm.kadena.io
+   - 127.0.0.1       chain-23.evm.kadena.io
+   - 127.0.0.1       chain-24.evm.kadena.io
+
+# Stopping service
 
 ```sh
-./stop
+./bs stop
+```
+
+# removing all data and stop services
+
+```sh
+./bs remove
 ```
 
 # Verify Contracts

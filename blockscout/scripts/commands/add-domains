@@ -1,0 +1,15 @@
+#!/bin/bash
+source ./scripts/utils/init_chain_vars.sh "$@"
+
+HOSTS_FILE="/etc/hosts"
+IP="127.0.0.1"
+
+for ((i = start; i <= end; i++)); do
+  domain="chain-$i.evm.kadena.io"
+  # Check if the entry already exists
+    record="$IP $domain"
+  if ! grep -qE "^\s*$IP\s+$domain(\s|$)" "$HOSTS_FILE"; then
+    cmd="echo -e '$record' | sudo tee -a $HOSTS_FILE > /dev/null"
+    run $cmd
+  fi
+done

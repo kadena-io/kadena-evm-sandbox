@@ -22,6 +22,9 @@ case "$cmd" in
   remove)
     $command_dir/remove "$@"
     ;;
+  add-domains)
+    $command_dir/add-domains "$@"
+    ;;
   *)
     echo "Unknown command: $cmd"
     echo "Usage: $0 {start|stop|remove} [args...]"

@@ -9,7 +9,9 @@ services:
     env_file:
       -  ../envs/common-stats.env
     environment:
+      - STATS__BLOCKSCOUT_API_URL=${STATS__BLOCKSCOUT_API_URL:-http://backend:4000}
       - STATS__DB_URL=${STATS__DB_URL:-postgres://stats:n0uejXPl61ci6ldCuE2gQU5Y@stats-db:5432/${STATS_DB_NAME}}
       - STATS__BLOCKSCOUT_DB_URL=${STATS__BLOCKSCOUT_DB_URL:-postgresql://blockscout:ceWb1MeLBEeOIfk65gU8EjF8@db:5432/${BLOCKSCOUT_DB_NAME}}
       - STATS__CREATE_DATABASE=${STATS__CREATE_DATABASE:-true}
       - STATS__RUN_MIGRATIONS=${STATS__RUN_MIGRATIONS:-true}
+      - STATS__CONDITIONAL_START__USER_OPS_PAST_INDEXING_FINISHED__ENABLED=${STATS__CONDITIONAL_START__USER_OPS_PAST_INDEXING_FINISHED__ENABLED:-false}

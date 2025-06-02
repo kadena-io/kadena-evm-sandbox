@@ -2,7 +2,7 @@
 
 # Check if at least one argument is passed
 if [ $# -lt 1 ]; then
-  echo "Usage: $0 {start|stop|remove} [args...]"
+  echo "Usage: $0 {start|stop|remove|add-domains} [args...]"
   exit 1
 fi
 

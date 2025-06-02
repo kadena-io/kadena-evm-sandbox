@@ -7,7 +7,7 @@ echo "Starting using: docker compose up $compose_action"
 
 run "docker compose -p bs_general -f general-docker-compose.yaml up $compose_action"  
 
-for ((i = 0; i <= numberOfChains; i++)); do
+for ((i = 0; i < numberOfChains; i++)); do
   chainId=$((i + $chainIdOffset))
   chainWebChainId=$((i + $chainwebChainIdOffset))
   run "CHAIN_ID=$chainId CHAINWEB_CHAIN_ID=$chainWebChainId docker compose -p bs_chain_${chainWebChainId} --env-file ./envs/chain-common.env -f common-docker-compose.yaml up $compose_action"

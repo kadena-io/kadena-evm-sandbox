@@ -100,7 +100,8 @@ describe('EVM error scenarios on Kadena devnet', () => {
       /HardhatEthersSigner\.signTransaction/
     )
 
-    /* Once the above is implemented, we can proceed with the test 
+    /* Once the above is implemented, we can proceed with the test , 
+       still was expecting this to work, but it does not
         const raw = await sender.signTransaction(txReq)
 
         const tampered = raw.slice(0, -2) + (raw.slice(-2) === '00' ? '01' : '00')

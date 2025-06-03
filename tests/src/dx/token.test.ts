@@ -3,7 +3,7 @@ import { beforeAll, it, expect } from 'bun:test'
 import hre, { ethers } from 'hardhat'
 import type { Contract } from 'ethers'
 
-let token: Contract
+// let token: Contract
 let ownerAddress: string
 let receiverAddress: string
 

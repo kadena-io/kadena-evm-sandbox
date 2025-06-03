@@ -7,7 +7,7 @@ export const CONFIG = {
   VERBOSE: false,
 };
 
-export const DOCKER_COMPOSE_FILE = '../devnet/docker-compose.yml';
+export const DOCKER_COMPOSE_FILE = '../devnet/docker-compose.yaml';
 
 export const $devnet = $({ cwd: path.join(__dirname, '../../devnet') });
 export const $root = $({ cwd: path.join(__dirname, '../../') });
@@ -95,7 +95,7 @@ export async function waitFor(
   checkFn: (devnetStatus: DevnetStatus) => boolean | Promise<boolean>,
   options: { intervalSeconds?: number; timeoutSeconds?: number } = {}
 ): Promise<void> {
-  const { intervalSeconds = 4, timeoutSeconds = 120 } = options;
+  const { intervalSeconds = 4, timeoutSeconds = 15 } = options;
   const start = Date.now();
   let iteration = 0;
 
@@ -112,7 +112,7 @@ export async function waitFor(
   }
 }
 
-export async function waitForCutHeight(
+export async function waitForMinCutHeight(
   cutHeight: number,
   options?: { intervalSeconds?: number; timeoutSeconds?: number }
 ): Promise<void> {

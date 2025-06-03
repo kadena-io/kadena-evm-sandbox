@@ -2,7 +2,8 @@
   "name": "tests",
   "private": true,
   "scripts": {
-    "test": "bun test --timeout 300000"
+    "test": "bun test ./src",
+    "e2e": "bun test ./e2e --timeout 300000"
   },
   "devDependencies": {
     "@types/bun": "latest"

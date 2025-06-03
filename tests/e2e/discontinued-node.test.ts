@@ -7,7 +7,7 @@ import {
   getDevnetStatus,
   stopAndRemoveNetwork,
   waitFor,
-  waitForCutHeight,
+  waitForMinCutHeight,
 } from './devnet-utils';
 import { DOCKER_COMPOSE_FILE } from './devnet-utils';
 import { createLogger } from './utils';
@@ -15,10 +15,10 @@ import { fs, $ } from 'zx';
 
 $.verbose = CONFIG.VERBOSE;
 
-const log = createLogger({});
+const log = createLogger({ context: 'discontinued-node.test.ts' });
 
-describe(`verify ${DOCKER_COMPOSE_FILE} generation`, () => {
-  it(`generate ${DOCKER_COMPOSE_FILE}`, async () => {
+describe(`e2e: verify ${DOCKER_COMPOSE_FILE} generation`, () => {
+  it(`e2e: generate ${DOCKER_COMPOSE_FILE}`, async () => {
     await createDockerComposeFile();
     const fileExists = fs.existsSync(DOCKER_COMPOSE_FILE);
     expect(fileExists).toBe(true);
@@ -29,7 +29,7 @@ describe(`verify ${DOCKER_COMPOSE_FILE} generation`, () => {
   });
 });
 
-describe('start network, stop node, restart node', () => {
+describe('e2e: start network, stop node, restart node', () => {
   beforeAll(() => {
     if (CONFIG.CLEAN_BEFORE) {
       return stopAndRemoveNetwork();
@@ -41,21 +41,24 @@ describe('start network, stop node, restart node', () => {
     }
   });
 
-  test(`generate ${DOCKER_COMPOSE_FILE}`, async () => {
+  test(`e2e: generate ${DOCKER_COMPOSE_FILE}`, async () => {
     await generateDockerComposeAndStartNetwork();
 
-    await waitFor(({ chains }) => {
-      const evm20 = chains.find((chain) => chain.chainId === 20)!;
-      log('evm-20 height:', evm20.height);
+    await waitFor(
+      ({ chains, cutHeight }) => {
+        const evm20 = chains.find((chain) => chain.chainId === 20)!;
+        log(`evm-20 height: ${evm20.height}, cut-height: ${cutHeight}`);
 
-      return evm20.height > 0;
-    });
+        return evm20.height > 0;
+      },
+      { timeoutSeconds: 300 }
+    );
 
     console.log('stopping bootnode-evm-20...');
     await $devnet`docker compose -f ${DOCKER_COMPOSE_FILE} stop bootnode-evm-20`;
     log('bootnode-evm-20 stopped');
 
-    await waitForCutHeight(98);
+    await waitForMinCutHeight(98);
 
     console.log('verifying lowest chain-height is evm-20...');
     const devnetStatus = await getDevnetStatus();
@@ -77,7 +80,7 @@ describe('start network, stop node, restart node', () => {
 
     console.log('waiting for cut-height to catch up...');
     try {
-      await waitForCutHeight(
+      await waitForMinCutHeight(
         devnetStatus.chains.reduce((acc, chain) => acc + chain.height, 0) + 10
       );
     } catch (e) {

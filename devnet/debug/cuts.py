@@ -12,10 +12,10 @@ import base64
 import json
 import subprocess
 
+DEFAULT_LIMIT = 30
 
 # ############################################################################ #
 # SHA512--256 hashes
-
 
 # Decode as string of base64url encoded bytes
 #
@@ -116,7 +116,7 @@ async def get_branch_hashes(
     cid: ChainId,
     branch: BlockHash,
     *,
-    limit: int = 10,
+    limit: int = DEFAULT_LIMIT,
     version="evm-development",
 ) -> list[BlockHash]:
     uri = f"http://{node}/chainweb/0.0/{version}/chain/{cid}/hash/branch"
@@ -161,7 +161,7 @@ async def get_branches(
     node: Node,
     *,
     chains: list[ChainId] | None = None,
-    limit: int = 10,
+    limit: int = DEFAULT_LIMIT,
     version="evm-development",
 ) -> dict[ChainId, list[RankedBlockHash]]:
     cut = await get_cut(session, node, version=version)
@@ -190,7 +190,7 @@ async def get_branches_for_all_nodes(
     nodes: frozenset[Node],
     *,
     chains: list[ChainId] | None = None,
-    limit: int = 10,
+    limit: int = DEFAULT_LIMIT,
     version="evm-development",
 ) -> dict[Node, dict[ChainId, list[RankedBlockHash]]]:
     async def run(n):
@@ -265,14 +265,16 @@ async def get_fork_points(
     nodes: frozenset[Node],
     *,
     chains: list[ChainId] | None = None,
-    version: str = "evm-development"
+    version: str = "evm-development",
+    limit: int = DEFAULT_LIMIT
 ) -> dict[ChainId, ForkPoints]:
     async with aiohttp.ClientSession() as session:
         branches = await get_branches_for_all_nodes(
             session,
             nodes,
             chains=chains,
-            version=version
+            version=version,
+            limit=limit
         )
         cids = frozenset(
             [
@@ -289,14 +291,16 @@ async def get_fork_points(
 async def get_forks(
     nodes: frozenset[Node], *,
     chains: list[ChainId] | None = None,
-    version: str = "evm-development"
+    version: str = "evm-development",
+    limit: int = DEFAULT_LIMIT
 ) -> dict[ChainId, Forks]:
     async with aiohttp.ClientSession() as session:
         branches = await get_branches_for_all_nodes(
             session,
             nodes,
             chains=chains,
-            version=version
+            version=version,
+            limit=limit
         )
         cids = frozenset(
             [
@@ -359,10 +363,11 @@ async def main(
     nodes: frozenset[Node],
     chains: list[ChainId] | None = None,
     forks: bool = False,
-    version: str = "evm-development"
+    version: str = "evm-development",
+    limit: int = DEFAULT_LIMIT
 ):
     if forks:
-        cfs = await get_forks(nodes, chains=chains, version=version)
+        cfs = await get_forks(nodes, chains=chains, version=version, limit=limit)
         print(
             json.dumps(
                 {
@@ -382,7 +387,7 @@ async def main(
             )
         )
     else:
-        fps = await get_fork_points(nodes, chains=chains, version=version)
+        fps = await get_fork_points(nodes, chains=chains, version=version, limit=limit)
         print(
             json.dumps(
                 {
@@ -407,6 +412,7 @@ if __name__ == "__main__":
     parser.add_argument("--chainweb-version")  # TODO
     parser.add_argument("--chains")
     parser.add_argument("--nodes")
+    parser.add_argument("--depth")
     parser.add_argument(
         "--summary", action="store_true", help="Show cut summary of nodes"
     )
@@ -418,6 +424,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     version = args.chainweb_version or "evm-development"
+    limit = int(args.depth) if args.depth is not None else DEFAULT_LIMIT
 
     if args.nodes is not None:
         node_args = args.nodes.split(",")
@@ -438,7 +445,7 @@ if __name__ == "__main__":
         asyncio.run(summary(nodes, version))
         exit(0)
     else:
-        asyncio.run(main(nodes, chains, args.forks, version=version))
+        asyncio.run(main(nodes, chains, args.forks, version=version, limit=limit))
 
 # ############################################################################ #
 

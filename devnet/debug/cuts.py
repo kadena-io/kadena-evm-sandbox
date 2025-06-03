@@ -91,23 +91,37 @@ class Cut:
 # hashes are encodedd the API as base64 url without padding and must be decoded
 # to bytes
 async def get_cut(
-    session: aiohttp.ClientSession, node: Node, *, version="evm-development"
-) -> Cut:
+    session: aiohttp.ClientSession,
+    node: Node,
+    *,
+    version="evm-development"
+) -> Cut|None:
+    """
+    Get the latest cut from the given node.
+    Returns None if the node is not reachable.
+    """
     uri = f"http://{node}/chainweb/0.0/{version}/cut"
-    async with session.get(uri) as resp:
-        json = await resp.json()
-        return Cut(
-            hashes={
-                # decode block height and block hash from base64 url
-                int(k): (v["height"], BlockHash(v["hash"]))
-                for k, v in json["hashes"].items()
-            },
-            weight=json["weight"],
-            height=json["height"],
-            instance=ChainwebVersion(json["instance"]),
-            id=CutId(json["id"]),
-            origin=json.get("origin"),
-        )
+    try:
+        async with session.get(uri) as resp:
+            json = await resp.json()
+            if resp.status != 200:
+                raise ValueError(f"Error: {resp.status} {resp}")
+            return Cut(
+                hashes={
+                    # decode block height and block hash from base64 url
+                    int(k): (v["height"], BlockHash(v["hash"]))
+                    for k, v in json["hashes"].items()
+                },
+                weight=json["weight"],
+                height=json["height"],
+                instance=ChainwebVersion(json["instance"]),
+                id=CutId(json["id"]),
+                origin=json.get("origin"),
+            )
+    except aiohttp.ClientConnectorError as _:
+        return None
+    except aiohttp.ConnectionTimeoutError as _:
+        return None
 
 
 async def get_branch_hashes(
@@ -118,23 +132,32 @@ async def get_branch_hashes(
     *,
     limit: int = DEFAULT_LIMIT,
     version="evm-development",
-) -> list[BlockHash]:
+) -> list[BlockHash]|None:
+    """
+    Get the branch hashes for the given chain id and branch hash.
+    Returns None if the node is not reachable.
+    """
     uri = f"http://{node}/chainweb/0.0/{version}/chain/{cid}/hash/branch"
     result: list[BlockHash] = []
     next = branch
-    while len(result) < limit and next is not None:
-        body = {
-            "upper": [f"{next}"],
-            "lower": [],
-        }
-        params = {"limit": limit - len(result)}
-        async with session.post(uri, json=body, params=params) as resp:
-            if resp.status != 200:
-                raise ValueError(f"Error: {resp.status} {resp}")
-            json = await resp.json()
-            result += json["items"]
-            next = json["next"].split(":")[1] if json["next"] else None
-    return result
+    try:
+        while len(result) < limit and next is not None:
+            body = {
+                "upper": [f"{next}"],
+                "lower": [],
+            }
+            params = {"limit": limit - len(result)}
+            async with session.post(uri, json=body, params=params) as resp:
+                if resp.status != 200:
+                    raise ValueError(f"Error: {resp.status} {resp}")
+                json = await resp.json()
+                result += json["items"]
+                next = json["next"].split(":")[1] if json["next"] else None
+        return result
+    except aiohttp.ClientConnectorError as _:
+        return None
+    except aiohttp.ConnectionTimeoutError as _:
+        return None
 
 
 # ############################################################################ #
@@ -146,7 +169,7 @@ async def cuts(
     session, 
     nodes: frozenset[Node],
     version: str = "evm-development"
-) -> dict[Node, Cut]:
+) -> dict[Node, Cut|None]:
     async def run(n):
         c = await get_cut(session, n, version=version)
         return n, c
@@ -163,26 +186,31 @@ async def get_branches(
     chains: list[ChainId] | None = None,
     limit: int = DEFAULT_LIMIT,
     version="evm-development",
-) -> dict[ChainId, list[RankedBlockHash]]:
+) -> dict[ChainId, list[RankedBlockHash]]|None:
     cut = await get_cut(session, node, version=version)
+    if cut is None:
+        return None
+    else:
+        async def run(cid, h, bh):
+            branch = await get_branch_hashes(
+                session, node, cid, bh, limit=limit, version=version
+            )
+            if branch is None:
+                return cid, None
+            else:
+                l = list(range(h + 1 - len(branch), h + 1))
+                l.reverse()
+                ranked = list(zip(l, branch))
+                return cid, ranked
 
-    async def run(cid, h, bh):
-        branch = await get_branch_hashes(
-            session, node, cid, bh, limit=limit, version=version
+        results = await asyncio.gather(
+            *[
+                run(cid, h, bh)
+                for cid, (h, bh) in cut.hashes.items()
+                if chains is None or cid in chains
+            ]
         )
-        l = list(range(h + 1 - len(branch), h + 1))
-        l.reverse()
-        ranked = list(zip(l, branch))
-        return cid, ranked
-
-    results = await asyncio.gather(
-        *[
-            run(cid, h, bh)
-            for cid, (h, bh) in cut.hashes.items()
-            if chains is None or cid in chains
-        ]
-    )
-    return {key: value for key, value in results}
+        return {key: value for key, value in results if value is not None}
 
 
 async def get_branches_for_all_nodes(
@@ -201,7 +229,7 @@ async def get_branches_for_all_nodes(
 
     jobs = [run(n) for n in nodes]
     results = await asyncio.gather(*jobs)
-    return {key: value for key, value in results}
+    return {key: value for key, value in results if value is not None}
 
 
 # Find forks per chain:
@@ -268,7 +296,8 @@ async def get_fork_points(
     version: str = "evm-development",
     limit: int = DEFAULT_LIMIT
 ) -> dict[ChainId, ForkPoints]:
-    async with aiohttp.ClientSession() as session:
+    timeout = aiohttp.ClientTimeout(connect=1, total=2)
+    async with aiohttp.ClientSession(timeout=timeout) as session:
         branches = await get_branches_for_all_nodes(
             session,
             nodes,
@@ -294,7 +323,8 @@ async def get_forks(
     version: str = "evm-development",
     limit: int = DEFAULT_LIMIT
 ) -> dict[ChainId, Forks]:
-    async with aiohttp.ClientSession() as session:
+    timeout = aiohttp.ClientTimeout(connect=1, total=2)
+    async with aiohttp.ClientSession(timeout=timeout) as session:
         branches = await get_branches_for_all_nodes(
             session,
             nodes,
@@ -339,18 +369,22 @@ def get_docker_project_nodes() -> frozenset[Node]:
 
 
 async def summary(nodes: frozenset[Node], version: str = "evm-development"):
-    async with aiohttp.ClientSession() as session:
+    timeout = aiohttp.ClientTimeout(connect=0.5, total=1)
+    async with aiohttp.ClientSession(timeout=timeout) as session:
         cs = await cuts(session, nodes, version=version)
-
         def info(n):
-            hs = [h for h, _ in cs[n].hashes.values()]
-            return {
-                "cut.height": cs[n].height,
-                "blockheight.avg": mean(hs),
-                "blockheight.median": median(hs),
-                "blockheight.min": min(hs),
-                "blockheight.max": max(hs),
-            }
+            c = cs.get(n)
+            if c is None:
+                return None
+            elif c is not None:
+                hs = [h for h, _ in c.hashes.values()]
+                return {
+                    "cut.height": c.height,
+                    "blockheight.avg": mean(hs),
+                    "blockheight.median": median(hs),
+                    "blockheight.min": min(hs),
+                    "blockheight.max": max(hs),
+                }
 
         print(json.dumps({n: info(n) for n in nodes}))
 

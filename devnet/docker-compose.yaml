@@ -78,7 +78,7 @@
                 "com.chainweb.devnet.description": "EVM Devnet Chainweb Node",
                 "com.chainweb.devnet.chainweb-node": ""
             },
-            "image": "${CHAINWEB_NODE_IMAGE:-ghcr.io/kadena-io/chainweb-node:pp-evm}",
+            "image": "${CHAINWEB_NODE_IMAGE:-ghcr.io/kadena-io/chainweb-node:sha-e9ba145}",
             "platform": "linux/amd64",
             "restart": "unless-stopped",
             "stop_grace_period": "20s",
@@ -189,7 +189,7 @@
             "container_name": "bootnode-evm-20",
             "hostname": "bootnode-evm-20",
             "restart": "unless-stopped",
-            "image": "${EVM_IMAGE:-ghcr.io/kadena-io/evm-devnet-kadena-reth:latest}",
+            "image": "${EVM_IMAGE:-ghcr.io/kadena-io/kadena-reth:lars-kadena-chains}",
             "secrets": [
                 {
                     "source": "bootnode-jwtsecret",
@@ -266,7 +266,7 @@
             "container_name": "bootnode-evm-21",
             "hostname": "bootnode-evm-21",
             "restart": "unless-stopped",
-            "image": "${EVM_IMAGE:-ghcr.io/kadena-io/evm-devnet-kadena-reth:latest}",
+            "image": "${EVM_IMAGE:-ghcr.io/kadena-io/kadena-reth:lars-kadena-chains}",
             "secrets": [
                 {
                     "source": "bootnode-jwtsecret",
@@ -343,7 +343,7 @@
             "container_name": "bootnode-evm-22",
             "hostname": "bootnode-evm-22",
             "restart": "unless-stopped",
-            "image": "${EVM_IMAGE:-ghcr.io/kadena-io/evm-devnet-kadena-reth:latest}",
+            "image": "${EVM_IMAGE:-ghcr.io/kadena-io/kadena-reth:lars-kadena-chains}",
             "secrets": [
                 {
                     "source": "bootnode-jwtsecret",
@@ -420,7 +420,7 @@
             "container_name": "bootnode-evm-23",
             "hostname": "bootnode-evm-23",
             "restart": "unless-stopped",
-            "image": "${EVM_IMAGE:-ghcr.io/kadena-io/evm-devnet-kadena-reth:latest}",
+            "image": "${EVM_IMAGE:-ghcr.io/kadena-io/kadena-reth:lars-kadena-chains}",
             "secrets": [
                 {
                     "source": "bootnode-jwtsecret",
@@ -497,7 +497,7 @@
             "container_name": "bootnode-evm-24",
             "hostname": "bootnode-evm-24",
             "restart": "unless-stopped",
-            "image": "${EVM_IMAGE:-ghcr.io/kadena-io/evm-devnet-kadena-reth:latest}",
+            "image": "${EVM_IMAGE:-ghcr.io/kadena-io/kadena-reth:lars-kadena-chains}",
             "secrets": [
                 {
                     "source": "bootnode-jwtsecret",

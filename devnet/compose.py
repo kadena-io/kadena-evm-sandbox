@@ -15,6 +15,9 @@ import yaml
 from secp256k1 import PrivateKey
 from typing import TypedDict, Any
 
+DEFAULT_CHAINWEB_NODE_IMAGE = "ghcr.io/kadena-io/chainweb-node:sha-e9ba145"
+DEFAULT_EVM_IMAGE = "ghcr.io/kadena-io/kadena-reth:lars-kadena-chains"
+
 # #############################################################################
 # BOILERPLATE
 # #############################################################################
@@ -466,7 +469,7 @@ def chainweb_consensus_service(
             "com.chainweb.devnet.description": "EVM Devnet Chainweb Node",
             "com.chainweb.devnet.chainweb-node": "",
         },
-        "image": "${CHAINWEB_NODE_IMAGE:-ghcr.io/kadena-io/chainweb-node:pp-evm}",
+        "image": f"${{CHAINWEB_NODE_IMAGE:-{DEFAULT_CHAINWEB_NODE_IMAGE}}}",
         "platform": "linux/amd64",
         "restart": "unless-stopped",
         "stop_grace_period": "20s",
@@ -600,7 +603,7 @@ def evm_chain(
         "container_name": f"{node_name}-evm-{cid}",
         "hostname": f"{node_name}-evm-{cid}",
         "restart": "unless-stopped",
-        "image": "${EVM_IMAGE:-ghcr.io/kadena-io/evm-devnet-kadena-reth:latest}",
+        "image": f"${{EVM_IMAGE:-{DEFAULT_EVM_IMAGE}}}",
         "secrets": [
             {
                 "source": f"{node_name}-jwtsecret",

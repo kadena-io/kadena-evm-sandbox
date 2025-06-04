@@ -1,0 +1,61 @@
+#!/bin/bash
+source ./scripts/utils/init_chain_vars.sh "$@"
+
+generate_static_env() {
+  local CHAIN_ID="$1"
+  local CHAINWEB_CHAIN_ID="$2"
+  envFile="$3"
+
+  # Run in a subshell to avoid polluting parent shell
+  (
+    export CHAIN_ID CHAINWEB_CHAIN_ID
+
+    # Export variables from chain-common.env
+    set -a
+    . $(pwd)/envs/chain-common.env
+    set +a
+
+    build_dir="$(pwd)/envs-static/${CHAINWEB_CHAIN_ID}"
+
+    mkdir -p $build_dir
+    
+    # Create temp file for merged env
+    local tmpfile
+    tmpfile=$(mktemp)
+
+    # Build a new env file: use env var if already defined, else keep original
+    awk -F '=' '
+      /^[[:space:]]*#/ || NF < 2 { next }  # Skip comments and malformed lines
+      {
+        key = $1
+        val = substr($0, index($0, "=") + 1)
+        gsub(/^[[:space:]]+|[[:space:]]+$/, "", key)  # Trim key whitespace
+        final_val = (key in ENVIRON) ? ENVIRON[key] : val
+        if (final_val != "") {
+          printf "%s=%s\n", key, final_val
+        }
+      }
+    ' $(pwd)/envs/common-$envFile.env > "$tmpfile"
+
+    # Generate static env file
+    envsubst < "$tmpfile" > "$build_dir/$envFile-${CHAINWEB_CHAIN_ID}.static.env"
+    echo "$envFile: $build_dir/$envFile-${CHAINWEB_CHAIN_ID}.static.env"
+
+     # Cleanup
+    rm "$tmpfile"
+  )
+}
+
+
+info "Creating dev vars for $numberOfChains chains."
+
+for ((i = 0; i < numberOfChains; i++)); do
+  chainId=$((i + $chainIdOffset))
+  chainWebChainId=$((i + $chainwebChainIdOffset))
+  info "Creating files for CHAIN_ID=$chainId CHAINWEB_CHAIN_ID=$chainWebChainId"
+  generate_static_env "$chainId" "$chainWebChainId" "blockscout"
+  generate_static_env "$chainId" "$chainWebChainId" "frontend"
+  generate_static_env "$chainId" "$chainWebChainId" "stats"
+  generate_static_env "$chainId" "$chainWebChainId" "user-ops-indexer"
+done
+

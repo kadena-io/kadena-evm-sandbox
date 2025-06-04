@@ -24,3 +24,9 @@ run() {
   printf "\033[1;34m%s\033[0m\n" "$cmd"
   eval "$cmd"
 }
+
+info() {
+  local msg="$*"
+  echo ""
+  printf "\033[1;90m%s\033[0m\n" "$msg"
+}

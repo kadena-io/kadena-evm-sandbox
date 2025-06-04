@@ -25,6 +25,9 @@ case "$cmd" in
   add-domains)
     $command_dir/add-domains "$@"
     ;;
+  create-envs)
+    $command_dir/create-envs "$@"
+    ;;
   *)
     echo "Unknown command: $cmd"
     echo "Usage: $0 {start|stop|remove} [args...]"

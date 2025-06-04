@@ -50,12 +50,12 @@ services:
       file: ./services/backend.yml
       service: backend   
     environment:
-      - CHAIN_ID=${CHAIN_ID?}
-      - SUBNETWORK=${SUBNETWORK?}
-      - ETHEREUM_JSONRPC_HTTP_URL=${ETHEREUM_JSONRPC_HTTP_URL?}
-      - ETHEREUM_JSONRPC_WS_URL=${ETHEREUM_JSONRPC_WS_URL?}
-      - ETHEREUM_JSONRPC_TRACE_URL=${ETHEREUM_JSONRPC_TRACE_URL?}
-      - DATABASE_URL=${BLOCKSCOUT_DB_URL}
+      - CHAIN_ID=${CHAIN_ID}
+      - SUBNETWORK=${SUBNETWORK}
+      - ETHEREUM_JSONRPC_HTTP_URL=${ETHEREUM_JSONRPC_HTTP_URL}
+      - ETHEREUM_JSONRPC_WS_URL=${ETHEREUM_JSONRPC_WS_URL}
+      - ETHEREUM_JSONRPC_TRACE_URL=${ETHEREUM_JSONRPC_TRACE_URL}
+      - DATABASE_URL=${DATABASE_URL}
     networks:
       - service-network 
       - default     
@@ -110,7 +110,7 @@ services:
       service: user-ops-indexer
     environment:
       - USER_OPS_INDEXER__INDEXER__RPC_URL=${USER_OPS_INDEXER__INDEXER__RPC_URL}
-      - USER_OPS_INDEXER__DATABASE__CONNECT__URL=${BLOCKSCOUT_DB_URL}  
+      - USER_OPS_INDEXER__DATABASE__CONNECT__URL=${USER_OPS_INDEXER__DATABASE__CONNECT__URL}  
     networks:
       - service-network  
       - default  

@@ -71,6 +71,14 @@ Assuming the current working dir is the root of the repository,
 ./bs remove
 ```
 
+# Static env file creation
+
+You can create static env files 
+
+```sh
+./bs static-envs
+```
+
 # Verify Contracts
 
 Verification of contracts allows Blockscout to provide more detailed and richer

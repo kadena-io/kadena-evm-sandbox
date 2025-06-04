@@ -1,8 +1,17 @@
 #!/bin/bash
+source ./scripts/utils/utils.sh
 
 # Check if at least one argument is passed
 if [ $# -lt 1 ]; then
-  echo "Usage: $0 {start|stop|remove|add-domains} [args...]"
+  echo "Usage: $0 {start|stop|remove|add-domains|static-envs} <chian_id_offset (default=1789)> <chainweb_chain_id_offset (default=20)> <number_of_chains (default=5)>"
+  echo ""
+  echo "Examples:"
+  info "Start with default values:"
+  echo "$0 start "
+  info "Start with 2 chains"
+  echo "$0 start 1789 20 2"
+  info "Start with specific chain ID offset 1234 and 2 chains"
+  echo "$0 start 1234 20 2"
   exit 1
 fi
 
@@ -25,8 +34,8 @@ case "$cmd" in
   add-domains)
     $command_dir/add-domains "$@"
     ;;
-  create-envs)
-    $command_dir/create-envs "$@"
+  static-envs)
+    $command_dir/static-envs "$@"
     ;;
   *)
     echo "Unknown command: $cmd"

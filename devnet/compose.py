@@ -137,10 +137,16 @@ defaultPactMiner = {
 }
 
 
-def jwtsecret_config(project_name, node_name: str) -> None:
+def jwtsecret_config(project_name, node_name: str, update: bool = False) -> None:
+    """
+    Creates JWT secret file for the node.
+    An existing file is not overwritten unless `update` is set to True.
+    """
     os.makedirs(config_dir(project_name, node_name), exist_ok=True)
-    with open(f"{config_dir(project_name,node_name)}/jwtsecret", "w") as f:
-        f.write(jwtsecret)
+    file = f"{config_dir(project_name,node_name)}/jwtsecret"
+    if update or not os.path.exists(file):
+        with open(file, "w") as f:
+            f.write(jwtsecret)
 
 
 def payload_provider_config(
@@ -176,7 +182,8 @@ def payload_provider_config(
         },
     }
     os.makedirs(config_dir(project_name, node_name), exist_ok=True)
-    with open(f"{config_dir(project_name, node_name)}/payload-providers.yaml", "w") as f:
+    file = f"{config_dir(project_name, node_name)}/payload-providers.yaml"
+    with open(file, "w") as f:
         yaml.dump(config, f, default_flow_style=False)
 
 
@@ -190,26 +197,34 @@ def payload_provider_config(
 # Every node has a cryptographic identity, a key on the secp256k1 elliptic
 # curve. The public key of the node serves as its identifier or 'node ID'.
 #
-def evm_bootnodes(project_name, node_name, evm_cids):
+def evm_bootnodes(project_name, node_name, evm_cids, update: bool = False) -> None:
     for cid in evm_cids:
-        # generate a secp256k1 keypair
-        sk = PrivateKey()
-
-        # drop the leading 0x04 byte from the public key
-        pk = sk.pubkey.serialize(compressed=False)[1:]
-
         dir = config_dir(project_name, node_name)
         os.makedirs(dir, exist_ok=True)
 
-        # Reth requires that the private key is given in a file with no new line
-        with open(f"{dir}/evm-{cid}-p2p-secret", "w") as f:
-            print(sk.serialize(), file=f, end="")
+        secret_file = f"{dir}/evm-{cid}-p2p-secret"
+        pk_file = f"{dir}/evm-{cid}-p2p-public"
+        enode_file = f"{dir}/evm-{cid}-enode"
 
-        with open(f"{dir}/evm-{cid}-p2p-public", "w") as f:
-            print(pk.hex(), file=f)
+        # generate a secp256k1 keypair
+        sk = PrivateKey()
+        # drop the leading 0x04 byte from the public key
+        pk = sk.pubkey.serialize(compressed=False)[1:]
 
-        with open(f"{dir}/evm-{cid}-enode", "w") as f:
-            print(f"enode://{pk.hex()}@{node_name}-evm-{cid}:{30303 + cid}", file=f)
+        exists = (
+            os.path.exists(secret_file)
+            and os.path.exists(pk_file)
+            and os.path.exists(enode_file)
+        )
+
+        if update or not exists:
+            # Reth requires that the private key is given in a file with no new line
+            with open(secret_file, "w") as f:
+                print(sk.serialize(), file=f, end="")
+            with open(pk_file, "w") as f:
+                print(pk.hex(), file=f)
+            with open(enode_file, "w") as f:
+                print(f"enode://{pk.hex()}@{node_name}-evm-{cid}:{30303 + cid}", file=f)
 
 
 # ############################################################################# #
@@ -991,13 +1006,13 @@ def debug_services(nodes: list[str]) -> Spec:
 # It also includes the definition of curl container for easy to internal APIs
 # for debugging.
 #
-def default_project() -> Spec:
+def default_project(update_secrets: bool = False) -> Spec:
     # Create boostrap information
     evm_cids = list(range(20, 25))
     pact_cids = list(range(0, 20))
 
     # Create bootstrap node IDs
-    evm_bootnodes("default", "bootnode", evm_cids)
+    evm_bootnodes("default", "bootnode", evm_cids, update=update_secrets)
 
     top: Spec = spec
     top["name"] = "chainweb-evm"
@@ -1026,13 +1041,13 @@ def default_project() -> Spec:
 # It also includes the definition of curl container for easy to internal APIs
 # for debugging.
 #
-def minimal_project() -> Spec:
+def minimal_project(update_secrets: bool = False) -> Spec:
     # Create boostrap information
     evm_cids = list(range(20, 25))
     pact_cids = list(range(0, 20))
 
     # Create bootstrap node IDs
-    evm_bootnodes("minimal", "bootnode", evm_cids)
+    evm_bootnodes("minimal", "bootnode", evm_cids, update=update_secrets)
 
     top: Spec = spec
     top["name"] = "chainweb-evm"
@@ -1061,7 +1076,7 @@ def minimal_project() -> Spec:
 # A project for testing and debugging chainweb-node itself. It runs several
 # nodes in different configurations.
 #
-def kadena_dev_project() -> Spec:
+def kadena_dev_project(update_secrets: bool = False) -> Spec:
     nodes = ["bootnode", "appdev", "miner-1", "miner-2"]
 
     # Create boostrap information
@@ -1069,7 +1084,7 @@ def kadena_dev_project() -> Spec:
     pact_cids = list(range(0, 20))
 
     # Create bootstrap node IDs
-    evm_bootnodes("kadena-dev", "bootnode", evm_cids)
+    evm_bootnodes("kadena-dev", "bootnode", evm_cids, update=update_secrets)
 
     top: Spec = spec
     top["name"] = "chainweb-evm"
@@ -1123,7 +1138,7 @@ def kadena_dev_project() -> Spec:
     )
 
 
-def kadena_dev_singleton_evm_project() -> Spec:
+def kadena_dev_singleton_evm_project(update_secrets: bool = False) -> Spec:
     project_name = "kadena-dev-singleton-evm"
     nodes = ["bootnode", "miner-1", "miner-2"]
 
@@ -1132,7 +1147,7 @@ def kadena_dev_singleton_evm_project() -> Spec:
     pact_cids = []
 
     # Create bootstrap node IDs
-    evm_bootnodes(project_name, "bootnode", evm_cids)
+    evm_bootnodes(project_name, "bootnode", evm_cids, update=update_secrets)
 
     top: Spec = spec
     top["name"] = "chainweb-evm"
@@ -1190,7 +1205,7 @@ def kadena_dev_singleton_evm_project() -> Spec:
 # * Blocks are produced at a fixed rate of 2 seconds per chain.
 # * There is a single bootstrap node that is also a miner.
 #
-def app_dev_project(exposed_evm_chains, exposed_pact_chains) -> Spec:
+def app_dev_project(exposed_evm_chains, exposed_pact_chains, update_secrets) -> Spec:
     nodes = ["bootnode", "appdev"]
 
     # Create boostrap information
@@ -1198,7 +1213,7 @@ def app_dev_project(exposed_evm_chains, exposed_pact_chains) -> Spec:
     pact_cids = list(range(0, 20))
 
     # Create bootstrap node IDs
-    evm_bootnodes("add-dev", "bootnode", evm_cids)
+    evm_bootnodes("add-dev", "bootnode", evm_cids, update=update_secrets)
 
     top: Spec = spec
     top["name"] = "chainweb-evm"
@@ -1237,14 +1252,14 @@ def app_dev_project(exposed_evm_chains, exposed_pact_chains) -> Spec:
 #
 # FIXME: this is work in progress
 #
-def pact_project(pact_chains) -> Spec:
+def pact_project(update_secrets: bool = False) -> Spec:
     nodes = ["bootnode", "appdev"]
 
     evm_cids = list(range(20, 25))
     pact_cids = list(range(0, 20))
 
     # Create bootstrap node IDs
-    evm_bootnodes("pact", "bootnode", evm_cids)
+    evm_bootnodes("pact", "bootnode", evm_cids, update=update_secrets)
 
     top: Spec = spec
     top["name"] = "chainweb-evm"
@@ -1285,7 +1300,7 @@ def pact_project(pact_chains) -> Spec:
 #
 # FIXME: this is work in progress
 #
-def mining_pool_project() -> Spec:
+def mining_pool_project(update_secrets: bool = False) -> Spec:
     nodes = ["bootnode"]
 
     # Create boostrap information
@@ -1293,7 +1308,7 @@ def mining_pool_project() -> Spec:
     pact_cids = list(range(0, 20))
 
     # Create bootstrap node IDs
-    evm_bootnodes("mining-pool", "bootnode", evm_cids)
+    evm_bootnodes("mining-pool", "bootnode", evm_cids, update=update_secrets)
 
     top: Spec = spec
     top["name"] = "chainweb-evm"
@@ -1322,7 +1337,8 @@ def mining_pool_project() -> Spec:
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--exposed-chains")
-parser.add_argument("--project")  # TODO
+parser.add_argument("--project")
+parser.add_argument("--update-secrets", action="store_true", help="Update existing secrets")
 args = parser.parse_args()
 
 # All available EVM chains
@@ -1334,23 +1350,29 @@ else:
     exposed_evm_chains = [i for i in range(20, 25) if i in exposed_cids]
     exposed_pact_chains = [i for i in range(0, 20) if i in exposed_cids]
 
+update_secrets = args.update_secrets
+
 # print the docker-compose file
 match args.project:
     case "minimal":
-        print(json.dumps(minimal_project(), indent=4))
+        print(json.dumps(minimal_project(update_secrets=update_secrets), indent=4))
     case "kadena-dev":
-        print(json.dumps(kadena_dev_project(), indent=4))
+        print(json.dumps(kadena_dev_project(update_secrets=update_secrets), indent=4))
     case "kadena-dev-singleton-evm":
-        print(json.dumps(kadena_dev_singleton_evm_project(), indent=4))
+        print(json.dumps(kadena_dev_singleton_evm_project(update_secrets=update_secrets), indent=4))
     case "appdev":
         print(
             json.dumps(
-                app_dev_project(exposed_evm_chains, exposed_pact_chains), indent=4
+                app_dev_project(
+                    exposed_evm_chains,
+                    exposed_pact_chains,
+                    update_secrets=update_secrets
+                ), indent=4
             )
         )
     case "pact":
-        print(json.dumps(pact_project(exposed_pact_chains), indent=4))
+        print(json.dumps(pact_project(update_secrets=update_secrets), indent=4))
     case "mining-pool":
-        print(json.dumps(mining_pool_project(), indent=4))
+        print(json.dumps(mining_pool_project(update_secrets=update_secrets), indent=4))
     case _:
-        print(json.dumps(default_project(), indent=4))
+        print(json.dumps(default_project(update_secrets=update_secrets), indent=4))

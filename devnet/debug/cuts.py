@@ -296,7 +296,7 @@ async def get_fork_points(
     version: str = "evm-development",
     limit: int = DEFAULT_LIMIT
 ) -> dict[ChainId, ForkPoints]:
-    timeout = aiohttp.ClientTimeout(connect=1, total=2)
+    timeout = aiohttp.ClientTimeout(connect=2, total=4)
     async with aiohttp.ClientSession(timeout=timeout) as session:
         branches = await get_branches_for_all_nodes(
             session,
@@ -323,7 +323,7 @@ async def get_forks(
     version: str = "evm-development",
     limit: int = DEFAULT_LIMIT
 ) -> dict[ChainId, Forks]:
-    timeout = aiohttp.ClientTimeout(connect=1, total=2)
+    timeout = aiohttp.ClientTimeout(connect=2, total=4)
     async with aiohttp.ClientSession(timeout=timeout) as session:
         branches = await get_branches_for_all_nodes(
             session,

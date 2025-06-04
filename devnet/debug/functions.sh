@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 
 export HEIGHT=${1:-${HEIGHT:-latest}}
-export NODE=${2:-chainweb-node}
-export EVMNODE=${3:-chainweb-evm-chain}
+export NODE=${2:-bootnode-consensus}
+export EVMNODE=${3:-chainweb-consensus}
 
 function info() {
   local height=${1}

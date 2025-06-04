@@ -15,6 +15,9 @@ import yaml
 from secp256k1 import PrivateKey
 from typing import TypedDict, Any
 
+DEFAULT_CHAINWEB_NODE_IMAGE = "ghcr.io/kadena-io/chainweb-node:sha-74c260e"
+DEFAULT_EVM_IMAGE = "ghcr.io/kadena-io/kadena-reth:lars-kadena-chains"
+
 # #############################################################################
 # BOILERPLATE
 # #############################################################################
@@ -113,6 +116,9 @@ def join_specs(specs: list[Spec]) -> Spec:
 # CONFIGURATION FILES
 # #############################################################################
 
+def config_dir(project_name: str, node_name: str) -> str:
+    return f"./config/{project_name}/{node_name}"
+
 # #############################################################################
 # Payload Provider Configuration for Consensus
 #
@@ -131,14 +137,23 @@ defaultPactMiner = {
 }
 
 
-def jwtsecret_config(node_name: str) -> None:
-    os.makedirs(f"./config/{node_name}", exist_ok=True)
-    with open(f"config/{node_name}/jwtsecret", "w") as f:
-        f.write(jwtsecret)
+def jwtsecret_config(project_name, node_name: str, update: bool = False) -> None:
+    """
+    Creates JWT secret file for the node.
+    An existing file is not overwritten unless `update` is set to True.
+    """
+    os.makedirs(config_dir(project_name, node_name), exist_ok=True)
+    file = f"{config_dir(project_name,node_name)}/jwtsecret"
+    if update or not os.path.exists(file):
+        with open(file, "w") as f:
+            f.write(jwtsecret)
 
 
 def payload_provider_config(
-    node_name: str, evm_chains: list[int], pact_chains: list[int]
+    project_name: str,
+    node_name: str, 
+    evm_chains: list[int], 
+    pact_chains: list[int]
 ) -> None:
     config = {
         "chainweb": {
@@ -166,8 +181,9 @@ def payload_provider_config(
             }
         },
     }
-    os.makedirs(f"./config/{node_name}", exist_ok=True)
-    with open(f"config/{node_name}/payload-providers.yaml", "w") as f:
+    os.makedirs(config_dir(project_name, node_name), exist_ok=True)
+    file = f"{config_dir(project_name, node_name)}/payload-providers.yaml"
+    with open(file, "w") as f:
         yaml.dump(config, f, default_flow_style=False)
 
 
@@ -181,35 +197,43 @@ def payload_provider_config(
 # Every node has a cryptographic identity, a key on the secp256k1 elliptic
 # curve. The public key of the node serves as its identifier or 'node ID'.
 #
-def evm_bootnodes(node_name, evm_cids):
+def evm_bootnodes(project_name, node_name, evm_cids, update: bool = False) -> None:
     for cid in evm_cids:
+        dir = config_dir(project_name, node_name)
+        os.makedirs(dir, exist_ok=True)
+
+        secret_file = f"{dir}/evm-{cid}-p2p-secret"
+        pk_file = f"{dir}/evm-{cid}-p2p-public"
+        enode_file = f"{dir}/evm-{cid}-enode"
+
         # generate a secp256k1 keypair
         sk = PrivateKey()
-
         # drop the leading 0x04 byte from the public key
         pk = sk.pubkey.serialize(compressed=False)[1:]
 
-        dir = f"config/{node_name}"
-        os.makedirs(dir, exist_ok=True)
+        exists = (
+            os.path.exists(secret_file)
+            and os.path.exists(pk_file)
+            and os.path.exists(enode_file)
+        )
 
-        # Reth requires that the private key is given in a file with no new line
-        with open(f"{dir}/evm-{cid}-p2p-secret", "w") as f:
-            print(sk.serialize(), file=f, end="")
-
-        with open(f"{dir}/evm-{cid}-p2p-public", "w") as f:
-            print(pk.hex(), file=f)
-
-        with open(f"{dir}/evm-{cid}-enode", "w") as f:
-            print(f"enode://{pk.hex()}@{node_name}-evm-{cid}:{30303 + cid}", file=f)
+        if update or not exists:
+            # Reth requires that the private key is given in a file with no new line
+            with open(secret_file, "w") as f:
+                print(sk.serialize(), file=f, end="")
+            with open(pk_file, "w") as f:
+                print(pk.hex(), file=f)
+            with open(enode_file, "w") as f:
+                print(f"enode://{pk.hex()}@{node_name}-evm-{cid}:{30303 + cid}", file=f)
 
 
 # ############################################################################# #
 # Nginx Reverse Proxy
 
 
-def nginx_index_html(node_name, evm_cids, port=1848):
+def nginx_index_html(project_name, node_name, evm_cids, port=1848):
     pact_chains = [i for i in range(0, 20)]
-    dir = f"config/{node_name}"
+    dir = config_dir(project_name, node_name)
     os.makedirs(dir, exist_ok=True)
 
     with open(f"{dir}/index.html", "w") as f:
@@ -309,8 +333,8 @@ def nginx_index_html(node_name, evm_cids, port=1848):
 #   - https://hostname/chainweb/0.0/{networkName}/chain/{chainId}/evm  = rpc endpoint
 
 
-def nginx_proxy_config(node_name, evm_cids):
-    dir = f"config/{node_name}"
+def nginx_proxy_config(project_name, node_name, evm_cids):
+    dir = config_dir(project_name, node_name)
     os.makedirs(dir, exist_ok=True)
 
     with open(f"{dir}/nginx.conf", "w") as f:
@@ -328,7 +352,7 @@ http {{
     keepalive_timeout  65;
 
     server {{
-        listen 80;
+        listen 1848;
         server_name {node_name}-frontend;
 
         location /info {{
@@ -395,15 +419,16 @@ http {{
 #   - https://api.chainweb.com/chainweb/{apiVersion}/mainnet01/chain/{chainId}/evm/api/v1/... -> bootnode-evm-{cid}:8545
 
 
-def nginx_reverse_proxy(node_name: str, evm_cids: list[int]) -> Service:
+def nginx_reverse_proxy(node_name: str, evm_cids: list[int], exposed: bool = False) -> Service:
     result: Service = {
         "container_name": f"{node_name}-frontend",
         "hostname": f"{node_name}-frontend",
         "image": "${NGINX_IMAGE:-nginx:latest}",
+        "platform": "linux/amd64",
         "restart": "unless-stopped",
         "networks": {
             f"{node_name}-internal": None,
-            "p2p": None,
+            f"{node_name}-frontend": None,
         },
         "volumes": [f"{node_name}_logs:/var/log/nginx"],
         "configs": [
@@ -418,7 +443,8 @@ def nginx_reverse_proxy(node_name: str, evm_cids: list[int]) -> Service:
                 "mode": "0440",
             },
         ],
-        "ports": ["1848:80"],
+        "expose": ["1848"],
+        "ports": [],
         "depends_on": {
             f"{node_name}-consensus": {"condition": "service_healthy"},
             **{
@@ -427,6 +453,9 @@ def nginx_reverse_proxy(node_name: str, evm_cids: list[int]) -> Service:
             },
         },
     }
+
+    if exposed:
+        result["ports"] += ["1848:1848"]
 
     return result
 
@@ -445,6 +474,7 @@ def chainweb_consensus_service(
     is_bootnode=False,
     mining=False,
     exposed=False,
+    has_frontend=False,
 ) -> Service:
     result: Service = {
         "container_name": f"{node_name}-consensus",
@@ -454,7 +484,7 @@ def chainweb_consensus_service(
             "com.chainweb.devnet.description": "EVM Devnet Chainweb Node",
             "com.chainweb.devnet.chainweb-node": "",
         },
-        "image": "${CHAINWEB_NODE_IMAGE:-ghcr.io/kadena-io/chainweb-node:pp-evm}",
+        "image": f"${{CHAINWEB_NODE_IMAGE:-{DEFAULT_CHAINWEB_NODE_IMAGE}}}",
         "platform": "linux/amd64",
         "restart": "unless-stopped",
         "stop_grace_period": "20s",
@@ -532,7 +562,10 @@ def chainweb_consensus_service(
     }
 
     if exposed:
-        result["ports"] += ["11848:11848"]
+        if has_frontend:
+            result["ports"] += ["11848:1848"]
+        else:
+            result["ports"] += ["1848:1848"]
 
     if is_bootnode:
         result["entrypoint"] += [
@@ -572,17 +605,20 @@ def chainweb_consensus_service(
 # EVM Services
 
 
-def evm_chain(node_name: str, cid: int, *, is_bootnode=False, exposed=False) -> Service:
+def evm_chain(
+    node_name: str,
+    cid: int,
+    *,
+    boot_enodes: list[str] = [],
+    is_bootnode=False,
+    exposed=False
+) -> Service:
     apis = "admin,debug,eth,net,trace,txpool,web3,rpc,reth,ots"  # ,flashbots,miner,mev"
     result: Service = {
         "container_name": f"{node_name}-evm-{cid}",
         "hostname": f"{node_name}-evm-{cid}",
         "restart": "unless-stopped",
-        "image": "${EVM_IMAGE:-ghcr.io/kadena-io/evm-devnet-kadena-reth:latest}",
-        "build": {
-            "context": "../rust",
-            "dockerfile": "Dockerfile",
-        },
+        "image": f"${{EVM_IMAGE:-{DEFAULT_EVM_IMAGE}}}",
         "secrets": [
             {
                 "source": f"{node_name}-jwtsecret",
@@ -665,12 +701,9 @@ def evm_chain(node_name: str, cid: int, *, is_bootnode=False, exposed=False) -> 
                 "target": "p2p-secret",
             }
         ]
-    else:
-        if not os.path.isdir("./config/bootnode"):
-            raise RuntimeError("Bootnode config directory not found.")
-        with open(f"config/bootnode/evm-{cid}-enode", "r") as f:
-            boot_enodes = f.read().strip()
-        result["entrypoint"] += [f"--bootnodes={boot_enodes}"]
+
+    if boot_enodes is not None and len(boot_enodes) > 0:
+        result["entrypoint"] += [f"--bootnodes={",".join(boot_enodes)}"]
 
     return result
 
@@ -815,27 +848,36 @@ def debug(nodes: list[str]) -> Service:
 # chains enabled. These condition are currently not checked.
 #
 def chainweb_node(
-    node_name,
-    evm_cids,
-    pact_cids,
+    project_name: str,
+    node_name: str,
+    evm_cids: list[int],
+    pact_cids: list[int],
     is_bootnode: bool = False,
     mining_mode: str | None = None,
+    has_frontend: bool = False,
     exposed: bool = False,
 ) -> Spec:
-    jwtsecret_config(node_name)
-    payload_provider_config(node_name, evm_cids, pact_cids)
+    jwtsecret_config(project_name, node_name)
+    payload_provider_config(project_name, node_name, evm_cids, pact_cids)
+    cdir = config_dir(project_name, node_name)
+
+   
+    # EVM bootnodes for each EVM chain:
+    def boot_enodes(cid: int) -> list[str]:
+        bdir = config_dir(project_name, "bootnode")
+        if not os.path.isdir(bdir):
+            raise RuntimeError("Bootnode config directory not found.")
+        with open(f"{bdir}/evm-{cid}-enode", "r") as f:
+            return [f.read().strip()]
+
     result: Spec = {
         "name": f"{node_name}",
         "secrets": {
-            f"{node_name}-jwtsecret": {"file": f"./config/{node_name}/jwtsecret"}
+            f"{node_name}-jwtsecret": {"file": f"{cdir}/jwtsecret"}
         },
         "configs": {
             f"{node_name}-consensus-config": {"file": "./config/consensus-config.yaml"},
-            f"{node_name}-payload-providers": {
-                "file": f"./config/{node_name}/payload-providers.yaml"
-            },
-            f"{node_name}-nginx-config": {"file": f"./config/{node_name}/nginx.conf"},
-            f"{node_name}-nginx-html": {"file": f"./config/{node_name}/index.html"},
+            f"{node_name}-payload-providers": { "file": f"{cdir}/payload-providers.yaml"},
         }
         | {
             f"{node_name}-chain-spec-{cid}": {
@@ -858,16 +900,14 @@ def chainweb_node(
                 is_bootnode=is_bootnode,
                 mining=False if mining_mode is None else True,
                 exposed=exposed,
-            ),
-            f"{node_name}-frontend": nginx_reverse_proxy(
-                node_name,
-                evm_cids,
+                has_frontend=has_frontend,
             ),
         }
         | {
             f"{node_name}-evm-{cid}": evm_chain(
                 node_name,
                 cid,
+                boot_enodes = boot_enodes(cid) if not is_bootnode else [],
                 is_bootnode=is_bootnode,
                 exposed=exposed,
             )
@@ -875,10 +915,30 @@ def chainweb_node(
         },
     }
 
+    if has_frontend:
+
+        # Create nginx reverse proxy configuration for exposed nodes
+        nginx_proxy_config(project_name, node_name, evm_cids)
+        nginx_index_html(project_name, node_name, evm_cids)
+        cdir = config_dir(project_name, node_name)
+
+        result["configs"] |= {
+            f"{node_name}-nginx-config": {"file": f"{cdir}/nginx.conf"},
+            f"{node_name}-nginx-html": {"file": f"{cdir}/index.html"},
+        }
+        result["services"] |= {
+            f"{node_name}-frontend": nginx_reverse_proxy(
+                node_name,
+                evm_cids,
+                exposed=exposed,
+            ),
+        }
+        result["networks"][f"{node_name}-frontend"] = None
+
     if is_bootnode:
         result["secrets"] |= {
             f"{node_name}-evm-{cid}-p2p-secret": {
-                "file": f"./config/{node_name}/evm-{cid}-p2p-secret"
+                "file": f"{cdir}/evm-{cid}-p2p-secret"
             }
             for cid in evm_cids
         } | {
@@ -921,32 +981,77 @@ def other_services(nodes: list[str]) -> Spec:
     }
 
 
+def debug_services(nodes: list[str]) -> Spec:
+    return {
+        "name": "other-services",
+        "services": {
+            "curl": curl(nodes),
+            "debug": debug(nodes),
+        },
+        "networks": {},
+        "volumes": {},
+        "configs": {},
+        "secrets": {},
+    }
+
+
 # ############################################################################# #
 # COMPOSE PROJECT DEFINITIONS
 # ############################################################################# #
 
 
-# A minimal project setup. It runs a single exposed bootnode that has mining
-# enabled.
+# A default project setup. It runs a single frontend bootnode that has 
+# constant delay mining enabled and is exposed to the host network.
 #
 # It also includes the definition of curl container for easy to internal APIs
 # for debugging.
 #
-def minimal_project() -> Spec:
+def default_project(update_secrets: bool = False) -> Spec:
     # Create boostrap information
     evm_cids = list(range(20, 25))
     pact_cids = list(range(0, 20))
 
     # Create bootstrap node IDs
-    evm_bootnodes("bootnode", evm_cids)
-
-    # Create nginx reverse proxy configuration
-    nginx_proxy_config("bootnode", evm_cids)
-    nginx_index_html("bootnode", evm_cids)
+    evm_bootnodes("default", "bootnode", evm_cids, update=update_secrets)
 
     top: Spec = spec
     top["name"] = "chainweb-evm"
-    top["networks"] = {f"p2p": None}
+    top["networks"] = {"p2p": None}
+
+    return join_specs(
+        [
+            top,
+            chainweb_node(
+                "default",
+                "bootnode",
+                evm_cids,
+                pact_cids,
+                is_bootnode=True,
+                mining_mode="simulation",
+                exposed=True,
+                has_frontend=True,
+            ),
+            other_services(['bootnode']),
+        ]
+    )
+
+# A minimal project setup. It runs a single exposed bootnode that has simulation 
+# mining enabled.
+#
+# It also includes the definition of curl container for easy to internal APIs
+# for debugging.
+#
+def minimal_project(update_secrets: bool = False) -> Spec:
+    # Create boostrap information
+    evm_cids = list(range(20, 25))
+    pact_cids = list(range(0, 20))
+
+    # Create bootstrap node IDs
+    evm_bootnodes("minimal", "bootnode", evm_cids, update=update_secrets)
+
+    top: Spec = spec
+    top["name"] = "chainweb-evm"
+    top["networks"] = {"p2p": None}
     top["services"] = {
         "curl": curl(["bootnode"]),
     }
@@ -955,12 +1060,14 @@ def minimal_project() -> Spec:
         [
             top,
             chainweb_node(
+                "minimal",
                 "bootnode",
                 evm_cids,
                 pact_cids,
                 is_bootnode=True,
                 mining_mode="simulation",
                 exposed=True,
+                has_frontend=False,
             ),
         ]
     )
@@ -969,7 +1076,7 @@ def minimal_project() -> Spec:
 # A project for testing and debugging chainweb-node itself. It runs several
 # nodes in different configurations.
 #
-def kadena_dev_project() -> Spec:
+def kadena_dev_project(update_secrets: bool = False) -> Spec:
     nodes = ["bootnode", "appdev", "miner-1", "miner-2"]
 
     # Create boostrap information
@@ -977,50 +1084,117 @@ def kadena_dev_project() -> Spec:
     pact_cids = list(range(0, 20))
 
     # Create bootstrap node IDs
-    evm_bootnodes("bootnode", evm_cids)
+    evm_bootnodes("kadena-dev", "bootnode", evm_cids, update=update_secrets)
 
     top: Spec = spec
     top["name"] = "chainweb-evm"
-    top["networks"] = {f"p2p": None}
+    top["networks"] = {"p2p": None}
 
     return join_specs(
         [
             top,
             chainweb_node(
+                "kadena-dev",
                 "bootnode",
                 evm_cids,
                 pact_cids,
                 is_bootnode=True,
                 mining_mode=None,
                 exposed=False,
+                has_frontend=False,
             ),
             chainweb_node(
+                "kadena-dev",
                 "miner-1",
                 evm_cids,
                 pact_cids,
                 is_bootnode=False,
                 mining_mode="simulation",
                 exposed=False,
+                has_frontend=False,
             ),
             chainweb_node(
+                "kadena-dev",
                 "miner-2",
                 evm_cids,
                 pact_cids,
                 is_bootnode=False,
                 mining_mode="simulation",
                 exposed=False,
+                has_frontend=False,
             ),
             chainweb_node(
+                "kadena-dev",
                 "appdev",
                 [20, 24],
                 [1, 5, 19],
                 is_bootnode=False,
                 mining_mode=None,
                 exposed=True,
+                has_frontend=True,
             ),
             other_services(nodes),
         ]
     )
+
+
+def kadena_dev_singleton_evm_project(update_secrets: bool = False) -> Spec:
+    project_name = "kadena-dev-singleton-evm"
+    nodes = ["bootnode", "miner-1", "miner-2"]
+
+    # Create boostrap information
+    evm_cids = list(range(1))
+    pact_cids = []
+
+    # Create bootstrap node IDs
+    evm_bootnodes(project_name, "bootnode", evm_cids, update=update_secrets)
+
+    top: Spec = spec
+    top["name"] = "chainweb-evm"
+    top["networks"] = {"p2p": None}
+
+    specs = join_specs(
+        [
+            top,
+            chainweb_node(
+                project_name,
+                "bootnode",
+                evm_cids,
+                pact_cids,
+                is_bootnode=True,
+                mining_mode=None,
+                exposed=False,
+                has_frontend=False,
+            ),
+            chainweb_node(
+                project_name,
+                "miner-1",
+                evm_cids,
+                pact_cids,
+                is_bootnode=False,
+                mining_mode="simulation",
+                exposed=False,
+                has_frontend=False,
+            ),
+            chainweb_node(
+                project_name,
+                "miner-2",
+                evm_cids,
+                pact_cids,
+                is_bootnode=False,
+                mining_mode="simulation",
+                exposed=False,
+                has_frontend=False,
+            ),
+            debug_services(nodes),
+        ]
+    )
+
+    for n in nodes:
+        specs["services"][f"{n}-consensus"]["entrypoint"] += [
+            "--chainweb-version=evm-development-singleton",
+        ]
+    return specs
 
 
 # A project setup for DApp development. It runs a single full bootstrap nodes
@@ -1031,7 +1205,7 @@ def kadena_dev_project() -> Spec:
 # * Blocks are produced at a fixed rate of 2 seconds per chain.
 # * There is a single bootstrap node that is also a miner.
 #
-def app_dev_project(exposed_evm_chains, exposed_pact_chains) -> Spec:
+def app_dev_project(exposed_evm_chains, exposed_pact_chains, update_secrets) -> Spec:
     nodes = ["bootnode", "appdev"]
 
     # Create boostrap information
@@ -1039,30 +1213,34 @@ def app_dev_project(exposed_evm_chains, exposed_pact_chains) -> Spec:
     pact_cids = list(range(0, 20))
 
     # Create bootstrap node IDs
-    evm_bootnodes("bootnode", evm_cids)
+    evm_bootnodes("add-dev", "bootnode", evm_cids, update=update_secrets)
 
     top: Spec = spec
     top["name"] = "chainweb-evm"
-    top["networks"] = {f"p2p": None}
+    top["networks"] = {"p2p": None}
 
     return join_specs(
         [
             top,
             chainweb_node(
+                "app-dev",
                 "bootnode",
                 evm_cids,
                 pact_cids,
                 is_bootnode=True,
                 mining_mode="constant-delay",
                 exposed=False,
+                has_frontend=False,
             ),
             chainweb_node(
+                "app-dev",
                 "appdev",
                 exposed_evm_chains,
                 exposed_pact_chains,
                 is_bootnode=False,
                 mining_mode=None,
                 exposed=True,
+                has_frontend=True,
             ),
             other_services(nodes),
         ]
@@ -1074,37 +1252,41 @@ def app_dev_project(exposed_evm_chains, exposed_pact_chains) -> Spec:
 #
 # FIXME: this is work in progress
 #
-def pact_project(pact_chains) -> Spec:
+def pact_project(update_secrets: bool = False) -> Spec:
     nodes = ["bootnode", "appdev"]
 
     evm_cids = list(range(20, 25))
     pact_cids = list(range(0, 20))
 
     # Create bootstrap node IDs
-    evm_bootnodes("bootnode", evm_cids)
+    evm_bootnodes("pact", "bootnode", evm_cids, update=update_secrets)
 
     top: Spec = spec
     top["name"] = "chainweb-evm"
-    top["networks"] = {f"p2p": None}
+    top["networks"] = {"p2p": None}
 
     return join_specs(
         [
             top,
             chainweb_node(
+                "pact",
                 "bootnode",
                 evm_cids,
                 pact_cids,
                 is_bootnode=True,
                 mining_mode="constant-delay",
                 exposed=False,
+                has_frontend=False,
             ),
             chainweb_node(
+                "pact",
                 "appdev",
                 [],
                 exposed_pact_chains,
                 is_bootnode=False,
                 mining_mode=None,
                 exposed=True,
+                has_frontend=True,
             ),
             other_services(nodes),
         ]
@@ -1118,7 +1300,7 @@ def pact_project(pact_chains) -> Spec:
 #
 # FIXME: this is work in progress
 #
-def mining_pool_project() -> Spec:
+def mining_pool_project(update_secrets: bool = False) -> Spec:
     nodes = ["bootnode"]
 
     # Create boostrap information
@@ -1126,22 +1308,24 @@ def mining_pool_project() -> Spec:
     pact_cids = list(range(0, 20))
 
     # Create bootstrap node IDs
-    evm_bootnodes("bootnode", evm_cids)
+    evm_bootnodes("mining-pool", "bootnode", evm_cids, update=update_secrets)
 
     top: Spec = spec
     top["name"] = "chainweb-evm"
-    top["networks"] = {f"p2p": None}
+    top["networks"] = {"p2p": None}
 
     return join_specs(
         [
             top,
             chainweb_node(
+                "mining-pool",
                 "bootnode",
                 evm_cids,
                 pact_cids,
                 is_bootnode=True,
                 mining_mode="stratum",
                 exposed=False,
+                has_frontend=False,
             ),
             other_services(nodes),
         ]
@@ -1153,7 +1337,8 @@ def mining_pool_project() -> Spec:
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--exposed-chains")
-parser.add_argument("--project")  # TODO
+parser.add_argument("--project")
+parser.add_argument("--update-secrets", action="store_true", help="Update existing secrets")
 args = parser.parse_args()
 
 # All available EVM chains
@@ -1165,21 +1350,29 @@ else:
     exposed_evm_chains = [i for i in range(20, 25) if i in exposed_cids]
     exposed_pact_chains = [i for i in range(0, 20) if i in exposed_cids]
 
+update_secrets = args.update_secrets
+
 # print the docker-compose file
 match args.project:
     case "minimal":
-        print(json.dumps(minimal_project(), indent=4))
+        print(json.dumps(minimal_project(update_secrets=update_secrets), indent=4))
     case "kadena-dev":
-        print(json.dumps(kadena_dev_project(), indent=4))
+        print(json.dumps(kadena_dev_project(update_secrets=update_secrets), indent=4))
+    case "kadena-dev-singleton-evm":
+        print(json.dumps(kadena_dev_singleton_evm_project(update_secrets=update_secrets), indent=4))
     case "appdev":
         print(
             json.dumps(
-                app_dev_project(exposed_evm_chains, exposed_pact_chains), indent=4
+                app_dev_project(
+                    exposed_evm_chains,
+                    exposed_pact_chains,
+                    update_secrets=update_secrets
+                ), indent=4
             )
         )
     case "pact":
-        print(json.dumps(pact_project(exposed_pact_chains), indent=4))
+        print(json.dumps(pact_project(update_secrets=update_secrets), indent=4))
     case "mining-pool":
-        print(json.dumps(mining_pool_project(), indent=4))
+        print(json.dumps(mining_pool_project(update_secrets=update_secrets), indent=4))
     case _:
-        print(json.dumps(minimal_project(), indent=4))
+        print(json.dumps(default_project(update_secrets=update_secrets), indent=4))

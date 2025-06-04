@@ -216,7 +216,8 @@ function blockscout () {
 # Devnet
 
 function show-ports () {
-    for i in chainweb-node chainweb-miner chainweb-evm-chain0 chainweb-evm-chain1 ; do
+    local nodes=$(docker compose ps --format=json | jq -r '.Name')
+    for i in $nodes ; do
         echo "$i:"
         docker port $i
         echo

@@ -15,7 +15,7 @@ import yaml
 from secp256k1 import PrivateKey
 from typing import TypedDict, Any
 
-DEFAULT_CHAINWEB_NODE_IMAGE = "ghcr.io/kadena-io/chainweb-node:sha-32264a0"
+DEFAULT_CHAINWEB_NODE_IMAGE = "ghcr.io/kadena-io/chainweb-node:sha-55de105"
 DEFAULT_EVM_IMAGE = "ghcr.io/kadena-io/kadena-reth:lars-kadena-chains"
 
 # #############################################################################

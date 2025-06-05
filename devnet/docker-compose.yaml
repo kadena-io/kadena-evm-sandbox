@@ -78,7 +78,7 @@
                 "com.chainweb.devnet.description": "EVM Devnet Chainweb Node",
                 "com.chainweb.devnet.chainweb-node": ""
             },
-            "image": "${CHAINWEB_NODE_IMAGE:-ghcr.io/kadena-io/chainweb-node:sha-32264a0}",
+            "image": "${CHAINWEB_NODE_IMAGE:-ghcr.io/kadena-io/chainweb-node:sha-55de105}",
             "platform": "linux/amd64",
             "restart": "unless-stopped",
             "stop_grace_period": "20s",

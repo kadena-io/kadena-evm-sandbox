@@ -15,8 +15,11 @@ import yaml
 from secp256k1 import PrivateKey
 from typing import TypedDict, Any
 
-DEFAULT_CHAINWEB_NODE_IMAGE = "ghcr.io/kadena-io/chainweb-node:sha-5ed0db4"
-DEFAULT_EVM_IMAGE = "ghcr.io/kadena-io/kadena-reth:sha-65cc961"
+# Previous images. I don't know whether those also have the persistent payload jobs
+# DEFAULT_CHAINWEB_NODE_IMAGE = "ghcr.io/kadena-io/chainweb-node:sha-5ed0db4"
+# DEFAULT_EVM_IMAGE = "ghcr.io/kadena-io/kadena-reth:sha-65cc961"
+DEFAULT_CHAINWEB_NODE_IMAGE = "ghcr.io/kadena-io/chainweb-node:sha-4a0d634"
+DEFAULT_EVM_IMAGE = "ghcr.io/kadena-io/kadena-reth:edmund-persistent-payload-jobs"
 
 # #############################################################################
 # BOILERPLATE
@@ -697,7 +700,6 @@ def evm_chain(
             f"--discovery.port={30303 + cid}",
             # chainweb
             "--chain=/config/chain-spec.json",
-            "--engine.experimental",
             "--engine.persistence-threshold=0",
             "--engine.memory-block-buffer-target=0"
         ],

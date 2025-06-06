@@ -16,7 +16,7 @@ from secp256k1 import PrivateKey
 from typing import TypedDict, Any
 
 DEFAULT_CHAINWEB_NODE_IMAGE = "ghcr.io/kadena-io/chainweb-node:sha-4a0d634"
-DEFAULT_EVM_IMAGE = "ghcr.io/kadena-io/kadena-reth:sha-65cc961"
+DEFAULT_EVM_IMAGE = "ghcr.io/kadena-io/kadena-reth:edmund-persistent-payload-jobs"
 
 # #############################################################################
 # BOILERPLATE
@@ -152,8 +152,8 @@ def jwtsecret_config(project_name, node_name: str, update: bool = False) -> None
 
 def payload_provider_config(
     project_name: str,
-    node_name: str, 
-    evm_chains: list[int], 
+    node_name: str,
+    evm_chains: list[int],
     pact_chains: list[int]
 ) -> None:
     config = {
@@ -248,7 +248,7 @@ def nginx_index_html(project_name, node_name, evm_cids, port=1848):
 
     This proxy provides a reverse proxy for the Kadena EVM development network.
     It allows you to access the EVM development network via a single endpoint.
-    
+
     ## Usage
     You can access the EVM development network via the following URL:
     ```
@@ -306,7 +306,7 @@ def nginx_index_html(project_name, node_name, evm_cids, port=1848):
                 "type": 'external',
                 "chainwebChainIdOffset": 20,
                 "chainIdOffset": 1789,
-                "accounts": [ 
+                "accounts": [
                     "0xe711c50150f500fdebec57e5c299518c2f7b36271c138c55759e5b4515dc7161",
                     "0xb332ddc4e0801582e154d10cad8b672665656cbf0097f2b47483c0cfe3261299",
                     "0x28536b3ec112d99faeceb6cfaccd4b2b920fcb7cd6689ed3b2f842142ce196cb",
@@ -317,7 +317,7 @@ def nginx_index_html(project_name, node_name, evm_cids, port=1848):
             },
         },
     }, indent=2)
-} 
+}
 ```
 </script>
 </zero-md>
@@ -679,7 +679,6 @@ def evm_chain(
             f"--discovery.port={30303 + cid}",
             # chainweb
             "--chain=/config/chain-spec.json",
-            "--engine.experimental",
             "--engine.persistence-threshold=0",
             "--engine.memory-block-buffer-target=0"
         ],
@@ -897,7 +896,7 @@ def chainweb_node(
     payload_provider_config(project_name, node_name, evm_cids, pact_cids)
     cdir = config_dir(project_name, node_name)
 
-   
+
     # EVM bootnodes for each EVM chain:
     def boot_enodes(cid: int) -> list[str]:
         bdir = config_dir(project_name, "bootnode")

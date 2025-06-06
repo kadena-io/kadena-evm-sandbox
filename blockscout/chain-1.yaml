@@ -1,5 +1,0 @@
-name: blockscout-chain-1
-include:
-  - path: common-docker-compose.yaml
-    env_file: envs/chain-1.env
-

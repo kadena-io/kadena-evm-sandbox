@@ -1,0 +1,14 @@
+#!/bin/bash
+source ./scripts/utils/init_chain_vars.sh "$@"
+
+echo "Stopping using: docker compose down $compose_action"
+
+run "docker compose -p bs_gateway -f gateway-docker-compose.yaml down $compose_action"
+
+for ((i = 0; i < numberOfChains; i++)); do
+  chainId=$((i + $chainIdOffset))
+  chainWebChainId=$((i + $chainwebChainIdOffset))
+  run "CHAIN_ID=$chainId CHAINWEB_CHAIN_ID=$chainWebChainId docker compose -p bs_chain_${chainWebChainId} --env-file ./envs/chain-common.env -f common-docker-compose.yaml down $compose_action"
+done
+
+run "docker compose -p bs_general -f general-docker-compose.yaml down $compose_action"

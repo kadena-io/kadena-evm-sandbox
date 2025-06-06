@@ -1,0 +1,6 @@
+#!/bin/bash
+
+# Compose action (remaining arguments from 4th onward)
+compose_action="-v --remove-orphans"
+
+source ./scripts/commands/stop "$@"

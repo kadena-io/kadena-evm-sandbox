@@ -78,7 +78,7 @@
                 "com.chainweb.devnet.description": "EVM Devnet Chainweb Node",
                 "com.chainweb.devnet.chainweb-node": ""
             },
-            "image": "${CHAINWEB_NODE_IMAGE:-ghcr.io/kadena-io/chainweb-node:sha-74c260e}",
+            "image": "${CHAINWEB_NODE_IMAGE:-ghcr.io/kadena-io/chainweb-node:sha-55de105}",
             "platform": "linux/amd64",
             "restart": "unless-stopped",
             "stop_grace_period": "20s",
@@ -639,9 +639,9 @@
             "entrypoint": [
                 "/chainweb-mining-client/chainweb-mining-client",
                 "--node=bootnode-consensus:1848",
-                "--thread-count=2",
+                "--thread-count=1",
                 "--no-tls",
-                "--worker=simulation",
+                "--worker=constant-delay",
                 "--hash-rate=1000000",
                 "--constant-delay-block-time=${BLOCK_RATE:-2}",
                 "--on-demand-port=1917"

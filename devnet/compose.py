@@ -15,7 +15,7 @@ import yaml
 from secp256k1 import PrivateKey
 from typing import TypedDict, Any
 
-DEFAULT_CHAINWEB_NODE_IMAGE = "ghcr.io/kadena-io/chainweb-node:sha-74c260e"
+DEFAULT_CHAINWEB_NODE_IMAGE = "ghcr.io/kadena-io/chainweb-node:sha-55de105"
 DEFAULT_EVM_IMAGE = "ghcr.io/kadena-io/kadena-reth:lars-kadena-chains"
 
 # #############################################################################
@@ -728,7 +728,7 @@ def chainweb_mining_client(
         "entrypoint": [
             "/chainweb-mining-client/chainweb-mining-client",
             f"--node={node_name}-consensus:1848",
-            "--thread-count=2",
+            "--thread-count=1",
             "--no-tls",
             f"--worker={mode}",
             # only used when worker is set to "simulation"
@@ -1027,7 +1027,7 @@ def default_project(update_secrets: bool = False) -> Spec:
                 evm_cids,
                 pact_cids,
                 is_bootnode=True,
-                mining_mode="simulation",
+                mining_mode="constant-delay",
                 exposed=True,
                 has_frontend=True,
             ),

@@ -639,9 +639,9 @@
             "entrypoint": [
                 "/chainweb-mining-client/chainweb-mining-client",
                 "--node=bootnode-consensus:1848",
-                "--thread-count=2",
+                "--thread-count=1",
                 "--no-tls",
-                "--worker=simulation",
+                "--worker=on-demand",
                 "--hash-rate=1000000",
                 "--constant-delay-block-time=${BLOCK_RATE:-2}",
                 "--on-demand-port=1917"

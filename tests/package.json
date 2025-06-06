@@ -3,7 +3,9 @@
   "private": true,
   "scripts": {
     "test": "bun test ./src",
-    "e2e": "bun test ./e2e --timeout 300000"
+    "e2e": "bun test ./e2e --timeout 300000",
+    "send-basic-tx": "npx hardhat run ./scripts/send-basic-tx.js --chainweb devnet",
+    "make-blocks": "bun ./scripts/make-blocks.js"
   },
   "devDependencies": {
     "@types/bun": "latest"

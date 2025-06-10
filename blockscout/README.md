@@ -128,17 +128,13 @@ Verification can be done directly from the hardhat project.
     Pull images:
 
     ```sh
-    docker compose -p bs_database  -f db-docker-compose.yaml pull
-    docker compose -p bs_chain_0  --env-file ./envs/chain-0.env -f common-docker-compose.yaml pull
-    docker compose -p bs_chain_1  --env-file ./envs/chain-1.env -f common-docker-compose.yaml pull
+    ./bs pull
     ```
 
     And then start the project without pulling:
 
     ```sh
-    docker compose -p bs_database  -f db-docker-compose.yaml --pull=missing
-    docker compose -p bs_chain_0  --env-file ./envs/chain-0.env -f common-docker-compose.yaml --pull=missing
-    docker compose -p bs_chain_1  --env-file ./envs/chain-1.env -f common-docker-compose.yaml --pull=missing
+    ./bs start
     ```
 
 *   Currently, some internal components of Blockscout communicate via the

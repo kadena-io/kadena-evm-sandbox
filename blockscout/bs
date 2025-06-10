@@ -1,0 +1,64 @@
+#!/bin/bash
+source ./scripts/utils/utils.sh
+
+help() {
+  echo "Usage: $0 {start|stop|remove|add-domains|static-envs|pull} <chain_id_offset?> <chainweb_chain_id_offset?> <number_of_chains?>"
+  echo ""
+  echo "Commands:"
+  echo "  start            Start the blockscout with specified parameters."
+  echo "  pull             pull container images for all blockscout services."
+  echo "  stop             Stop the blockscout."
+  echo "  remove           Remove the blockscout data."
+  echo "  add-domains      Add domains to the host."
+  echo "  static-envs      create static environment variables files"
+  echo ""
+  echo "Arguments:"
+  echo "  chain_id_offset  The chain ID offset (default: 1789)."
+  echo "  chainweb_chain_id_offset  The chainweb chain ID offset (default: 20)."
+  echo "  number_of_chains The number of chains (default: 5)."
+  echo ""
+  echo "Examples:"
+  info "Start with default values:"
+  echo "$0 start "
+  info "Start with 2 chains"
+  echo "$0 start 1789 20 2"
+  info "Start with specific chain ID offset 1234 and 2 chains"
+  echo "$0 start 1234 20 2"
+}
+
+# Check if at least one argument is passed
+if [ $# -lt 1 ]; then
+  help
+  exit 1
+fi
+
+# Get the first argument as command
+cmd="$1"
+shift  # Remove the first argument so $@ is the rest
+
+command_dir="./scripts/commands"
+
+case "$cmd" in
+  start|up)
+    $command_dir/start "$@"
+    ;;
+  stop|down)
+    $command_dir/stop "$@"
+    ;;
+  pull)
+    $command_dir/pull "$@"
+    ;;  
+  remove|delete)
+    $command_dir/remove "$@"
+    ;;
+  add-domains)
+    $command_dir/add-domains "$@"
+    ;;
+  static-envs)
+    $command_dir/static-envs "$@"
+    ;;
+  *)
+    help
+    exit 1
+    ;;
+esac

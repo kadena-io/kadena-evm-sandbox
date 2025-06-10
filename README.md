@@ -435,7 +435,21 @@ To use Blockscout:
    ./network blockscout pull
    ```
 
-1. Start a Blockscout instance by running the following command:
+2. Add blockscout domains to the host file:
+
+   ```sh
+   ./network blockscout add-domains
+   ```
+
+   This will add the following records to /etc/host 
+
+   - 127.0.0.1       chain-20.evm.kadena.local
+   - 127.0.0.1       chain-21.evm.kadena.local
+   - 127.0.0.1       chain-22.evm.kadena.local
+   - 127.0.0.1       chain-23.evm.kadena.local
+   - 127.0.0.1       chain-24.evm.kadena.local
+
+3. Start a Blockscout instance by running the following command:
 
    ```sh
    ./network blockscout start
@@ -443,17 +457,23 @@ To use Blockscout:
 
    After running this command, it can take several minutes before you can open Blockscout in a browser.
 
-1. Open the appropriate URL for the chain you want to explore:
+4. Open the appropriate URL for the chain you want to explore:
 
    ```sh
-   chain 0: http://localhost:8000
-   chain 1: http://localhost:8001
+   chain 20: http://chain-20.evm.kadena.local:8000
+   chain 21: http://chain-21.evm.kadena.local:8000
+   chain 22: http://chain-22.evm.kadena.local:8000
+   chain 23: http://chain-23.evm.kadena.local:8000
+   chain 24: http://chain-24.evm.kadena.local:8000
    ```
 
    The Blockscout UIs for the EVM chains are available at the following URLs.
 
-   - [Chainweb EVM chain 0](http://localhost:8000)
-   - [Chainweb EVM chain 1](http://localhost:8001)
+   - [Chainweb EVM chain 20](http://chain-20.evm.kadena.local:8000)
+   - [Chainweb EVM chain 21](http://chain-21.evm.kadena.local:8000)
+   - [Chainweb EVM chain 22](http://chain-22.evm.kadena.local:8000)
+   - [Chainweb EVM chain 23](http://chain-23.evm.kadena.local:8000)
+   - [Chainweb EVM chain 24](http://chain-24.evm.kadena.local:8000)
 
 ## Network components and chain specifications
 

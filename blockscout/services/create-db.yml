@@ -1,0 +1,20 @@
+services:
+  create-stats-db:
+    image: postgres:17
+    entrypoint: ["sh", "-c"]
+    command: >
+      "psql -h stats-db -U stats -d postgres -tAc \"SELECT 1 FROM pg_database WHERE datname='${STATS_DB_NAME}'\" | grep -q 1 || psql -h stats-db -U stats -d postgres -c \"CREATE DATABASE ${STATS_DB_NAME};\""
+    environment:
+        STATS_DB_NAME: ${STATS_DB_NAME}
+        PGUSER: 'stats'
+        PGPASSWORD: 'n0uejXPl61ci6ldCuE2gQU5Y'  
+
+  create-blockscout-db:
+    image: postgres:17
+    entrypoint: ["sh", "-c"]
+    command: >
+      "psql -h db -U blockscout -d postgres -tAc \"SELECT 1 FROM pg_database WHERE datname='${BLOCKSCOUT_DB_NAME}'\" | grep -q 1 || psql -h db -U blockscout -d postgres -c \"CREATE DATABASE ${BLOCKSCOUT_DB_NAME};\""    
+    environment:
+        BLOCKSCOUT_DB_NAME: ${BLOCKSCOUT_DB_NAME}
+        PGUSER: 'blockscout'
+        PGPASSWORD: 'ceWb1MeLBEeOIfk65gU8EjF8'  

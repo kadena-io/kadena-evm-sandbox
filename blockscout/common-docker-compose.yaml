@@ -1,54 +1,64 @@
 volumes:
-  blockscout-db-data:
-  stats-db-data:
   redis-data:
   logs:
   dets:
+
+networks:
+  default:
+    driver: bridge
+
+  proxy-network:
+    external: true
+    name: proxy-network  
+
+  service-network:
+    external: true
+    name: service-network
 
 services:
   redis-db:
     extends:
       file: ./services/redis.yml
       service: redis-db
+    networks:
+      - default   
+      
 
-  db-init:
+  create-blockscout-db:
     extends:
-      file: ./services/db.yml
-      service: db-init
+      file: ./services/create-db.yml
+      service: create-blockscout-db
+    networks:
+      - service-network  
 
-  db:
-    depends_on:
-      db-init:
-        condition: service_completed_successfully
+  create-stats-db:
     extends:
-      file: ./services/db.yml
-      service: db
+      file: ./services/create-db.yml
+      service: create-stats-db
+    networks:
+      - service-network     
+
+      
 
   backend:
     depends_on:
-      - db
-      - redis-db
+      redis-db:
+        condition: service_started
+      create-blockscout-db : 
+          condition: service_completed_successfully  
     extends:
       file: ./services/backend.yml
-      service: backend
-    links:
-      - db:database
+      service: backend   
     environment:
-      - CHAIN_ID=${CHAIN_ID?}
-      - SUBNETWORK=${SUBNETWORK?}
-      - ETHEREUM_JSONRPC_HTTP_URL=${ETHEREUM_JSONRPC_HTTP_URL?}
-      - ETHEREUM_JSONRPC_WS_URL=${ETHEREUM_JSONRPC_WS_URL?}
-      - ETHEREUM_JSONRPC_TRACE_URL=${ETHEREUM_JSONRPC_TRACE_URL?}
-
-  visualizer:
-    extends:
-      file: ./services/visualizer.yml
-      service: visualizer
-
-  sig-provider:
-    extends:
-      file: ./services/sig-provider.yml
-      service: sig-provider
+      - CHAIN_ID=${CHAIN_ID}
+      - SUBNETWORK=${SUBNETWORK}
+      - ETHEREUM_JSONRPC_HTTP_URL=${ETHEREUM_JSONRPC_HTTP_URL}
+      - ETHEREUM_JSONRPC_WS_URL=${ETHEREUM_JSONRPC_WS_URL}
+      - ETHEREUM_JSONRPC_TRACE_URL=${ETHEREUM_JSONRPC_TRACE_URL}
+      - DATABASE_URL=${DATABASE_URL}
+    networks:
+      - service-network 
+      - default     
 
   frontend:
     depends_on:
@@ -59,50 +69,55 @@ services:
     environment:
       - NEXT_PUBLIC_NETWORK_ID=${NEXT_PUBLIC_NETWORK_ID?}
 
-      # Kinda sucks. Why does this communicate via the host network?
-      - NEXT_PUBLIC_STATS_API_HOST=http://localhost:${PROXY_STATS_PORT}
-      - NEXT_PUBLIC_VISUALIZE_API_HOST=http://localhost:${PROXY_VISUALIZER_PORT}
-      - NEXT_PUBLIC_API_HOST=localhost:${PROXY_UI_PORT}
-      - NEXT_PUBLIC_APP_HOST=localhost:${PROXY_UI_PORT}
+      # Kinda sucks. Why does this communicate via the host network? 
+      # I think because this urls will be used in the browser so they should target the host not the container
+      - NEXT_PUBLIC_STATS_API_HOST=${NEXT_PUBLIC_STATS_API_HOST}
+      - NEXT_PUBLIC_VISUALIZE_API_HOST=${NEXT_PUBLIC_VISUALIZE_API_HOST}
+      - NEXT_PUBLIC_APP_HOST=${NEXT_PUBLIC_APP_HOST}
+      - NEXT_PUBLIC_APP_PORT=${NEXT_PUBLIC_APP_PORT}
+      - NEXT_PUBLIC_API_HOST=${NEXT_PUBLIC_API_HOST}
+      - NEXT_PUBLIC_API_PORT=${NEXT_PUBLIC_API_PORT}
+      - NEXT_PUBLIC_NETWORK_NAME=${NEXT_PUBLIC_NETWORK_NAME}
+      - NEXT_PUBLIC_FEATURED_NETWORKS=${NEXT_PUBLIC_FEATURED_NETWORKS}
+    networks:
+      - default   
 
-  stats-db-init:
-    extends:
-      file: ./services/stats.yml
-      service: stats-db-init
-
-  stats-db:
-    depends_on:
-      stats-db-init:
-        condition: service_completed_successfully
-    extends:
-      file: ./services/stats.yml
-      service: stats-db
 
   stats:
     depends_on:
-      - stats-db
-      - backend
+      backend:
+        condition: service_started
+      create-stats-db : 
+          condition: service_completed_successfully
     extends:
       file: ./services/stats.yml
       service: stats
+    networks:
+      - service-network 
+      - default      
 
   user-ops-indexer:
     depends_on:
-      - db
-      - backend
+      backend:
+        condition: service_started
+      create-blockscout-db : 
+          condition: service_completed_successfully
+      create-stats-db : 
+          condition: service_completed_successfully    
+    restart: on-failure      
     extends:
       file: ./services/user-ops-indexer.yml
       service: user-ops-indexer
-
-  smart-contract-verifier:
-    extends:
-      file: ./services/smart-contract-verifier.yml
-      service: smart-contract-verifier
-    depends_on:
-      - backend
-      - frontend
+    environment:
+      - USER_OPS_INDEXER__INDEXER__RPC_URL=${USER_OPS_INDEXER__INDEXER__RPC_URL}
+      - USER_OPS_INDEXER__DATABASE__CONNECT__URL=${USER_OPS_INDEXER__DATABASE__CONNECT__URL}  
+    networks:
+      - service-network  
+      - default  
+ 
   
   proxy:
+    restart: on-failure
     depends_on:
       - backend
       - frontend
@@ -110,5 +125,7 @@ services:
     extends:
       file: ./services/nginx.yml
       service: proxy
-    platform: linux/amd64
+    networks:
+     - default    
+     - proxy-network
 

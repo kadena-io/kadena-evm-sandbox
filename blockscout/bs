@@ -2,10 +2,11 @@
 source ./scripts/utils/utils.sh
 
 help() {
-  echo "Usage: $0 {start|stop|remove|add-domains|static-envs} <chain_id_offset?> <chainweb_chain_id_offset?> <number_of_chains?>"
+  echo "Usage: $0 {start|stop|remove|add-domains|static-envs|pull} <chain_id_offset?> <chainweb_chain_id_offset?> <number_of_chains?>"
   echo ""
   echo "Commands:"
   echo "  start            Start the blockscout with specified parameters."
+  echo "  pull             pull container images for all blockscout services."
   echo "  stop             Stop the blockscout."
   echo "  remove           Remove the blockscout data."
   echo "  add-domains      Add domains to the host."
@@ -38,13 +39,16 @@ shift  # Remove the first argument so $@ is the rest
 command_dir="./scripts/commands"
 
 case "$cmd" in
-  start)
+  start|up)
     $command_dir/start "$@"
     ;;
-  stop)
+  stop|down)
     $command_dir/stop "$@"
     ;;
-  remove)
+  pull)
+    $command_dir/pull "$@"
+    ;;  
+  remove|delete)
     $command_dir/remove "$@"
     ;;
   add-domains)

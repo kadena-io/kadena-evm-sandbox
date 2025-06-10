@@ -97,7 +97,7 @@ function blockscout-help () {
     echo -e "  ${B}blockscout pull${R}   pull container images for all blockscout services"
     echo -e "  ${B}blockscout start${R}  start block scope instances for the EVM chains"
     echo -e "  ${B}blockscout stop${R}   stop block scope instances for the EVM chains"
-    echo -e "  (The UIs are served at http://localhost:8000 and http://localhost:8001.)"
+    echo -e "  (The UIs are served at http://chain-20.evm.kadena.local:8000 and  http://chain-21.evm.kadena.local:8000 and so on)"
 }
 
 function devnet-help () {
@@ -161,53 +161,6 @@ function solidity () {
         *)
             shift
             fail-unknown solidity solidity-help "$CMD"
-            ;;
-    esac
-}
-
-# ############################################################################# #
-# Blockscout
-
-function blockscout () {
-    local CMD=$1
-    case "$CMD" in
-        help|h) 
-            shift
-            blockscout-help
-            ;;
-        pull)
-            shift
-            (
-                cd "$BLOCKSCOUT_DIR" && 
-                docker compose -f chain-0.yaml pull
-                docker compose -f chain-1.yaml pull
-            )
-            ;;
-        start|up)
-            shift
-            (
-                cd "$BLOCKSCOUT_DIR" &&
-                docker compose -f chain-0.yaml up -d --pull=missing
-                docker compose -f chain-1.yaml up -d --pull=missing
-                color-echo $GREEN "chain 0: http://localhost:8000"
-                color-echo $GREEN "chain 1: http://localhost:8001"
-            )
-            ;;
-        stop|down|shutdown)
-            shift
-            (
-                cd "$BLOCKSCOUT_DIR" && 
-                docker compose -f chain-0.yaml down --remove-orphans -v
-                docker compose -f chain-1.yaml down --remove-orphans -v
-            )
-            ;;
-        "")
-            shift
-            fail-missing blockscout blockscout-help
-            ;;
-        *)
-            shift
-            fail-unknown blockscout blockscout-help "$CMD"
             ;;
     esac
 }
@@ -346,7 +299,7 @@ case "$CMD" in
     pull)
         shift
         devnet pull
-        blockscout pull
+        ( cd "$BLOCKSCOUT_DIR" && ./bs pull)
         ;;
     devnet)
         shift
@@ -354,7 +307,7 @@ case "$CMD" in
         ;;
     blockscout)
         shift
-        blockscout "$@"
+        ( cd "$BLOCKSCOUT_DIR" && ./bs "$@")
         ;;
     solidity)
         shift

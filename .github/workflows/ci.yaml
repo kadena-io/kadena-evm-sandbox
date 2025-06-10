@@ -43,5 +43,5 @@ jobs:
       - name: Cleanup
         if: always()
         run: |
-        # I am unsure this is needed as this VM will delete after use
+          # I am unsure this is needed as this VM will delete after use
           ./network devnet stop

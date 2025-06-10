@@ -35,9 +35,8 @@ module.exports = {
       chainwebChainIdOffset: 20,
       externalHostUrl: "http://localhost:1848/chainweb/0.0/evm-development/"
 
-    }
+    },
   },
-
   etherscan: {
     apiKey: {
       sandbox20: "abc", // Any non-empty string works for Blockscout

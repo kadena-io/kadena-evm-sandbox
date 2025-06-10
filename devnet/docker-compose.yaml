@@ -641,7 +641,7 @@
                 "--node=bootnode-consensus:1848",
                 "--thread-count=1",
                 "--no-tls",
-                "--worker=constant-delay",
+                "--worker=on-demand",
                 "--hash-rate=1000000",
                 "--constant-delay-block-time=${BLOCK_RATE:-2}",
                 "--on-demand-port=1917"
@@ -649,6 +649,35 @@
             "ports": [
                 "1917:1917"
             ]
+        },
+        "bootnode-mining-trigger": {
+            "container_name": "bootnode-mining-trigger",
+            "hostname": "bootnode-mining-trigger",
+            "image": "oven/bun:latest",
+            "restart": "unless-stopped",
+            "depends_on": {
+                "bootnode-consensus": {
+                    "condition": "service_healthy"
+                }
+            },
+            "networks": {
+                "bootnode-internal": null
+            },
+            "volumes": [
+                "./mining-trigger:/app"
+            ],
+            "working_dir": "/app",
+            "entrypoint": [
+                "bun",
+                "--watch",
+                "index.ts"
+            ],
+            "environment": {
+                "MINER_HOSTNAME": "bootnode-mining-client",
+                "MINER_PORT": "1917",
+                "CONSENSUS_CUT_ENDPOINT": "http://bootnode-consensus:1848/chainweb/0.0/evm-development/cut",
+                "CHAINS": "20"
+            }
         },
         "allocations": {
             "container_name": "bootnode-allocations",

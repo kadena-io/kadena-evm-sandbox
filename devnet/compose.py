@@ -43,6 +43,7 @@ class Service(TypedDict, total=False):
     volumes: list[dict | str]
     networks: dict[str, None]
     depends_on: dict[str, dict]
+    working_dir: str
     entrypoint: list[str]
     deploy: dict[str, dict[str, str | int]]
     healthcheck: dict
@@ -748,6 +749,38 @@ def chainweb_mining_client(
 
 
 # ############################################################################# #
+# Mining Trigger
+
+
+def chainweb_mining_trigger(node_name: str) -> Service:
+    result: Service = {
+        "container_name": f"{node_name}-mining-trigger",
+        "hostname": f"{node_name}-mining-trigger",
+        "image": "oven/bun:latest",
+        "restart": "unless-stopped",
+        "depends_on": {f"{node_name}-consensus": {"condition": "service_healthy"}},
+        "networks": {
+            f"{node_name}-internal": None,
+        },
+        "volumes": ["./mining-trigger:/app"],
+        "working_dir": "/app",
+        "entrypoint": [
+            "bun",
+            "--watch",
+            "index.ts",
+        ],
+        "environment": {
+            "MINER_HOSTNAME": f"{node_name}-mining-client",
+            "MINER_PORT": "1917",
+            "CONSENSUS_CUT_ENDPOINT": f"http://{node_name}-consensus:1848/chainweb/0.0/evm-development/cut",
+            "CHAINS": "20",
+        },
+    }
+
+    return result
+
+
+# ############################################################################# #
 # Allocations
 
 
@@ -959,6 +992,11 @@ def chainweb_node(
             )
         }
 
+    if mining_mode == "on-demand":
+        result["services"] |= {
+            f"{node_name}-mining-trigger": chainweb_mining_trigger(node_name)
+        }
+
     return result
 
 
@@ -1000,7 +1038,7 @@ def debug_services(nodes: list[str]) -> Spec:
 # ############################################################################# #
 
 
-# A default project setup. It runs a single frontend bootnode that has 
+# A default project setup. It runs a single frontend bootnode that has
 # constant delay mining enabled and is exposed to the host network.
 #
 # It also includes the definition of curl container for easy to internal APIs
@@ -1027,7 +1065,7 @@ def default_project(update_secrets: bool = False) -> Spec:
                 evm_cids,
                 pact_cids,
                 is_bootnode=True,
-                mining_mode="constant-delay",
+                mining_mode="on-demand",
                 exposed=True,
                 has_frontend=True,
             ),
@@ -1035,7 +1073,7 @@ def default_project(update_secrets: bool = False) -> Spec:
         ]
     )
 
-# A minimal project setup. It runs a single exposed bootnode that has simulation 
+# A minimal project setup. It runs a single exposed bootnode that has simulation
 # mining enabled.
 #
 # It also includes the definition of curl container for easy to internal APIs
@@ -1355,14 +1393,14 @@ update_secrets = args.update_secrets
 # print the docker-compose file
 match args.project:
     case "minimal":
-        print(json.dumps(minimal_project(update_secrets=update_secrets), indent=4))
+        print(yaml.dump(minimal_project(update_secrets=update_secrets), indent=4))
     case "kadena-dev":
-        print(json.dumps(kadena_dev_project(update_secrets=update_secrets), indent=4))
+        print(yaml.dump(kadena_dev_project(update_secrets=update_secrets), indent=4))
     case "kadena-dev-singleton-evm":
-        print(json.dumps(kadena_dev_singleton_evm_project(update_secrets=update_secrets), indent=4))
+        print(yaml.dump(kadena_dev_singleton_evm_project(update_secrets=update_secrets), indent=4))
     case "appdev":
         print(
-            json.dumps(
+            yaml.dump(
                 app_dev_project(
                     exposed_evm_chains,
                     exposed_pact_chains,
@@ -1371,8 +1409,8 @@ match args.project:
             )
         )
     case "pact":
-        print(json.dumps(pact_project(update_secrets=update_secrets), indent=4))
+        print(yaml.dump(pact_project(update_secrets=update_secrets), indent=4))
     case "mining-pool":
-        print(json.dumps(mining_pool_project(update_secrets=update_secrets), indent=4))
+        print(yaml.dump(mining_pool_project(update_secrets=update_secrets), indent=4))
     case _:
-        print(json.dumps(default_project(update_secrets=update_secrets), indent=4))
+        print(yaml.dump(default_project(update_secrets=update_secrets), indent=4))

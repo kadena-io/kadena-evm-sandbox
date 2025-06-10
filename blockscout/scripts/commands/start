@@ -15,3 +15,12 @@ done
 
 run "docker compose -p bs_gateway -f gateway-docker-compose.yaml up $compose_action"  
 
+info "Blockscout started successfully."
+
+for ((i = 0; i < numberOfChains; i++)); do
+  chainId=$((i + $chainIdOffset))
+  chainWebChainId=$((i + $chainwebChainIdOffset))
+  echo "chain $chainWebChainId": "http://chain-$chainWebChainId.evm.kadena.local:8000"
+done
+
+info "Run './bs add-domains' to add domains to /etc/hosts"

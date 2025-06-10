@@ -47,17 +47,21 @@ Assuming the current working dir is the root of the repository,
 
 6. Open other chains url
 
+if you hev MacOs or a linux system run
+
     ```sh
     ./bs add-domains
     ```
 
    this will add the following records to /etc/host 
 
-   - 127.0.0.1       chain-20.evm.kadena.io
-   - 127.0.0.1       chain-21.evm.kadena.io
-   - 127.0.0.1       chain-22.evm.kadena.io
-   - 127.0.0.1       chain-23.evm.kadena.io
-   - 127.0.0.1       chain-24.evm.kadena.io
+   - 127.0.0.1       chain-20.evm.kadena.local
+   - 127.0.0.1       chain-21.evm.kadena.local
+   - 127.0.0.1       chain-22.evm.kadena.local
+   - 127.0.0.1       chain-23.evm.kadena.local
+   - 127.0.0.1       chain-24.evm.kadena.local
+
+   Note: on Windows you need to add them manually
 
 # Stopping service
 

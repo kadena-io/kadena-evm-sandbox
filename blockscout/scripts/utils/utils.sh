@@ -7,7 +7,7 @@ generate_chains_meta() {
   local json="["
 
   for ((i = start; i <= end; i++)); do
-    item="{\"title\":\"Devnet@chain$i\",\"url\":\"http://chain-$i.evm.kadena.io:8000/\",\"group\":\"Mainnets\",\"icon\":\"https://www.kadena.io/favicon.ico\"}"
+    item="{\"title\":\"chain$i@kadena_devnet\",\"url\":\"http://chain-$i.evm.kadena.local:8000/\",\"group\":\"Mainnets\",\"icon\":\"https://www.kadena.local/favicon.ico\"}"
     json+="$item"
     if [[ $i -lt $end ]]; then
       json+=","

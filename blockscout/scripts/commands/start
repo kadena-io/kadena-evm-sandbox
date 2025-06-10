@@ -7,6 +7,8 @@ echo "Starting using: docker compose up -d $compose_action"
 
 run "docker compose -p bs_general -f general-docker-compose.yaml up -d $compose_action"  
 
+sleep 2
+
 for ((i = 0; i < numberOfChains; i++)); do
   chainId=$((i + $chainIdOffset))
   chainWebChainId=$((i + $chainwebChainIdOffset))

@@ -14,7 +14,7 @@ const config = {
     : Array.from({ length: 98 }, (_, i) => i.toString()),
   TRIGGER_PORT: parseInt(process.env.TRIGGER_PORT || '11848', 10),
   TRIGGER_BLOCK_COUNT: parseInt(process.env.TRIGGER_BLOCK_COUNT || '1', 10),
-  CONTINUOUS_INTERVAL: parseInt(process.env.CONTINUOUS_INTERVAL || '10000', 10),
+  CONTINUOUS_INTERVAL: parseInt(process.env.CONTINUOUS_INTERVAL || '20000', 10),
 };
 
 /**

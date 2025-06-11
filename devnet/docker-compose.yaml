@@ -519,9 +519,8 @@ services:
         environment:
             CHAINS: ${CHAINS:-20}
             CONSENSUS_ENDPOINT: http://bootnode-consensus:1848/chainweb/0.0/evm-development
-            CONTINUOUS_INTERVAL: ${CONTINUOUS_INTERVAL:-10000}
+            CONTINUOUS_INTERVAL: ${CONTINUOUS_INTERVAL:-20000}
             MINER_HOSTNAME: bootnode-mining-client
-            MINING_CONFIRMATION_PERIOD: ${MINING_CONFIRMATION_PERIOD:-12}
             MINING_MODE: ${MINING_MODE:-triggered}
             MINING_PORT: '1917'
             TRIGGER_BLOCK_COUNT: ${TRIGGER_BLOCK_COUNT:-1}

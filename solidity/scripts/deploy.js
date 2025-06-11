@@ -1,11 +1,12 @@
-const { chainweb } = require('hardhat');
+const { ethers, chainweb } = require('hardhat');
 
 async function main() {
   const verificationDelay = 10000; // Delay in milliseconds before verification
+  const [deployer] = await ethers.getSigners();
 
   const deployed = await chainweb.deployContractOnChains({
     name: 'SimpleToken',
-    constructorArgs: [ethers.parseUnits('1000000')],
+    constructorArgs: [ethers.parseUnits('1000000'), deployer.address],
   });
 
 
@@ -45,7 +46,7 @@ async function main() {
         console.log(`Attempting to verify contract ${contractAddress} on chain ${chainId}...`);
         await run("verify:verify", {
           address: contractAddress,
-          constructorArguments: [ethers.parseUnits('1000000')]
+          constructorArguments: [ethers.parseUnits('1000000'), deployer.address]
         });
 
         console.log(`✅ Contract successfully verified on chain ${chainId}`);

@@ -49,11 +49,11 @@ contract SimpleToken is ERC20("SimpleToken", "SIM"), Ownable {
 
     /// @notice Precompile for verifying the SPV proof
     address public constant VALIDATE_PROOF_PRECOMPILE =
-        address(0x0000000000000000000000000000000000000421);
+        address(0x48C3b4d2757447601776837B6a85F31EF88A87bf);
 
     /// @notice Precompile that provides the chainweb-chain-id
     address public constant CHAIN_ID_PRECOMPILE =
-        address(0x0000000000000000000000000000000000000422);
+        address(0x9b02c3e2dF42533e0FD166798B5A616f59DBd2cc);
 
     /// @notice Mapping of chainId to the address of the same contract on other chains
     mapping(uint32 => address) private crossChainAddresses;

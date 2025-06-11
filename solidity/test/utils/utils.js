@@ -1,4 +1,4 @@
-const { switchNetwork, chainweb, ethers } = require('hardhat');
+const { chainweb, ethers } = require('hardhat');
 
 const { requestSpvProof, switchChain, deployContractOnChains } = chainweb;
 
@@ -8,7 +8,7 @@ const EVENT_SIG_HASH =
 
 // Authorize contracts for cross-chain transfers to and from the token
 async function authorizeContracts(token, tokenInfo, authorizedTokenInfos) {
-  await switchNetwork(tokenInfo.network.name);
+  await switchChain(tokenInfo.chain);
   for (const tok of authorizedTokenInfos) {
     console.log(
       `Authorizing ${tok.chain}:${tok.address} for ${tokenInfo.chain}:${tokenInfo.address}`,
@@ -40,7 +40,8 @@ async function initCrossChain(
   console.log(
     `Initiating cross-chain transfer from ${sourceTokenInfo.network.name} to ${targetTokenInfo.network.name}`,
   );
-  await switchNetwork(sourceTokenInfo.network.name);
+
+  await switchChain(sourceTokenInfo.chain);
   let response1 = await sourceToken
     .connect(sender)
     .transferCrossChain(receiver.address, amount, targetTokenInfo.chain);
@@ -71,7 +72,8 @@ async function redeemCrossChain(
   amount,
   proof,
 ) {
-  await switchNetwork(targetTokenInfo.network.name);
+  
+  await switchChain(targetTokenInfo.chain);
   console.log(`Redeeming tokens on chain ${targetTokenInfo.network.name}`);
   let response2 = await targetToken.redeemCrossChain(
     receiver.address,
@@ -116,7 +118,9 @@ const CrossChainOperation = {
 };
 
 async function getSigners() {
-  await switchChain(0);
+  const chains = await chainweb.getChainIds();
+  await chainweb.switchChain(chains[0]);
+
   const [deployer, alice, bob, carol] = await ethers.getSigners();
   return {
     deployer,

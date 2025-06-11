@@ -1,5 +1,5 @@
 const { expect } = require('chai');
-const { ethers, chainweb, switchNetwork } = require('hardhat');
+const { ethers, chainweb } = require('hardhat');
 const { ZeroAddress } = require('ethers');
 const {
   authorizeContracts,
@@ -15,6 +15,7 @@ const {
   requestSpvProof,
   createTamperedProof,
   switchChain,
+  getChainIds,
 } = chainweb;
 
 describe('SimpleToken Unit Tests', async function () {
@@ -27,8 +28,9 @@ describe('SimpleToken Unit Tests', async function () {
   let amount;
 
   beforeEach(async function () {
-    // switchChain(0) or switchNetwork("chain name") can be used to switch to a different chain
-    await switchChain(0);
+    // switchChain() or switchNetwork("chain name") can be used to switch to a different chain
+    const chains = await getChainIds();
+    await switchChain(chains[0]);
     signers = await getSigners();
 
     const deployed = await deployContractOnChains({
@@ -43,7 +45,7 @@ describe('SimpleToken Unit Tests', async function () {
     // Keep deployment info accessible when needed
     token0Info = deployed.deployments[0];
     token1Info = deployed.deployments[1];
-    await switchNetwork(token0Info.network.name);
+    await switchChain(token0Info.chain);
   });
 
   context('Deployment and Initialization', async function () {
@@ -84,7 +86,7 @@ describe('SimpleToken Unit Tests', async function () {
           );
 
         // Explicitly set cross-chain addresses for token1
-        await switchNetwork(token1Info.network.name);
+        await switchChain(token1Info.chain);
         const tx2 = await token1.setCrossChainAddress(
           token0Info.chain,
           await token0.getAddress(),
@@ -460,8 +462,8 @@ describe('SimpleToken Unit Tests', async function () {
       });
 
       it('Should revert when redeeming on the wrong contrct', async function () {
-        // Switch to chain1, where token1 is deployed
-        await switchNetwork(token1Info.network.name);
+        // Switch to chain where token1 is deployed
+        await switchChain(token1Info.chain);
 
         // Deploy a new token contract on chain1
         const factory = await ethers.getContractFactory('SimpleToken');
@@ -596,7 +598,7 @@ describe('SimpleToken Unit Tests', async function () {
         // getChainwebChainId() should return the correct chain id for each token, regardless of the current network
         expect(await token0.getChainwebChainId()).to.equal(0n);
         expect(await token1.getChainwebChainId()).to.equal(1n);
-        await switchNetwork(token1Info.network.name);
+        await switchChain(token1Info.chain);
         expect(await token1.getChainwebChainId()).to.equal(1n);
         expect(await token0.getChainwebChainId()).to.equal(0n);
       });
@@ -620,7 +622,7 @@ describe('SimpleToken Unit Tests', async function () {
         );
 
         // Explicitly set cross-chain addresses for token1
-        await switchNetwork(token1Info.network.name);
+        await switchChain(token1Info.chain);
         const tx2 = await token1.setCrossChainAddress(
           token0Info.chain,
           await token0.getAddress(),

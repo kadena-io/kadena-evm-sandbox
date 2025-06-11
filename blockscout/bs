@@ -1,34 +1,36 @@
 #!/bin/bash
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+cd "$SCRIPT_DIR"
+
 source ./scripts/utils/utils.sh
 
-help() {
-  echo "Usage: $0 {start|stop|remove|add-domains|static-envs|pull} <chain_id_offset?> <chainweb_chain_id_offset?> <number_of_chains?>"
-  echo ""
-  echo "Commands:"
-  echo "  start            Start the blockscout with specified parameters."
-  echo "  pull             pull container images for all blockscout services."
-  echo "  stop             Stop the blockscout."
-  echo "  remove           Remove the blockscout data."
-  echo "  add-domains      Add domains to the host."
-  echo "  static-envs      create static environment variables files"
-  echo ""
-  echo "Arguments:"
-  echo "  chain_id_offset  The chain ID offset (default: 1789)."
-  echo "  chainweb_chain_id_offset  The chainweb chain ID offset (default: 20)."
-  echo "  number_of_chains The number of chains (default: 5)."
-  echo ""
-  echo "Examples:"
-  info "Start with default values:"
-  echo "$0 start "
-  info "Start with 2 chains"
-  echo "$0 start 1789 20 2"
-  info "Start with specific chain ID offset 1234 and 2 chains"
-  echo "$0 start 1234 20 2"
+blockscout-help() {
+  echo -e "Usage:"
+  echo -e "${B}$0 pulls|start|stop|remove|add-domains|static-envs <chain_id_offset?> <chainweb_chain_id_offset?> <number_of_chains?>${R}"
+  echo -e ""
+  echo -e "Examples:"
+  echo -e "${B}$0 start${R}             Start with default values"
+  echo -e "${B}$0 start 1789 20 2${R}   Start with 2 chains"
+  echo -e "${B}$0 start 1234 20 2 ${R}  Start with chain ID offset 1234 and 2 chains"
+  echo -e ""
+  echo -e "Commands:"
+  echo -e "  ${B}pull${R}          pull container images for all blockscout services."
+  echo -e "  ${B}start|up${R}      Start the blockscout with specified parameters. used pull images or pull if not available."
+  echo -e "  ${B}stop|down${R}     Stop the blockscout."
+  echo -e "  ${B}remove|delete${R} Remove the blockscout data."
+  echo -e "  ${B}add-domains${R}   Add domains to the host."
+  echo -e "  ${B}static-envs${R}   create static environment variables files"
+  echo -e ""
+  echo -e "Arguments:"
+  echo -e "  ${B}chain_id_offset${R}  The chain ID offset (default: 1789)."
+  echo -e "  ${B}chainweb_chain_id_offset${R}  The chainweb chain ID offset (default: 20)."
+  echo -e "  ${B}number_of_chains The number${R} of chains (default: 5)."
+  echo -e ""
 }
 
 # Check if at least one argument is passed
 if [ $# -lt 1 ]; then
-  help
+  blockscout-help
   exit 1
 fi
 
@@ -57,8 +59,11 @@ case "$cmd" in
   static-envs)
     $command_dir/static-envs "$@"
     ;;
+  help|usage|h)
+    blockscout-help
+    ;;  
   *)
-    help
+    blockscout-help
     exit 1
     ;;
 esac

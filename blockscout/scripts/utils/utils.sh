@@ -1,5 +1,24 @@
 #!/bin/bash
 
+if [ -t 1 ] ; then
+    B="\x1B[1;97m"
+    RED="\x1B[31m"
+    BRED="\x1B[1;31m"
+    FRED="\x1B[2;31m"
+    GREEN="\x1B[32m"
+    YELLOW="\x1B[33m"
+    BLUE="\x1B[34m"
+    R="\x1B[0m"
+else
+    B=
+    RED=
+    BRED=
+    FRED=
+    GREEN=
+    YELLOW=
+    BLUE=
+    R=
+fi
 
 generate_chains_meta() {
   local start=$1

@@ -248,7 +248,7 @@ async function crossChainTransfer(
   amount
 ) {
   console.log(
-    `Transfering ${amount} tokens from ${sourceTokenInfo.chain}:${sourceTokenInfo.address}:${sender.addresss} to ${targetTokenInfo.chain}:${targetTokenInfo.address}:${receiver.address}`
+    `Transfering ${amount} tokens from ${sourceTokenInfo.chain}:${sourceTokenInfo.address}:${sender.address} to ${targetTokenInfo.chain}:${targetTokenInfo.address}:${receiver.address}`
   );
   const origin = await initCrossChain(
     sourceToken,

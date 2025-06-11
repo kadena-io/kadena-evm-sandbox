@@ -22,7 +22,7 @@ describe('SimpleToken Integration Tests', async function () {
     signers = await getSigners();
     const deployed = await deployContractOnChains({
       name: 'SimpleToken',
-      constructorArgs: [ethers.parseUnits('1000000')],
+      constructorArgs: [ethers.parseUnits('1000000'), signers.deployer.address],
     });
 
     // Store contract instances for direct calls

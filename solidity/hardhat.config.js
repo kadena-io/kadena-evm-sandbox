@@ -25,7 +25,7 @@ module.exports = {
   },
   chainweb: {
     hardhat: {
-      chains: 2,
+      chains: 5,
     },
     sandbox: {
       type: 'external',

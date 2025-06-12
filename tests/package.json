@@ -3,7 +3,8 @@
   "private": true,
   "scripts": {
     "test": "bun test ./src",
-    "e2e": "bun test ./e2e --timeout 300000"
+    "e2e": "bun test ./e2e --timeout 300000",
+    "test-tx": "hardhat run ./scripts/send-basic-tx.mjs"
   },
   "devDependencies": {
     "@types/bun": "latest"

@@ -109,7 +109,11 @@ async function main() {
       const avgHeightsPerTrigger =
         Math.round(
           // use only oldest 5 heights to calculate the average
-          (last10intervalHeights.slice(0, 5).reduce((a, b) => a + b, 0) / 5) *
+          (Array.from(last10intervalHeights)
+            .sort((a, b) => b - a)
+            .slice(0, 5)
+            .reduce((a, b) => a + b, 0) /
+            5) *
             100
         ) / 100;
       maxRetryCount = Math.floor(98 / avgHeightsPerTrigger);

@@ -4,13 +4,30 @@ const config = {
   ),
   MINER_HOSTNAME: process.env.MINER_HOSTNAME ?? 'localhost',
   MINER_PORT: parseInt(process.env.MINER_PORT ?? '1917', 10),
-  CONSENSUS_CUT_ENDPOINT:
-    process.env.CONSENSUS_CUT_ENDPOINT ??
-    'http://localhost:1848/chainweb/0.0/evm-development/cut',
+  TRIGGERED_MINING: process.env.TRIGGERED_MINING
+    ? process.env.TRIGGERED_MINING.toLowerCase() === 'true'
+    : true, // default to true
+  CONTINUOUS_MINING: process.env.CONTINUOUS_MINING
+    ? process.env.CONTINUOUS_MINING.toLowerCase() === 'true'
+    : true, // default to true
+  CONSENSUS_ENDPOINT:
+    process.env.CONSENSUS_ENDPOINT ??
+    'http://localhost:1848/chainweb/0.0/evm-development',
   CHAINS: process.env.CHAINS
     ? process.env.CHAINS.split(',').map((c) => c.trim())
     : // default to chains 0-97 if not provided
       Array.from({ length: 98 }, (_, i) => i.toString()),
+};
+
+const getChainsFromEnv = (chains: string[]): Record<string, number> => {
+  if (!chains) {
+    return {};
+  }
+  return chains.reduce((acc, chain) => {
+    // 1 block per chain
+    acc[chain.toString()] = 1;
+    return acc;
+  }, {} as Record<string, number>);
 };
 
 /**
@@ -74,6 +91,135 @@ export async function makeBlocks(chainMap?: {
 async function main() {
   console.log(`${process.argv.join(' ')}`);
   console.log('Current config (can be passed as ENV vars):', config);
+
+  if (config.TRIGGERED_MINING === false) {
+    console.log('Triggered mining is disabled');
+  } else {
+    await startMiningTriggerListener().catch((error) => {
+      console.error('Error starting mining trigger listener:', error);
+      throw error;
+    });
+  }
+
+  if (config.CONTINUOUS_MINING === false) {
+    console.log('Continuous mining is disabled');
+  } else {
+    continuousMining().catch((error) => {
+      console.error('Error in continuous mining:', error);
+      throw error;
+    });
+  }
+}
+
+const errorCount = 0;
+
+main().catch((error) => {
+  console.error('Error in main function:', error);
+  if (errorCount < 5) {
+    console.error(`Retrying in 2 seconds... (Attempt ${errorCount + 1}/5)`);
+    setTimeout(main, 2000);
+  } else {
+    console.error('Max error count reached. Exiting...');
+    throw error;
+  }
+});
+
+async function getCutHeight() {
+  const response = await fetch(config.CONSENSUS_ENDPOINT + '/cut');
+  if (!response.ok) {
+    throw new Error(`Error fetching cut height: ${response.statusText}`);
+  }
+  const data = (await response.json()) as { instance: string; height: number };
+  return data.height;
+}
+
+function retry(
+  fn: () => Promise<number>,
+  { count, delay }: { count: number; delay: number }
+) {
+  return new Promise<number>((resolve, reject) => {
+    const attempt = async (n: number) => {
+      try {
+        const result = await fn();
+        resolve(result);
+      } catch (error) {
+        if (n === 1) {
+          reject(error);
+        } else {
+          console.log(`Retrying... (${count - n + 1}/${count})`);
+          console.error('Error:', error);
+          setTimeout(() => attempt(n - 1), delay);
+        }
+      }
+    };
+    attempt(count);
+  });
+}
+
+import net from 'net';
+
+async function startMiningTriggerListener() {
+  console.log('Starting mining trigger listener...');
+  console.log('Continuous mining for every 10 seconds is enabled.');
+  let miningTriggered = false;
+
+  const server = net.createServer((client) => {
+    client.on('data', (data) => {
+      const chainId = data
+        .toString()
+        .split('\r\n')
+        .find((line) => line.startsWith('X-Original-URI: '))
+        ?.match(/\/chain\/(\d+)\/evm\/rpc/)![1] as string;
+      const body = JSON.parse(data.toString().split('\r\n\r\n')[1] || '') as {
+        jsonrpc: string;
+        method: string;
+        params: any[];
+      };
+
+      const methods = ['eth_sendRawTransaction', 'eth_sendTransaction'];
+      if (methods.includes(body.method)) {
+        console.log(`Waiting 3 seconds...`);
+        miningTriggered = true;
+        setTimeout(() => {
+          miningTriggered = false;
+        }, 10000);
+        setTimeout(() => {
+          console.log(`Triggering mining for chain ${chainId}`);
+          makeBlocks({ [chainId]: 3 });
+        }, 3000);
+      } else {
+        console.log(
+          `   Received request for chain: ${chainId} (method: ${
+            body.method
+          }, params: ${JSON.stringify(body.params)})`
+        );
+      }
+      return client.end(
+        'HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\n\r\nMining triggered'
+      );
+    });
+  });
+
+  makeBlocks(getChainsFromEnv(config.CHAINS)).catch((error) => {
+    console.error('Error creating blocks:', error);
+  });
+  setInterval(() => {
+    if (!miningTriggered) {
+      console.log(
+        'No mining trigger received in the last 10 seconds, triggering mining...'
+      );
+      makeBlocks(getChainsFromEnv(config.CHAINS)).catch((error) => {
+        console.error('Error creating blocks:', error);
+      });
+    }
+  }, 10000);
+
+  server.listen(11848, () => {
+    console.log('Mining trigger listener started on port 11848');
+  });
+}
+
+async function continuousMining() {
   let intervalRef = null as NodeJS.Timeout | null;
   process.on('SIGINT', () => {
     console.log('SIGINT received, exiting...');
@@ -85,6 +231,7 @@ async function main() {
     } catch (error) {}
     process.exit(0);
   });
+
   try {
     let lastHeight = await retry(
       async () => {
@@ -154,59 +301,3 @@ async function main() {
     throw error;
   }
 }
-
-const errorCount = 0;
-
-main().catch((error) => {
-  console.error('Error in main function:', error);
-  if (errorCount < 5) {
-    console.error(`Retrying in 2 seconds... (Attempt ${errorCount + 1}/5)`);
-    setTimeout(main, 2000);
-  } else {
-    console.error('Max error count reached. Exiting...');
-    throw error;
-  }
-});
-
-async function getCutHeight() {
-  const response = await fetch(config.CONSENSUS_CUT_ENDPOINT);
-  if (!response.ok) {
-    throw new Error(`Error fetching cut height: ${response.statusText}`);
-  }
-  const data = (await response.json()) as { instance: string; height: number };
-  return data.height;
-}
-
-function retry(
-  fn: () => Promise<number>,
-  { count, delay }: { count: number; delay: number }
-) {
-  return new Promise<number>((resolve, reject) => {
-    const attempt = async (n: number) => {
-      try {
-        const result = await fn();
-        resolve(result);
-      } catch (error) {
-        if (n === 1) {
-          reject(error);
-        } else {
-          console.log(`Retrying... (${count - n + 1}/${count})`);
-          console.error('Error:', error);
-          setTimeout(() => attempt(n - 1), delay);
-        }
-      }
-    };
-    attempt(count);
-  });
-}
-
-const getChainsFromEnv = (chains: string[]): Record<string, number> => {
-  if (!chains) {
-    return {};
-  }
-  return chains.reduce((acc, chain) => {
-    // 1 block per chain
-    acc[chain.toString()] = 1;
-    return acc;
-  }, {} as Record<string, number>);
-};

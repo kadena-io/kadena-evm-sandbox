@@ -98,7 +98,7 @@ async function main() {
     await makeBlocks(getChainsFromEnv(config.CHAINS));
     let expectedCutHeight = lastHeight + 98; // 98 chains, 1 block each
     let retryCount = 0;
-    let maxRetryCount = Infinity;
+    let maxRetryCount = 20;
 
     intervalRef = setInterval(async () => {
       const newCutHeight = await getCutHeight();
@@ -107,7 +107,7 @@ async function main() {
         last10intervalHeights.shift(); // keep only the last 10 heights
       }
       const avgHeightsPerTrigger =
-        Math.round(
+        Math.ceil(
           // use only oldest 5 heights to calculate the average
           (Array.from(last10intervalHeights)
             .sort((a, b) => b - a)
@@ -116,7 +116,7 @@ async function main() {
             5) *
             100
         ) / 100;
-      maxRetryCount = Math.floor(98 / avgHeightsPerTrigger);
+      maxRetryCount = Math.ceil(98 / avgHeightsPerTrigger);
 
       lastHeight = newCutHeight;
       if (
@@ -127,7 +127,7 @@ async function main() {
         retryCount++;
         console.log(
           `    ${lastHeight} < ${expectedCutHeight} (try: ${retryCount}/${maxRetryCount}, avg: ${avgHeightsPerTrigger}, dynamic retry: ${
-            Math.floor((98 / avgHeightsPerTrigger) * 10) / 10
+            Math.ceil((98 / avgHeightsPerTrigger) * 10) / 10
           })`
         );
         if (retryCount <= maxRetryCount) return;

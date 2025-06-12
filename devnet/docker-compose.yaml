@@ -508,9 +508,11 @@ services:
         - index.ts
         environment:
             CHAINS: '20'
-            CONSENSUS_CUT_ENDPOINT: http://bootnode-consensus:1848/chainweb/0.0/evm-development/cut
+            CONSENSUS_ENDPOINT: http://bootnode-consensus:1848/chainweb/0.0/evm-development
             MINER_HOSTNAME: bootnode-mining-client
             MINER_PORT: '1917'
+            CONTINUOUS_MINING: false
+            TRIGGERED_MINING: true
         hostname: bootnode-mining-trigger
         image: oven/bun:latest
         networks:

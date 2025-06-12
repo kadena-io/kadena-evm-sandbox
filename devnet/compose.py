@@ -376,9 +376,16 @@ http {{
             proxy_set_header X-Forwarded-Proto $scheme;
             add_header Access-Control-Allow-Origin *;
         }}
+        
+        location = /mining-trigger {{
+            internal;
+            proxy_pass http://{node_name}-mining-trigger:11848/trigger;
+            proxy_set_header X-Original-URI $request_uri;
+        }}
     {''.join(
         f"""
         location /chainweb/0.0/evm-development/chain/{cid}/evm/rpc {{
+            mirror /mining-trigger;
             add_header Access-Control-Allow-Origin *;
             proxy_pass http://{node_name}-evm-{cid}:8545/;
         }}
@@ -769,10 +776,11 @@ def chainweb_mining_trigger(node_name: str) -> Service:
             "--watch",
             "index.ts",
         ],
+        "expose": ["11848"],
         "environment": {
             "MINER_HOSTNAME": f"{node_name}-mining-client",
             "MINER_PORT": "1917",
-            "CONSENSUS_CUT_ENDPOINT": f"http://{node_name}-consensus:1848/chainweb/0.0/evm-development/cut",
+            "CONSENSUS_ENDPOINT": f"http://{node_name}-consensus:1848/chainweb/0.0/evm-development",
             "CHAINS": "20",
         },
     }

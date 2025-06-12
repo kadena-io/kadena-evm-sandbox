@@ -439,11 +439,11 @@ describe("SimpleToken Unit Tests", async function () {
         // Token0 is deployed on chain 0
         // Token1 is deployed on chain 1
         // getChainwebChainId() should return the correct chain id for each token, regardless of the current network
-        expect(await token0.getChainwebChainId()).to.equal(0n);
-        expect(await token1.getChainwebChainId()).to.equal(1n);
+        expect(await token0.getChainwebChainId()).to.equal(20n);
+        expect(await token1.getChainwebChainId()).to.equal(21n);
         await switchNetwork(token1Info.network.name);
-        expect(await token1.getChainwebChainId()).to.equal(1n);
-        expect(await token0.getChainwebChainId()).to.equal(0n);
+        expect(await token1.getChainwebChainId()).to.equal(21n);
+        expect(await token0.getChainwebChainId()).to.equal(20n);
       });
     }); // End of Success Test Cases
   }); // End of getChainwebChainId

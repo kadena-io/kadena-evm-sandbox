@@ -169,6 +169,8 @@ services:
         - --disable-dns-discovery
         - --discovery.port=30323
         - --chain=/config/chain-spec.json
+        - --engine.persistence-threshold=0
+        - --engine.memory-block-buffer-target=0
         - --p2p-secret-key=/run/secrets/p2p-secret
         environment:
         - CHAINWEB_CHAIN_ID=20
@@ -180,7 +182,7 @@ services:
         - 30323/tcp
         - 30323/udp
         hostname: bootnode-evm-20
-        image: ${EVM_IMAGE:-ghcr.io/kadena-io/kadena-reth:sha-65cc961}
+        image: ${EVM_IMAGE:-ghcr.io/kadena-io/kadena-reth:edmund-persistent-payload-jobs}
         networks:
             bootnode-internal: null
             p2p: null
@@ -229,6 +231,8 @@ services:
         - --disable-dns-discovery
         - --discovery.port=30324
         - --chain=/config/chain-spec.json
+        - --engine.persistence-threshold=0
+        - --engine.memory-block-buffer-target=0
         - --p2p-secret-key=/run/secrets/p2p-secret
         environment:
         - CHAINWEB_CHAIN_ID=21
@@ -240,7 +244,7 @@ services:
         - 30324/tcp
         - 30324/udp
         hostname: bootnode-evm-21
-        image: ${EVM_IMAGE:-ghcr.io/kadena-io/kadena-reth:sha-65cc961}
+        image: ${EVM_IMAGE:-ghcr.io/kadena-io/kadena-reth:edmund-persistent-payload-jobs}
         networks:
             bootnode-internal: null
             p2p: null
@@ -289,6 +293,8 @@ services:
         - --disable-dns-discovery
         - --discovery.port=30325
         - --chain=/config/chain-spec.json
+        - --engine.persistence-threshold=0
+        - --engine.memory-block-buffer-target=0
         - --p2p-secret-key=/run/secrets/p2p-secret
         environment:
         - CHAINWEB_CHAIN_ID=22
@@ -300,7 +306,7 @@ services:
         - 30325/tcp
         - 30325/udp
         hostname: bootnode-evm-22
-        image: ${EVM_IMAGE:-ghcr.io/kadena-io/kadena-reth:sha-65cc961}
+        image: ${EVM_IMAGE:-ghcr.io/kadena-io/kadena-reth:edmund-persistent-payload-jobs}
         networks:
             bootnode-internal: null
             p2p: null
@@ -349,6 +355,8 @@ services:
         - --disable-dns-discovery
         - --discovery.port=30326
         - --chain=/config/chain-spec.json
+        - --engine.persistence-threshold=0
+        - --engine.memory-block-buffer-target=0
         - --p2p-secret-key=/run/secrets/p2p-secret
         environment:
         - CHAINWEB_CHAIN_ID=23
@@ -360,7 +368,7 @@ services:
         - 30326/tcp
         - 30326/udp
         hostname: bootnode-evm-23
-        image: ${EVM_IMAGE:-ghcr.io/kadena-io/kadena-reth:sha-65cc961}
+        image: ${EVM_IMAGE:-ghcr.io/kadena-io/kadena-reth:edmund-persistent-payload-jobs}
         networks:
             bootnode-internal: null
             p2p: null
@@ -409,6 +417,8 @@ services:
         - --disable-dns-discovery
         - --discovery.port=30327
         - --chain=/config/chain-spec.json
+        - --engine.persistence-threshold=0
+        - --engine.memory-block-buffer-target=0
         - --p2p-secret-key=/run/secrets/p2p-secret
         environment:
         - CHAINWEB_CHAIN_ID=24
@@ -420,7 +430,7 @@ services:
         - 30327/tcp
         - 30327/udp
         hostname: bootnode-evm-24
-        image: ${EVM_IMAGE:-ghcr.io/kadena-io/kadena-reth:sha-65cc961}
+        image: ${EVM_IMAGE:-ghcr.io/kadena-io/kadena-reth:edmund-persistent-payload-jobs}
         networks:
             bootnode-internal: null
             p2p: null
@@ -507,12 +517,17 @@ services:
         - --watch
         - index.ts
         environment:
-            CHAINS: '20'
+            CHAINS: ${CHAINS:-20}
             CONSENSUS_ENDPOINT: http://bootnode-consensus:1848/chainweb/0.0/evm-development
+            CONTINUOUS_INTERVAL: ${CONTINUOUS_INTERVAL:-10000}
             MINER_HOSTNAME: bootnode-mining-client
-            MINER_PORT: '1917'
-            CONTINUOUS_MINING: false
-            TRIGGERED_MINING: true
+            MINING_CONFIRMATION_PERIOD: ${MINING_CONFIRMATION_PERIOD:-12}
+            MINING_MODE: ${MINING_MODE:-triggered}
+            MINING_PORT: '1917'
+            TRIGGER_BLOCK_COUNT: ${TRIGGER_BLOCK_COUNT:-1}
+            TRIGGER_PORT: '11848'
+        expose:
+        - '11848'
         hostname: bootnode-mining-trigger
         image: oven/bun:latest
         networks:

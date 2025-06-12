@@ -1,0 +1,97 @@
+
+<script src="https://cdn.jsdelivr.net/npm/@webcomponents/webcomponentsjs@2/webcomponents-loader.min.js"></script>
+<script type="module" src="https://cdn.jsdelivr.net/gh/zerodevx/zero-md@1/src/zero-md.min.js"></script>
+<zero-md>
+    <script type="text/markdown">
+    # Nginx proxy
+
+    This proxy provides a reverse proxy for the Kadena EVM development network.
+    It allows you to access the EVM development network via a single endpoint.
+
+    ## Usage
+    You can access the EVM development network via the following URL:
+    ```
+    <current-host>/chainweb/0.0/evm-development/
+    <current-host>/chainweb/0.0/evm-development/chain/{cid}/evm/rpc
+    <current-host>/chainweb/0.0/evm-development/chain/{cid}/pact/api/v1
+    ```
+
+    ## Links
+    - [/chainweb/0.0/evm-development/cut](http://localhost:1848/chainweb/0.0/evm-development/cut)
+    - [/chainweb/0.0/evm-development/chain/0/pact/api/v1](http://localhost:1848/chainweb/0.0/evm-development/chain/0/pact/api/v1)
+    - [/chainweb/0.0/evm-development/chain/20/evm/rpc](http://localhost:1848/chainweb/0.0/evm-development/chain/20/evm/rpc)
+
+    ## Endpoints
+    The following endpoints are available. They all start with prefix
+    `http://localhost:1848/chainweb/0.0/evm-development/`:
+
+    - [Consensus API /cut](http://localhost:1848/chainweb/0.0/evm-development/cut)
+
+    </script>
+</zero-md>
+
+<details>
+<summary>Pact API</summary>
+    <zero-md>
+    <script type="text/markdown">
+- [Pact API <prefix>/chain/0/pact/api/v1](http://localhost:1848/chainweb/0.0/evm-development/chain/0/pact/api/v1)
+- [Pact API <prefix>/chain/1/pact/api/v1](http://localhost:1848/chainweb/0.0/evm-development/chain/1/pact/api/v1)
+- [Pact API <prefix>/chain/2/pact/api/v1](http://localhost:1848/chainweb/0.0/evm-development/chain/2/pact/api/v1)
+- [Pact API <prefix>/chain/3/pact/api/v1](http://localhost:1848/chainweb/0.0/evm-development/chain/3/pact/api/v1)
+- [Pact API <prefix>/chain/4/pact/api/v1](http://localhost:1848/chainweb/0.0/evm-development/chain/4/pact/api/v1)
+- [Pact API <prefix>/chain/5/pact/api/v1](http://localhost:1848/chainweb/0.0/evm-development/chain/5/pact/api/v1)
+- [Pact API <prefix>/chain/6/pact/api/v1](http://localhost:1848/chainweb/0.0/evm-development/chain/6/pact/api/v1)
+- [Pact API <prefix>/chain/7/pact/api/v1](http://localhost:1848/chainweb/0.0/evm-development/chain/7/pact/api/v1)
+- [Pact API <prefix>/chain/8/pact/api/v1](http://localhost:1848/chainweb/0.0/evm-development/chain/8/pact/api/v1)
+- [Pact API <prefix>/chain/9/pact/api/v1](http://localhost:1848/chainweb/0.0/evm-development/chain/9/pact/api/v1)
+- [Pact API <prefix>/chain/10/pact/api/v1](http://localhost:1848/chainweb/0.0/evm-development/chain/10/pact/api/v1)
+- [Pact API <prefix>/chain/11/pact/api/v1](http://localhost:1848/chainweb/0.0/evm-development/chain/11/pact/api/v1)
+- [Pact API <prefix>/chain/12/pact/api/v1](http://localhost:1848/chainweb/0.0/evm-development/chain/12/pact/api/v1)
+- [Pact API <prefix>/chain/13/pact/api/v1](http://localhost:1848/chainweb/0.0/evm-development/chain/13/pact/api/v1)
+- [Pact API <prefix>/chain/14/pact/api/v1](http://localhost:1848/chainweb/0.0/evm-development/chain/14/pact/api/v1)
+- [Pact API <prefix>/chain/15/pact/api/v1](http://localhost:1848/chainweb/0.0/evm-development/chain/15/pact/api/v1)
+- [Pact API <prefix>/chain/16/pact/api/v1](http://localhost:1848/chainweb/0.0/evm-development/chain/16/pact/api/v1)
+- [Pact API <prefix>/chain/17/pact/api/v1](http://localhost:1848/chainweb/0.0/evm-development/chain/17/pact/api/v1)
+- [Pact API <prefix>/chain/18/pact/api/v1](http://localhost:1848/chainweb/0.0/evm-development/chain/18/pact/api/v1)
+- [Pact API <prefix>/chain/19/pact/api/v1](http://localhost:1848/chainweb/0.0/evm-development/chain/19/pact/api/v1)
+
+        </script>
+    </zero-md>
+</details>
+<details>
+    <summary>EVM RPC</summary>
+    <zero-md>
+        <script type="text/markdown">
+    - [EVM RPC <prefix>/chain/20/evm/rpc](http://localhost:1848/chainweb/0.0/evm-development/chain/20/evm/rpc)
+- [EVM RPC <prefix>/chain/24/evm/rpc](http://localhost:1848/chainweb/0.0/evm-development/chain/24/evm/rpc)
+
+        </script>
+    </zero-md>
+</details>
+
+<zero-md>
+    <script type="text/markdown">
+## Hardhat config
+```
+{
+  "chainweb": {
+    "devnet": {
+      "chains": 2,
+      "type": "external",
+      "chainwebChainIdOffset": 20,
+      "chainIdOffset": 1789,
+      "accounts": [
+        "0xe711c50150f500fdebec57e5c299518c2f7b36271c138c55759e5b4515dc7161",
+        "0xb332ddc4e0801582e154d10cad8b672665656cbf0097f2b47483c0cfe3261299",
+        "0x28536b3ec112d99faeceb6cfaccd4b2b920fcb7cd6689ed3b2f842142ce196cb",
+        "0x9ff14f986d2e7c49c6b1f598aa55b8d79adfebb3e1c094abad8bd515ddcb1d6a",
+        "0x14fcd41cf1adc5ac71e1da6e8463a293520be53a1a0059d9730a01fc5aee5cb2"
+      ],
+      "externalHostUrl": "http://localhost:1848/chainweb/0.0/evm-development/"
+    }
+  }
+}
+```
+</script>
+</zero-md>
+    

@@ -1,0 +1,93 @@
+chainweb:
+  payloadProviders:
+    chain-0:
+      miner: &id001
+        account: NoMiner
+        predicate: <
+        public-keys: []
+      type: pact
+    chain-1:
+      miner: *id001
+      type: pact
+    chain-10:
+      miner: *id001
+      type: pact
+    chain-11:
+      miner: *id001
+      type: pact
+    chain-12:
+      miner: *id001
+      type: pact
+    chain-13:
+      miner: *id001
+      type: pact
+    chain-14:
+      miner: *id001
+      type: pact
+    chain-15:
+      miner: *id001
+      type: pact
+    chain-16:
+      miner: *id001
+      type: pact
+    chain-17:
+      miner: *id001
+      type: pact
+    chain-18:
+      miner: *id001
+      type: pact
+    chain-19:
+      miner: *id001
+      type: pact
+    chain-2:
+      miner: *id001
+      type: pact
+    chain-20:
+      engineJwtSecret: 10b45e8907ab12dd750f688733e73cf433afadfd2f270e5b75a6b8fff22dd352
+      engineUri: http://miner-2-evm-20:8551/
+      minerAddress: '0xd42d71cdc2A0a78fE7fBE7236c19925f62C442bA'
+      type: evm
+    chain-21:
+      engineJwtSecret: 10b45e8907ab12dd750f688733e73cf433afadfd2f270e5b75a6b8fff22dd352
+      engineUri: http://miner-2-evm-21:8551/
+      minerAddress: '0xd42d71cdc2A0a78fE7fBE7236c19925f62C442bA'
+      type: evm
+    chain-22:
+      engineJwtSecret: 10b45e8907ab12dd750f688733e73cf433afadfd2f270e5b75a6b8fff22dd352
+      engineUri: http://miner-2-evm-22:8551/
+      minerAddress: '0xd42d71cdc2A0a78fE7fBE7236c19925f62C442bA'
+      type: evm
+    chain-23:
+      engineJwtSecret: 10b45e8907ab12dd750f688733e73cf433afadfd2f270e5b75a6b8fff22dd352
+      engineUri: http://miner-2-evm-23:8551/
+      minerAddress: '0xd42d71cdc2A0a78fE7fBE7236c19925f62C442bA'
+      type: evm
+    chain-24:
+      engineJwtSecret: 10b45e8907ab12dd750f688733e73cf433afadfd2f270e5b75a6b8fff22dd352
+      engineUri: http://miner-2-evm-24:8551/
+      minerAddress: '0xd42d71cdc2A0a78fE7fBE7236c19925f62C442bA'
+      type: evm
+    chain-3:
+      miner: *id001
+      type: pact
+    chain-4:
+      miner: *id001
+      type: pact
+    chain-5:
+      miner: *id001
+      type: pact
+    chain-6:
+      miner: *id001
+      type: pact
+    chain-7:
+      miner: *id001
+      type: pact
+    chain-8:
+      miner: *id001
+      type: pact
+    chain-9:
+      miner: *id001
+      type: pact
+    default:
+      redeemAccount: '0xd42d71cdc2A0a78fE7fBE7236c19925f62C442bA'
+      redeemChain: 0

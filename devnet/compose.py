@@ -690,6 +690,9 @@ def evm_chain(
             f"--discovery.port={30303 + cid}",
             # chainweb
             "--chain=/config/chain-spec.json",
+            "--engine.experimental",
+            "--engine.persistence-threshold=0",
+            "--engine.memory-block-buffer-target=0"
         ],
         "environment": [f"CHAINWEB_CHAIN_ID={cid}"],
         "ports": [],

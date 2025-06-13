@@ -1,7 +1,15 @@
 const { expect } = require("chai");
-const { ethers, network, switchNetwork } = require("hardhat");
+const { ethers, chainweb, network, switchNetwork } = require("hardhat");
 const { ZeroAddress } = require("ethers");
-const { getSigners, deployContracts, authorizeContracts, initCrossChain, computeOriginHash, requestSpvProof, CrossChainOperation, createTamperedProof, redeemCrossChain, deployMocks } = require("./utils/utils");
+const { getSigners, authorizeContracts, initCrossChain, computeOriginHash, CrossChainOperation, createTamperedProof, redeemCrossChain, deployMocks } = require("./utils/utils");
+const {
+  deployContractOnChains,
+  //computeOriginHash,
+  requestSpvProof,
+  //createTamperedProof,
+  switchChain,
+  getChainIds,
+} = chainweb;
 
 describe("SimpleToken Unit Tests", async function () {
   let signers;
@@ -13,17 +21,26 @@ describe("SimpleToken Unit Tests", async function () {
   let amount;
 
   beforeEach(async function () {
+    // switchChain() or switchNetwork("chain name") can be used to switch to a different chain
+    const chains = await getChainIds();
+    await switchChain(chains[0]);
     signers = await getSigners();
-    const deployed = await deployContracts();
+
+    const deployed = await deployContractOnChains({
+      name: 'SimpleToken',
+      constructorArgs: [ethers.parseUnits('1000000'), signers.deployer.address],
+    });
+
+    console.log("deployed in beforeEach", deployed);
 
     // Store contract instances for direct calls
-    token0 = deployed.tokens[0].contract;
-    token1 = deployed.tokens[1].contract;
+    token0 = deployed.deployments[0].contract;
+    token1 = deployed.deployments[1].contract;
 
     // Keep deployment info accessible when needed
-    token0Info = deployed.tokens[0];
-    token1Info = deployed.tokens[1];
-    await switchNetwork(token0Info.network.name);
+    token0Info = deployed.deployments[0];
+    token1Info = deployed.deployments[1];
+    await switchChain(token0Info.chain);
   });
 
   context("Deployment and Initialization", async function () {
@@ -307,13 +324,24 @@ describe("SimpleToken Unit Tests", async function () {
       let mockToken1Info;
 
       beforeEach(async function () {
-        const mocks = await deployMocks();
-        mockToken0 = mocks.tokens[0].contract;
-        mockToken1 = mocks.tokens[1].contract;
+        // switchChain() or switchNetwork("chain name") can be used to switch to a different chain
+        const chains = await getChainIds();
+        await switchChain(chains[0]);
+        signers = await getSigners();
+
+        const deployed = await deployContractOnChains({
+          name: 'WrongOperationTypeToken',
+          constructorArgs: [ethers.parseUnits('1000000')],
+        });
+
+        console.log("deployed in Error Test Cases beforeEach", deployed);
+
+        mockToken0 = deployed.deployments[0].contract;
+        mockToken1 = deployed.deployments[1].contract;
 
         // Keep deployment info accessible when needed
-        mockToken0Info = mocks.tokens[0];
-        mockToken1Info = mocks.tokens[1];
+        mockToken0Info =  deployed.deployments[0];
+        mockToken1Info =  deployed.deployments[1];
 
         await authorizeContracts(mockToken0, mockToken0Info, [mockToken0Info, mockToken1Info]);
         await authorizeContracts(mockToken1, mockToken1Info, [mockToken0Info, mockToken1Info]);
@@ -340,7 +368,7 @@ describe("SimpleToken Unit Tests", async function () {
 
         // Deploy a new token contract on chain1
         const factory = await ethers.getContractFactory("SimpleToken");
-        const token2 = await factory.deploy(ethers.parseEther("1000000"));
+        const token2 = await factory.deploy(ethers.parseEther("1000000"), signers.deployer.address);
         const deploymentTx = token2.deploymentTransaction()
         await deploymentTx.wait();
 

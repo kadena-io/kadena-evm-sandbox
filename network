@@ -97,6 +97,7 @@ function blockscout-help () {
     echo -e "  ${B}blockscout pull${R}   pull container images for all blockscout services"
     echo -e "  ${B}blockscout start${R}  start block scope instances for the EVM chains"
     echo -e "  ${B}blockscout stop${R}   stop block scope instances for the EVM chains"
+    echo -e "  ${B}blockscout help${R}   see all available commands and options"
     echo -e "  (The UIs are served at http://chain-20.evm.kadena.local:8000 and  http://chain-21.evm.kadena.local:8000 and so on)"
 }
 
@@ -107,6 +108,7 @@ function devnet-help () {
     echo -e "  ${B}devnet stop|down${R}       shutdown the network and reset all database"
     echo -e "  ${B}devnet allocations${R}     print information about pre-allocated wallets"
     echo -e "  ${B}devnet state|status${R}    print lastest consensus state for all chains in the network"
+    echo -e "  ${B}devnet summary${R}         print summary of the consensus state for all nodes in the network"
     echo -e "  ${B}devnet restart${R}         restart the chainweb-node service"
     echo -e "  ${B}devnet ports${R}           show ports of available services"
     echo -e "  ${B}devnet height-details${R}  return detailed information for a given block height or 'latest' in JSON"
@@ -210,7 +212,7 @@ function devnet () {
             shift
             (
                 cd "$NETWORK_DIR" && 
-                docker compose restart chainweb-node
+                docker compose restart bootnode-consensus
             )
             ;;
         state|status)
@@ -218,6 +220,13 @@ function devnet () {
             (
                 cd "$NETWORK_DIR" && 
                 bash state.sh
+            )
+            ;;
+        summary)
+            shift
+            (
+                cd "$NETWORK_DIR" && 
+                docker compose run --rm debug -c "./cuts.py --summary" | jq
             )
             ;;
         allocations)
@@ -231,7 +240,7 @@ function devnet () {
             shift
             (
                 cd "$NETWORK_DIR" && 
-                docker compose run -ti --rm curl -skL https://chainweb-node:1789/config | jq -rC '.payloadProviders'
+                docker compose run -ti --rm curl -skL https://bootnode-consensus:1789/config | jq -rC '.payloadProviders'
             )
             ;;
         ports)

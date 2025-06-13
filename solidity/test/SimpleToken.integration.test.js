@@ -8,7 +8,7 @@ const {
   getSigners,
 } = require('./utils/utils');
 
-const { requestSpvProof, switchChain, deployContractOnChains } = chainweb;
+const { requestSpvProof, switchChain, deployContractOnChains, getChainIds } = chainweb;
 
 describe('SimpleToken Integration Tests', async function () {
   let signers;

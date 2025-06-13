@@ -15,8 +15,13 @@ import yaml
 from secp256k1 import PrivateKey
 from typing import TypedDict, Any
 
-DEFAULT_CHAINWEB_NODE_IMAGE = "ghcr.io/kadena-io/chainweb-node:sha-55de105"
-DEFAULT_EVM_IMAGE = "ghcr.io/kadena-io/kadena-reth:lars-kadena-chains"
+# Previous images. I don't know whether those also have the persistent payload jobs
+# Switch these if issues arise with the current images.
+# DEFAULT_CHAINWEB_NODE_IMAGE = "ghcr.io/kadena-io/chainweb-node:sha-5ed0db4"
+# DEFAULT_EVM_IMAGE = "ghcr.io/kadena-io/kadena-reth:sha-65cc961"
+
+DEFAULT_CHAINWEB_NODE_IMAGE = "ghcr.io/kadena-io/chainweb-node:sha-4a0d634"
+DEFAULT_EVM_IMAGE = "ghcr.io/kadena-io/kadena-reth:edmund-persistent-payload-jobs"
 
 # #############################################################################
 # BOILERPLATE
@@ -152,26 +157,37 @@ def jwtsecret_config(project_name, node_name: str, update: bool = False) -> None
 
 def payload_provider_config(
     project_name: str,
-    node_name: str, 
-    evm_chains: list[int], 
+    mining_node: bool,
+    node_name: str,
+    evm_chains: list[int],
     pact_chains: list[int]
 ) -> None:
     config = {
         "chainweb": {
             "payloadProviders": {
-                f"chain-{cid}": {
+                f"chain-{cid}":
+                    {
                     "type": "evm",
                     "engineUri": f"http://{node_name}-evm-{cid}:8551/",
-                    "minerAddress": f"{evmMinerAddress}",
                     "engineJwtSecret": f"{jwtsecret}",
-                }
+                    }
+                    |
+                    ({
+                    "minerAddress": f"{evmMinerAddress}",
+                    }
+                    if mining_node else {})
                 for cid in evm_chains
             }
             | {
-                f"chain-{cid}": {
+                f"chain-{cid}":
+                    {
                     "type": "pact",
+                    }
+                    |
+                    ({
                     "miner": defaultPactMiner,
-                }
+                    }
+                    if mining_node else {})
                 for cid in pact_chains
             }
             | {
@@ -248,7 +264,7 @@ def nginx_index_html(project_name, node_name, evm_cids, port=1848):
 
     This proxy provides a reverse proxy for the Kadena EVM development network.
     It allows you to access the EVM development network via a single endpoint.
-    
+
     ## Usage
     You can access the EVM development network via the following URL:
     ```
@@ -306,7 +322,7 @@ def nginx_index_html(project_name, node_name, evm_cids, port=1848):
                 "type": 'external',
                 "chainwebChainIdOffset": 20,
                 "chainIdOffset": 1789,
-                "accounts": [ 
+                "accounts": [
                     "0xe711c50150f500fdebec57e5c299518c2f7b36271c138c55759e5b4515dc7161",
                     "0xb332ddc4e0801582e154d10cad8b672665656cbf0097f2b47483c0cfe3261299",
                     "0x28536b3ec112d99faeceb6cfaccd4b2b920fcb7cd6689ed3b2f842142ce196cb",
@@ -317,7 +333,7 @@ def nginx_index_html(project_name, node_name, evm_cids, port=1848):
             },
         },
     }, indent=2)
-} 
+}
 ```
 </script>
 </zero-md>
@@ -342,9 +358,11 @@ def nginx_proxy_config(project_name, node_name, evm_cids):
         f.write(
             f"""
 worker_processes 1;
+
 events {{
     worker_connections 1024;
 }}
+
 http {{
     include       mime.types;
     default_type  application/octet-stream;
@@ -376,13 +394,30 @@ http {{
             proxy_set_header X-Forwarded-Proto $scheme;
             add_header Access-Control-Allow-Origin *;
         }}
-    {''.join(
+        
+        location = /mining-trigger {{
+            internal;
+            proxy_pass http://{node_name}-mining-trigger:11848/trigger;
+            proxy_set_header X-Original-URI $request_uri;
+        }}
+{''.join(
         f"""
         location /chainweb/0.0/evm-development/chain/{cid}/evm/rpc {{
+            mirror /mining-trigger;
             add_header Access-Control-Allow-Origin *;
             proxy_pass http://{node_name}-evm-{cid}:8545/;
         }}
-        """
+
+        location /chainweb/0.0/evm-development/chain/{cid}/evm/ws {{
+            add_header Access-Control-Allow-Origin *;
+            proxy_pass http://{node_name}-evm-{cid}:8546/;
+            proxy_set_header Upgrade $http_upgrade;
+            proxy_set_header Connection "upgrade";
+            proxy_set_header Host $host;
+            proxy_http_version 1.1;
+            proxy_read_timeout 86400; 
+        }}
+"""
         for cid in evm_cids
     )}
     }}
@@ -679,6 +714,8 @@ def evm_chain(
             f"--discovery.port={30303 + cid}",
             # chainweb
             "--chain=/config/chain-spec.json",
+            "--engine.persistence-threshold=0",
+            "--engine.memory-block-buffer-target=0"
         ],
         "environment": [f"CHAINWEB_CHAIN_ID={cid}"],
         "ports": [],
@@ -769,11 +806,16 @@ def chainweb_mining_trigger(node_name: str) -> Service:
             "--watch",
             "index.ts",
         ],
+        "expose": ["11848"],
         "environment": {
+            "MINING_MODE": "${MINING_MODE:-triggered}",
             "MINER_HOSTNAME": f"{node_name}-mining-client",
-            "MINER_PORT": "1917",
-            "CONSENSUS_CUT_ENDPOINT": f"http://{node_name}-consensus:1848/chainweb/0.0/evm-development/cut",
-            "CHAINS": "20",
+            "MINING_PORT": "1917",
+            "CONSENSUS_ENDPOINT": f"http://{node_name}-consensus:1848/chainweb/0.0/evm-development",
+            "CHAINS": "${CHAINS:-20}",
+            "TRIGGER_PORT": "11848",
+            "TRIGGER_BLOCK_COUNT": "${TRIGGER_BLOCK_COUNT:-1}",
+            "CONTINUOUS_INTERVAL": "${CONTINUOUS_INTERVAL:-20000}",
         },
     }
 
@@ -891,10 +933,10 @@ def chainweb_node(
     exposed: bool = False,
 ) -> Spec:
     jwtsecret_config(project_name, node_name)
-    payload_provider_config(project_name, node_name, evm_cids, pact_cids)
+    payload_provider_config(project_name, mining_mode is not None, node_name, evm_cids, pact_cids)
     cdir = config_dir(project_name, node_name)
 
-   
+
     # EVM bootnodes for each EVM chain:
     def boot_enodes(cid: int) -> list[str]:
         bdir = config_dir(project_name, "bootnode")
@@ -1232,6 +1274,9 @@ def kadena_dev_singleton_evm_project(update_secrets: bool = False) -> Spec:
         specs["services"][f"{n}-consensus"]["entrypoint"] += [
             "--chainweb-version=evm-development-singleton",
         ]
+
+    # FIXME: the chainspec file contains the wrong chainweb chain ID in the
+    # chainweb-chain-id system contract.
     return specs
 
 

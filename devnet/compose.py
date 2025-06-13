@@ -358,9 +358,11 @@ def nginx_proxy_config(project_name, node_name, evm_cids):
         f.write(
             f"""
 worker_processes 1;
+
 events {{
     worker_connections 1024;
 }}
+
 http {{
     include       mime.types;
     default_type  application/octet-stream;
@@ -398,14 +400,24 @@ http {{
             proxy_pass http://{node_name}-mining-trigger:11848/trigger;
             proxy_set_header X-Original-URI $request_uri;
         }}
-    {''.join(
+{''.join(
         f"""
         location /chainweb/0.0/evm-development/chain/{cid}/evm/rpc {{
             mirror /mining-trigger;
             add_header Access-Control-Allow-Origin *;
             proxy_pass http://{node_name}-evm-{cid}:8545/;
         }}
-        """
+
+        location /chainweb/0.0/evm-development/chain/{cid}/evm/ws {{
+            add_header Access-Control-Allow-Origin *;
+            proxy_pass http://{node_name}-evm-{cid}:8546/;
+            proxy_set_header Upgrade $http_upgrade;
+            proxy_set_header Connection "upgrade";
+            proxy_set_header Host $host;
+            proxy_http_version 1.1;
+            proxy_read_timeout 86400; 
+        }}
+"""
         for cid in evm_cids
     )}
     }}
@@ -803,7 +815,7 @@ def chainweb_mining_trigger(node_name: str) -> Service:
             "CHAINS": "${CHAINS:-20}",
             "TRIGGER_PORT": "11848",
             "TRIGGER_BLOCK_COUNT": "${TRIGGER_BLOCK_COUNT:-1}",
-            "CONTINUOUS_INTERVAL": "${CONTINUOUS_INTERVAL:-10000}",
+            "CONTINUOUS_INTERVAL": "${CONTINUOUS_INTERVAL:-20000}",
         },
     }
 

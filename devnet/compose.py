@@ -15,13 +15,8 @@ import yaml
 from secp256k1 import PrivateKey
 from typing import TypedDict, Any
 
-# Previous images. I don't know whether those also have the persistent payload jobs
-# Switch these if issues arise with the current images.
-# DEFAULT_CHAINWEB_NODE_IMAGE = "ghcr.io/kadena-io/chainweb-node:sha-5ed0db4"
-# DEFAULT_EVM_IMAGE = "ghcr.io/kadena-io/kadena-reth:sha-65cc961"
-
 DEFAULT_CHAINWEB_NODE_IMAGE = "ghcr.io/kadena-io/chainweb-node:sha-4a0d634"
-DEFAULT_EVM_IMAGE = "ghcr.io/kadena-io/kadena-reth:edmund-persistent-payload-jobs"
+DEFAULT_EVM_IMAGE = "ghcr.io/kadena-io/kadena-reth:sha-f999856"
 
 # #############################################################################
 # BOILERPLATE

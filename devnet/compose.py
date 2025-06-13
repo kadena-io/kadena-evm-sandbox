@@ -15,8 +15,13 @@ import yaml
 from secp256k1 import PrivateKey
 from typing import TypedDict, Any
 
-DEFAULT_CHAINWEB_NODE_IMAGE = "ghcr.io/kadena-io/chainweb-node:sha-5ed0db4"
-DEFAULT_EVM_IMAGE = "ghcr.io/kadena-io/kadena-reth:sha-f999856"
+# Previous images. I don't know whether those also have the persistent payload jobs
+# Switch these if issues arise with the current images.
+# DEFAULT_CHAINWEB_NODE_IMAGE = "ghcr.io/kadena-io/chainweb-node:sha-5ed0db4"
+# DEFAULT_EVM_IMAGE = "ghcr.io/kadena-io/kadena-reth:sha-65cc961"
+
+DEFAULT_CHAINWEB_NODE_IMAGE = "ghcr.io/kadena-io/chainweb-node:sha-4a0d634"
+DEFAULT_EVM_IMAGE = "ghcr.io/kadena-io/kadena-reth:edmund-persistent-payload-jobs"
 
 # #############################################################################
 # BOILERPLATE
@@ -389,7 +394,7 @@ http {{
             proxy_set_header X-Forwarded-Proto $scheme;
             add_header Access-Control-Allow-Origin *;
         }}
-
+        
         location = /mining-trigger {{
             internal;
             proxy_pass http://{node_name}-mining-trigger:11848/trigger;
@@ -410,7 +415,7 @@ http {{
             proxy_set_header Connection "upgrade";
             proxy_set_header Host $host;
             proxy_http_version 1.1;
-            proxy_read_timeout 86400;
+            proxy_read_timeout 86400; 
         }}
 """
         for cid in evm_cids

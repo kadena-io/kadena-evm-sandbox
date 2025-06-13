@@ -30,7 +30,7 @@ jobs:
       - name: Start Devnet
         working-directory: ./devnet
         run: |
-          docker compose up -d
+          docker compose up --quiet-pull -d
           # Wait for devnet to be ready
           sleep 30
 

@@ -97,6 +97,7 @@ function blockscout-help () {
     echo -e "  ${B}blockscout pull${R}   pull container images for all blockscout services"
     echo -e "  ${B}blockscout start${R}  start block scope instances for the EVM chains"
     echo -e "  ${B}blockscout stop${R}   stop block scope instances for the EVM chains"
+    echo -e "  ${B}blockscout help${R}   see all available commands and options"
     echo -e "  (The UIs are served at http://chain-20.evm.kadena.local:8000 and  http://chain-21.evm.kadena.local:8000 and so on)"
 }
 

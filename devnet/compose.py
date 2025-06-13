@@ -15,8 +15,13 @@ import yaml
 from secp256k1 import PrivateKey
 from typing import TypedDict, Any
 
-DEFAULT_CHAINWEB_NODE_IMAGE = "ghcr.io/kadena-io/chainweb-node:sha-5ed0db4"
-DEFAULT_EVM_IMAGE = "ghcr.io/kadena-io/kadena-reth:sha-65cc961"
+# Previous images. I don't know whether those also have the persistent payload jobs
+# Switch these if issues arise with the current images.
+# DEFAULT_CHAINWEB_NODE_IMAGE = "ghcr.io/kadena-io/chainweb-node:sha-5ed0db4"
+# DEFAULT_EVM_IMAGE = "ghcr.io/kadena-io/kadena-reth:sha-65cc961"
+
+DEFAULT_CHAINWEB_NODE_IMAGE = "ghcr.io/kadena-io/chainweb-node:sha-4a0d634"
+DEFAULT_EVM_IMAGE = "ghcr.io/kadena-io/kadena-reth:edmund-persistent-payload-jobs"
 
 # #############################################################################
 # BOILERPLATE
@@ -387,9 +392,16 @@ http {{
             proxy_set_header X-Forwarded-Proto $scheme;
             add_header Access-Control-Allow-Origin *;
         }}
+        
+        location = /mining-trigger {{
+            internal;
+            proxy_pass http://{node_name}-mining-trigger:11848/trigger;
+            proxy_set_header X-Original-URI $request_uri;
+        }}
     {''.join(
         f"""
         location /chainweb/0.0/evm-development/chain/{cid}/evm/rpc {{
+            mirror /mining-trigger;
             add_header Access-Control-Allow-Origin *;
             proxy_pass http://{node_name}-evm-{cid}:8545/;
         }}
@@ -690,6 +702,8 @@ def evm_chain(
             f"--discovery.port={30303 + cid}",
             # chainweb
             "--chain=/config/chain-spec.json",
+            "--engine.persistence-threshold=0",
+            "--engine.memory-block-buffer-target=0"
         ],
         "environment": [f"CHAINWEB_CHAIN_ID={cid}"],
         "ports": [],
@@ -780,11 +794,16 @@ def chainweb_mining_trigger(node_name: str) -> Service:
             "--watch",
             "index.ts",
         ],
+        "expose": ["11848"],
         "environment": {
+            "MINING_MODE": "${MINING_MODE:-triggered}",
             "MINER_HOSTNAME": f"{node_name}-mining-client",
-            "MINER_PORT": "1917",
-            "CONSENSUS_CUT_ENDPOINT": f"http://{node_name}-consensus:1848/chainweb/0.0/evm-development/cut",
-            "CHAINS": "20",
+            "MINING_PORT": "1917",
+            "CONSENSUS_ENDPOINT": f"http://{node_name}-consensus:1848/chainweb/0.0/evm-development",
+            "CHAINS": "${CHAINS:-20}",
+            "TRIGGER_PORT": "11848",
+            "TRIGGER_BLOCK_COUNT": "${TRIGGER_BLOCK_COUNT:-1}",
+            "CONTINUOUS_INTERVAL": "${CONTINUOUS_INTERVAL:-10000}",
         },
     }
 

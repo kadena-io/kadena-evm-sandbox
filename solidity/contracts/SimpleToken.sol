@@ -127,9 +127,10 @@ contract SimpleToken is ERC20("SimpleToken", "SIM"), Ownable {
      * @notice Constructor
      * @dev Sets caller as owner and mints the initial supply to owner
      * @param initialSupply The initial supply of the token
+     * @param owner The address of the owner of the contract
      */
-    constructor(uint256 initialSupply) Ownable(msg.sender) {
-        _mint(msg.sender, initialSupply);
+    constructor(uint256 initialSupply, address owner) Ownable(owner) {
+        _mint(owner, initialSupply);
     }
 
     /**

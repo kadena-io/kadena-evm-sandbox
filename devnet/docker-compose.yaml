@@ -115,7 +115,7 @@ services:
                 OK" <&3 || exit 1'
             timeout: 30s
         hostname: bootnode-consensus
-        image: ${CHAINWEB_NODE_IMAGE:-ghcr.io/kadena-io/chainweb-node:sha-4a0d634}
+        image: ${CHAINWEB_NODE_IMAGE:-ghcr.io/kadena-io/chainweb-node:sha-69c988e}
         labels:
             com.chainweb.devnet.chainweb-node: ''
             com.chainweb.devnet.description: EVM Devnet Chainweb Node

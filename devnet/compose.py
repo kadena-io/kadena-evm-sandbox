@@ -15,7 +15,7 @@ import yaml
 from secp256k1 import PrivateKey
 from typing import TypedDict, Any
 
-DEFAULT_CHAINWEB_NODE_IMAGE = "ghcr.io/kadena-io/chainweb-node:sha-56833d2"
+DEFAULT_CHAINWEB_NODE_IMAGE = "ghcr.io/kadena-io/evm-devnet-chainweb-node:latest"
 DEFAULT_EVM_IMAGE = "ghcr.io/kadena-io/kadena-reth:sha-eff370d"
 
 # The Ethereum network ID (chainID) base for the EVM chains in Kadena devnets.

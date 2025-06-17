@@ -5,9 +5,14 @@ compose_action="--pull=missing"
 
 echo "Starting using: docker compose up -d $compose_action"
 
-run "docker compose -p bs_general -f general-docker-compose.yaml up -d $compose_action"  
+create_network_if_missing proxy-network
+create_network_if_missing service-network
 
 sleep 2
+
+run "docker compose -p bs_general -f general-docker-compose.yaml up -d $compose_action"  
+
+sleep 5
 
 for ((i = 0; i < numberOfChains; i++)); do
   chainId=$((i + $chainIdOffset))

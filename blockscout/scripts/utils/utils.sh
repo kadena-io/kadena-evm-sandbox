@@ -55,3 +55,19 @@ info() {
   echo ""
   printf "\033[1;90m%s\033[0m\n" "$msg"
 }
+
+create_network_if_missing() {
+  local name=$1
+  if ! docker network inspect "$name" >/dev/null 2>&1; then
+    run "docker network create --driver bridge "$name""
+  else
+    echo "Network already exists: $name"
+  fi
+}
+
+delete_network_if_exists() {
+  local name=$1
+  if docker network inspect "$name" >/dev/null 2>&1; then
+    run "docker network rm "$name""
+  fi
+}

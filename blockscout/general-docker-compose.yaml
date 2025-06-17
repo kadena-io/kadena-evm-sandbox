@@ -63,12 +63,12 @@ services:
 
 networks:
   proxy-network:
-    name: proxy-network  
-    driver: bridge
+    name: proxy-network
+    external: true
 
   service-network:
     name: service-network
-    driver: bridge
+    external: true
   
 
 

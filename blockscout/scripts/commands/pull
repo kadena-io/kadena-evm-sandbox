@@ -3,6 +3,9 @@ source ./scripts/utils/init_chain_vars.sh "$@"
 
 echo "Pulling: docker compose pull"
 
+create_network_if_missing proxy-network
+create_network_if_missing service-network
+
 run "docker compose -p bs_general -f general-docker-compose.yaml pull"  
 
 for ((i = 0; i < numberOfChains; i++)); do

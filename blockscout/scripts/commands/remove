@@ -4,3 +4,6 @@
 compose_action="-v --remove-orphans"
 
 source ./scripts/commands/stop "$@"
+
+delete_network_if_exists proxy-network
+delete_network_if_exists service-network

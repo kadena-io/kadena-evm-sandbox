@@ -25,8 +25,14 @@ generate_chains_meta() {
   local end=$2
   local json="["
 
+  if [[ "$BASE_GATEWAY_PUBLIC_PORT" == "80" ]]; then
+    port=""
+  else
+    port=":$BASE_GATEWAY_PUBLIC_PORT"
+  fi
+
   for ((i = start; i <= end; i++)); do
-    item="{\"title\":\"chain$i@kadena_devnet\",\"url\":\"http://chain-$i.evm.kadena.local:8000/\",\"group\":\"Mainnets\",\"icon\":\"https://www.kadena.local/favicon.ico\"}"
+    item="{\"title\":\"chain$i@kadena_devnet\",\"url\":\"http://chain-$i.${BASE_EXPLORER_DOMAIN}$port/\",\"group\":\"Mainnets\",\"icon\":\"https://www.kadena.local/favicon.ico\"}"
     json+="$item"
     if [[ $i -lt $end ]]; then
       json+=","

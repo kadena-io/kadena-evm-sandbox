@@ -127,6 +127,7 @@ services:
       file: ./services/nginx.yml
       service: proxy
     networks:
-     - default    
+     - default
+     - service-network      
      - proxy-network
 

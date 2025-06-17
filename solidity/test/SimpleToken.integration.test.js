@@ -24,8 +24,8 @@ describe("SimpleToken Integration Tests", async function () {
     token1Info = deployed.tokens[1];
 
     // The owner/deployer transfers tokens to other accounts so that they can transfer tokens cross-chain. This is a setup step.
-    await token0.transfer(signers.alice.address, ethers.parseEther("1000000")); // Alice has 1M tokens on chain 0
-    await token1.transfer(signers.bob.address, ethers.parseEther("1000000")); // Bob has 1M tokens on chain 1
+    await token0.transfer(signers.alice.address, ethers.parseEther("1000000")); // Alice has 1M tokens on chain 20
+    await token1.transfer(signers.bob.address, ethers.parseEther("1000000")); // Bob has 1M tokens on chain 21
 
 
     await authorizeContracts(token0, token0Info, [token0Info, token1Info]);
@@ -35,7 +35,7 @@ describe("SimpleToken Integration Tests", async function () {
   });
 
   context("Success Test Cases", async function () {
-    it("Should transfer tokens to same address from chain 0 to chain 1", async function () {
+    it("Should transfer tokens to same address from chain 20 to chain 21", async function () {
       const sender = signers.alice;
       const receiver = signers.alice;
       const amount = ethers.parseEther("500");
@@ -49,7 +49,7 @@ describe("SimpleToken Integration Tests", async function () {
       expect(receiverBalanceBefore + amount).to.equal(receiverBalanceAfter);
     });
 
-    it("Should transfer tokens to different address from chain 0 to chain 1", async function () {
+    it("Should transfer tokens to different address from chain 20 to chain 21", async function () {
       const sender = signers.alice;
       const receiver = signers.bob;
       const amount = ethers.parseEther("250000");
@@ -63,16 +63,16 @@ describe("SimpleToken Integration Tests", async function () {
       expect(receiverBalanceBefore + amount).to.equal(receiverBalanceAfter);
     });
 
-    it("Should transfer tokens to different address from chain 1 to chain 0", async function () {
-      // Switch to chain 1 and get signer bob on chain 1. This is a hardhat thing - a signer has a network context.
+    it("Should transfer tokens to different address from chain 21 to chain 20", async function () {
+      // Switch to chain 21 and get signer bob on chain 21. This is a hardhat thing - a signer has a network context.
       // Not needed in other test cases because the contract is by default called by the first signer on the chain where the contract is deployed.
       await switchNetwork(token1Info.network.name);
-      const [, , chain1Bob] = await ethers.getSigners();  // Get Bob's signer on chain 1
-      const sender = chain1Bob;  // Use chain 1's Bob as sender
-      const receiver = signers.alice; // Use chain 0's  Alice as receiver
+      const [, , chain1Bob] = await ethers.getSigners();  // Get Bob's signer on chain 21
+      const sender = chain1Bob;  // Use chain 21's Bob as sender
+      const receiver = signers.alice; // Use chain 20's  Alice as receiver
       const amount = ethers.parseEther("10");
   
-      // Verify Bob has tokens on chain 1
+      // Verify Bob has tokens on chain 21
       const bobBalance = await token1.balanceOf(sender.address);
       expect(bobBalance).to.be.gte(amount);
 
@@ -139,7 +139,7 @@ describe("SimpleToken Integration Tests", async function () {
     });
 
     it("Should allow third party to redeem on behalf of receiver", async function () {
-      // Switch to chain 1 and get signer carol on chain 1. This is a hardhat thing - a signer has a network context.
+      // Switch to chain 21 and get signer carol on chain 21. This is a hardhat thing - a signer has a network context.
       // Not needed in other test cases because the contract is by default called by the first signer on the chain where the contract is deployed.
       await switchNetwork(token1Info.network.name);
       const [, , , chain1Carol] = await ethers.getSigners();

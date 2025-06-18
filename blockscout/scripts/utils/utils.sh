@@ -32,7 +32,8 @@ generate_chains_meta() {
   fi
 
   for ((i = start; i <= end; i++)); do
-    item="{\"title\":\"chain$i@kadena_devnet\",\"url\":\"http://chain-$i.${BASE_EXPLORER_DOMAIN}$port/\",\"group\":\"Mainnets\",\"icon\":\"https://www.kadena.io/favicon.ico\"}"
+    url="http://chain-$i.${BASE_EXPLORER_DOMAIN}$port/" 
+    item="{\"title\":\"testnet@chain$i\",\"url\":\"$url\",\"group\":\"Mainnets\",\"icon\":\"${url}assets/configs/network_icon.svg\"}"
     json+="$item"
     if [[ $i -lt $end ]]; then
       json+=","

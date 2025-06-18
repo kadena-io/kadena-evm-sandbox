@@ -378,9 +378,12 @@ http {{
         server_name {node_name}-frontend;
 
         location /info {{
-            add_header Content-Type application/json;
+            proxy_pass http://{node_name}-consensus:1848;
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto $scheme;
             add_header Access-Control-Allow-Origin *;
-            return 200 '{{"nodeVersion": "evm-development"}}';
         }}
 
         location / {{
@@ -397,7 +400,7 @@ http {{
             proxy_set_header X-Forwarded-Proto $scheme;
             add_header Access-Control-Allow-Origin *;
         }}
-        
+
         location = /mining-trigger {{
             internal;
             proxy_pass http://{node_name}-mining-trigger:11848/trigger;
@@ -418,7 +421,7 @@ http {{
             proxy_set_header Connection "upgrade";
             proxy_set_header Host $host;
             proxy_http_version 1.1;
-            proxy_read_timeout 86400; 
+            proxy_read_timeout 86400;
         }}
 """
         for cid in evm_cids

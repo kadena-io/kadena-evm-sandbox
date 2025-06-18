@@ -1435,7 +1435,7 @@ if args.exposed_chains is None:
     exposed_evm_chains = list(range(20, 25))
     exposed_pact_chains = list(range(0, 20))
 else:
-    exposed_cids = list(map(int, args.evm_chains.split(",")))
+    exposed_cids = list(map(int, args.exposed_chains.split(",")))
     exposed_evm_chains = [i for i in range(20, 25) if i in exposed_cids]
     exposed_pact_chains = [i for i in range(0, 20) if i in exposed_cids]
 

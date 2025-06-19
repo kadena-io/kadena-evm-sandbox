@@ -2,6 +2,17 @@
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$SCRIPT_DIR"
 
+
+if [ ! -f $(pwd)/.env ]; then
+  echo ".env file not found. use the .env.example file to create it."
+  exit 1
+fi
+
+# Export base environment variables
+set -a
+. $(pwd)/.env
+set +a
+
 source ./scripts/utils/utils.sh
 
 blockscout-help() {

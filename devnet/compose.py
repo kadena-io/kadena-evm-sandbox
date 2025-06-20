@@ -353,7 +353,7 @@ def nginx_index_html(project_name, node_name, evm_cids, port=1848):
 #   - https://hostname/chainweb/0.0/{networkName}/chain/{chainId}/evm  = rpc endpoint
 
 
-def nginx_proxy_config(project_name, node_name, evm_cids):
+def nginx_proxy_config(project_name, node_name, evm_cids, mining):
     dir = config_dir(project_name, node_name)
     os.makedirs(dir, exist_ok=True)
 
@@ -401,11 +401,14 @@ http {{
             add_header Access-Control-Allow-Origin *;
         }}
 
-        location = /mining-trigger {{
+{''.join(
+        f"""location = /mining-trigger {{
             internal;
             proxy_pass http://{node_name}-mining-trigger:11848/trigger;
             proxy_set_header X-Original-URI $request_uri;
-        }}
+        }}""") if mining else ''
+}
+
 {''.join(
         f"""
         location /chainweb/0.0/evm-development/chain/{cid}/evm/rpc {{
@@ -999,7 +1002,7 @@ def chainweb_node(
     if has_frontend:
 
         # Create nginx reverse proxy configuration for exposed nodes
-        nginx_proxy_config(project_name, node_name, evm_cids)
+        nginx_proxy_config(project_name, node_name, evm_cids, mining=False if mining_mode is None else True)
         nginx_index_html(project_name, node_name, evm_cids)
         cdir = config_dir(project_name, node_name)
 

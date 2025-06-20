@@ -1302,7 +1302,7 @@ def app_dev_project(exposed_evm_chains, exposed_pact_chains, update_secrets) -> 
     pact_cids = list(range(0, 20))
 
     # Create bootstrap node IDs
-    evm_bootnodes("add-dev", "bootnode", evm_cids, update=update_secrets)
+    evm_bootnodes("app-dev", "bootnode", evm_cids, update=update_secrets)
 
     top: Spec = spec
     top["name"] = "chainweb-evm"

@@ -85,77 +85,116 @@ describe('SimpleToken Unit Tests', async function () {
     }); // End of Success Test Cases
   }); // End of Deployment and Initialization
 
-  describe('setCrossChainAddress', async function () {
-    context('Success Test Cases', async function () {
-      it('Should correctly set cross chain addresses', async function () {
-        // Explicitly set cross-chain addresses for token0
-        const tx1 = await token0.setCrossChainAddress(
-          token1Info.chain,
-          await token1.getAddress(),
-        );
-        await tx1.wait();
-        expect(await token0.getCrossChainAddress(token1Info.chain)).to.equal(
-          await token1.getAddress(),
-        );
-
-        await expect(tx1)
-          .to.emit(token0, 'CrossChainAddressSet')
-          .withArgs(
-            token1Info.chain,
-            await token1.getAddress(),
-            initialSigners.deployer.address,
-          );
-
-        // Explicitly set cross-chain addresses for token1
-        await switchChain(token1Info.chain);
-        const tx2 = await token1.setCrossChainAddress(
-          token0Info.chain,
-          await token0.getAddress(),
-        );
-        await tx2.wait();
-        expect(await token1.getCrossChainAddress(token0Info.chain)).to.equal(
-          await token0.getAddress(),
-        );
-
-        await expect(tx2)
-          .to.emit(token1, 'CrossChainAddressSet')
-          .withArgs(
-            token0Info.chain,
-            await token0.getAddress(),
-            initialSigners.deployer.address,
-          );
-      });
-
-      it('Should allow a cross chain address to be set to the zero address', async function () {
-        // Explicitly set cross-chain addresses for token0
-        const tx1 = await token0.setCrossChainAddress(
-          token1Info.chain,
-          ZeroAddress,
-        );
-        await tx1.wait();
-        expect(await token0.getCrossChainAddress(token1Info.chain)).to.equal(
-          ZeroAddress,
-        );
-
-        await expect(tx1)
-          .to.emit(token0, 'CrossChainAddressSet')
-          .withArgs(token1Info.chain, ZeroAddress, initialSigners.deployer.address);
-      });
-    }); // End of Success Test Cases
-
-    context('Error Test Cases', async function () {
-      it('Should fail to set cross chain addresses for non-owner', async function () {
-        // Attempt to set cross-chain addresses for token0 from a non-owner
-        await expect(
-          token0
-            .connect(initialSigners.alice)
-            .setCrossChainAddress(token1Info.chain, await token1.getAddress()),
-        )
-          .to.be.revertedWithCustomError(token0, 'OwnableUnauthorizedAccount')
-          .withArgs(initialSigners.alice.address);
+describe('setCrossChainAddress', async function () {
+  context('Success Test Cases', async function () {
+    it('Should set up cross-chain addresses for all deployments using runOverChains', async function () {
+      // Set up cross-chain addresses for every chain to every other chain
+      await chainweb.runOverChains(async (currentChainId) => {
+        const currentDeployment = deployments.find(d => d.chain === currentChainId);
+        const chainSigners = await getSigners(currentChainId);
+        
+        // Set addresses for all other chains
+        for (const targetDeployment of deployments) {
+          if (targetDeployment.chain !== currentChainId) {
+            const tx = await currentDeployment.contract.setCrossChainAddress(
+              targetDeployment.chain,
+              targetDeployment.address
+            );
+            await tx.wait();
+            
+            // Verify the address was set correctly
+            expect(await currentDeployment.contract.getCrossChainAddress(targetDeployment.chain))
+              .to.equal(targetDeployment.address);
+            
+            // Verify the event was emitted correctly
+            await expect(tx)
+              .to.emit(currentDeployment.contract, 'CrossChainAddressSet')
+              .withArgs(
+                targetDeployment.chain,
+                targetDeployment.address,
+                chainSigners.deployer.address
+              );
+          }
+        }
       });
     });
-  }); // End of setCrossChainAddress
+
+    it('Should verify all cross-chain addresses are accessible from all chains', async function () {
+      // First set up all addresses (could be in beforeEach)
+      await chainweb.runOverChains(async (currentChainId) => {
+        const currentDeployment = deployments.find(d => d.chain === currentChainId);
+        
+        for (const targetDeployment of deployments) {
+          if (targetDeployment.chain !== currentChainId) {
+            const tx = await currentDeployment.contract.setCrossChainAddress(
+              targetDeployment.chain,
+              targetDeployment.address
+            );
+            await tx.wait();
+          }
+        }
+      });
+      
+      // Then verify all addresses are correctly set
+      await chainweb.runOverChains(async (chainId) => {
+        const deployment = deployments.find(d => d.chain === chainId);
+        
+        for (const otherDeployment of deployments) {
+          if (otherDeployment.chain !== chainId) {
+            const storedAddress = await deployment.contract.getCrossChainAddress(otherDeployment.chain);
+            expect(storedAddress).to.equal(otherDeployment.address);
+          }
+        }
+      });
+    });
+
+    it('Should allow setting cross-chain addresses to zero address on all chains', async function () {
+      // Pick one target chain to set to zero across all source chains
+      const targetChainId = deployments[1].chain;
+      
+      await chainweb.runOverChains(async (currentChainId) => {
+        if (currentChainId !== targetChainId) {
+          const currentDeployment = deployments.find(d => d.chain === currentChainId);
+          const chainSigners = await getSigners(currentChainId);
+          
+          const tx = await currentDeployment.contract.setCrossChainAddress(
+            targetChainId,
+            ZeroAddress
+          );
+          await tx.wait();
+          
+          expect(await currentDeployment.contract.getCrossChainAddress(targetChainId))
+            .to.equal(ZeroAddress);
+          
+          await expect(tx)
+            .to.emit(currentDeployment.contract, 'CrossChainAddressSet')
+            .withArgs(targetChainId, ZeroAddress, chainSigners.deployer.address);
+        }
+      });
+    });
+  }); // End of Success Test Cases
+
+  context('Error Test Cases', async function () {
+    it('Should fail to set cross-chain addresses for non-owner on all chains', async function () {
+      await chainweb.runOverChains(async (chainId) => {
+        const deployment = deployments.find(d => d.chain === chainId);
+        const chainSigners = await getSigners(chainId);
+        const targetChain = deployments.find(d => d.chain !== chainId)?.chain;
+        
+        if (targetChain) {
+          // Try to set cross-chain address as alice (non-owner)
+          await expect(
+            deployment.contract
+              .connect(chainSigners.alice)
+              .setCrossChainAddress(targetChain, deployment.address)
+          )
+            .to.be.revertedWithCustomError(deployment.contract, 'OwnableUnauthorizedAccount')
+            .withArgs(chainSigners.alice.address);
+        }
+      });
+    });
+  }); // End of 'Error Test Cases
+}); // End of setCrossChainAddress
 
   describe('verifySPV', async function () {
     beforeEach(async function () {

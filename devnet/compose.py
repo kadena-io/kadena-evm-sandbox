@@ -15,13 +15,16 @@ import yaml
 from secp256k1 import PrivateKey
 from typing import TypedDict, Any
 
-# Previous images. I don't know whether those also have the persistent payload jobs
-# Switch these if issues arise with the current images.
-# DEFAULT_CHAINWEB_NODE_IMAGE = "ghcr.io/kadena-io/chainweb-node:sha-5ed0db4"
-# DEFAULT_EVM_IMAGE = "ghcr.io/kadena-io/kadena-reth:sha-65cc961"
+DEFAULT_CHAINWEB_NODE_IMAGE = "ghcr.io/kadena-io/evm-devnet-chainweb-node:latest"
+DEFAULT_EVM_IMAGE = "ghcr.io/kadena-io/kadena-reth:sha-eff370d"
 
-DEFAULT_CHAINWEB_NODE_IMAGE = "ghcr.io/kadena-io/chainweb-node:sha-4a0d634"
-DEFAULT_EVM_IMAGE = "ghcr.io/kadena-io/kadena-reth:edmund-persistent-payload-jobs"
+# The Ethereum network ID (chainID) base for the EVM chains in Kadena devnets.
+#
+# This number has to match the number that is used in the EVM chain-spec files.
+# The current value is a legacy value. The Kadena testnets and the mainet use
+# different values.
+#
+NET_ID_BASE = 1789
 
 # #############################################################################
 # BOILERPLATE
@@ -321,7 +324,7 @@ def nginx_index_html(project_name, node_name, evm_cids, port=1848):
                 "chains": len(evm_cids),
                 "type": 'external',
                 "chainwebChainIdOffset": 20,
-                "chainIdOffset": 1789,
+                "chainIdOffset": NET_ID_BASE,
                 "accounts": [
                     "0xe711c50150f500fdebec57e5c299518c2f7b36271c138c55759e5b4515dc7161",
                     "0xb332ddc4e0801582e154d10cad8b672665656cbf0097f2b47483c0cfe3261299",
@@ -375,9 +378,12 @@ http {{
         server_name {node_name}-frontend;
 
         location /info {{
-            add_header Content-Type application/json;
+            proxy_pass http://{node_name}-consensus:1848;
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto $scheme;
             add_header Access-Control-Allow-Origin *;
-            return 200 '{{"nodeVersion": "evm-development"}}';
         }}
 
         location / {{
@@ -394,7 +400,7 @@ http {{
             proxy_set_header X-Forwarded-Proto $scheme;
             add_header Access-Control-Allow-Origin *;
         }}
-        
+
         location = /mining-trigger {{
             internal;
             proxy_pass http://{node_name}-mining-trigger:11848/trigger;
@@ -415,7 +421,7 @@ http {{
             proxy_set_header Connection "upgrade";
             proxy_set_header Host $host;
             proxy_http_version 1.1;
-            proxy_read_timeout 86400; 
+            proxy_read_timeout 86400;
         }}
 """
         for cid in evm_cids
@@ -669,7 +675,7 @@ def evm_chain(
             }
         ],
         "volumes": [
-            f"{node_name}-evm-{cid}_data:/root/.local/share/reth/{1789 + cid - 20}/",
+            f"{node_name}-evm-{cid}_data:/root/.local/share/reth/{NET_ID_BASE + cid - 20}/",
             f"{node_name}_logs:/root/logs/",
         ],
         "networks": {
@@ -1429,7 +1435,7 @@ if args.exposed_chains is None:
     exposed_evm_chains = list(range(20, 25))
     exposed_pact_chains = list(range(0, 20))
 else:
-    exposed_cids = list(map(int, args.evm_chains.split(",")))
+    exposed_cids = list(map(int, args.exposed_chains.split(",")))
     exposed_evm_chains = [i for i in range(20, 25) if i in exposed_cids]
     exposed_pact_chains = [i for i in range(0, 20) if i in exposed_cids]
 

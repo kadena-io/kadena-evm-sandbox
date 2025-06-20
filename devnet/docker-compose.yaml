@@ -115,7 +115,7 @@ services:
                 OK" <&3 || exit 1'
             timeout: 30s
         hostname: bootnode-consensus
-        image: ${CHAINWEB_NODE_IMAGE:-ghcr.io/kadena-io/chainweb-node:sha-4a0d634}
+        image: ${CHAINWEB_NODE_IMAGE:-ghcr.io/kadena-io/evm-devnet-chainweb-node:latest}
         labels:
             com.chainweb.devnet.chainweb-node: ''
             com.chainweb.devnet.description: EVM Devnet Chainweb Node
@@ -182,7 +182,7 @@ services:
         - 30323/tcp
         - 30323/udp
         hostname: bootnode-evm-20
-        image: ${EVM_IMAGE:-ghcr.io/kadena-io/kadena-reth:edmund-persistent-payload-jobs}
+        image: ${EVM_IMAGE:-ghcr.io/kadena-io/kadena-reth:sha-eff370d}
         networks:
             bootnode-internal: null
             p2p: null
@@ -244,7 +244,7 @@ services:
         - 30324/tcp
         - 30324/udp
         hostname: bootnode-evm-21
-        image: ${EVM_IMAGE:-ghcr.io/kadena-io/kadena-reth:edmund-persistent-payload-jobs}
+        image: ${EVM_IMAGE:-ghcr.io/kadena-io/kadena-reth:sha-eff370d}
         networks:
             bootnode-internal: null
             p2p: null
@@ -306,7 +306,7 @@ services:
         - 30325/tcp
         - 30325/udp
         hostname: bootnode-evm-22
-        image: ${EVM_IMAGE:-ghcr.io/kadena-io/kadena-reth:edmund-persistent-payload-jobs}
+        image: ${EVM_IMAGE:-ghcr.io/kadena-io/kadena-reth:sha-eff370d}
         networks:
             bootnode-internal: null
             p2p: null
@@ -368,7 +368,7 @@ services:
         - 30326/tcp
         - 30326/udp
         hostname: bootnode-evm-23
-        image: ${EVM_IMAGE:-ghcr.io/kadena-io/kadena-reth:edmund-persistent-payload-jobs}
+        image: ${EVM_IMAGE:-ghcr.io/kadena-io/kadena-reth:sha-eff370d}
         networks:
             bootnode-internal: null
             p2p: null
@@ -430,7 +430,7 @@ services:
         - 30327/tcp
         - 30327/udp
         hostname: bootnode-evm-24
-        image: ${EVM_IMAGE:-ghcr.io/kadena-io/kadena-reth:edmund-persistent-payload-jobs}
+        image: ${EVM_IMAGE:-ghcr.io/kadena-io/kadena-reth:sha-eff370d}
         networks:
             bootnode-internal: null
             p2p: null

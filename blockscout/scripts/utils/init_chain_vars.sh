@@ -4,6 +4,7 @@
 source ./scripts/utils/utils.sh
 
 required_vars=(
+  "BASE_CHAINWEB_NAME:the name of the chainweb network (e.g., devnet, testnet, mainnet)"
   "BASE_CHAIN_ID_OFFSET:the chain id of the first chain"
   "BASE_CHAINWEB_CHAIN_ID_OFFSET:the chainweb-chain id of the first chain"
   "BASE_NUMBER_OF_CHAINS:number of chains"

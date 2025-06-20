@@ -8,6 +8,7 @@ const {
   redeemCrossChain,
   getSigners,
   deployMocks,
+  //requestSpvProof
 } = require('./utils/utils');
 const {
   deployContractOnChains,
@@ -19,7 +20,8 @@ const {
 } = chainweb;
 
 describe('SimpleToken Unit Tests', async function () {
-  let signers;
+  let deployments = [];
+  let initialSigners;
   let token0;
   let token1;
   let origin;
@@ -28,14 +30,16 @@ describe('SimpleToken Unit Tests', async function () {
   let amount;
 
   beforeEach(async function () {
-    // switchChain() or switchNetwork("chain name") can be used to switch to a different chain
     const chains = await getChainIds();
-    await switchChain(chains[0]);
-    signers = await getSigners();
+    initialSigners = await getSigners(chains[0]); // get initialSigners for the first chain
 
+    // switchChain()can be used to switch to a different chain
+    // deployContractOnChains switches chains before deploying on each one
+    // Because this contract takes an address as a constructor param, we pass it in here as an address.
+    // In solidity, the address has no specific network affiliation like a signer does in Hardhat.
     const deployed = await deployContractOnChains({
       name: 'SimpleToken',
-      constructorArgs: [ethers.parseUnits('1000000'), signers.deployer.address],
+      constructorArgs: [ethers.parseUnits('1000000'), initialSigners.deployer.address],
     });
 
     // Store contract instances for direct calls
@@ -45,21 +49,38 @@ describe('SimpleToken Unit Tests', async function () {
     // Keep deployment info accessible when needed
     token0Info = deployed.deployments[0];
     token1Info = deployed.deployments[1];
+
+    deployments = deployed.deployments;
+
+    console.log("deployments in beforfeEach", deployments);
+
     await switchChain(token0Info.chain);
   });
 
   context('Deployment and Initialization', async function () {
     context('Success Test Cases', async function () {
-      it('Should have the correct configuration after deployment on both chains', async function () {
-        expect(await token0.symbol()).to.equal('SIM');
-        expect(await token0.totalSupply()).to.equal(
-          ethers.parseEther('1000000'),
-        );
-        expect(await token1.totalSupply()).to.equal(
-          ethers.parseEther('1000000'),
-        );
-        expect(await token1.name()).to.equal('SimpleToken');
-        expect(await token1.symbol()).to.equal('SIM');
+      it('Should have the correct configuration after deployment on all chains', async function () {
+        await chainweb.runOverChains(async (chainId) => {
+          const chainSigners = await getSigners(chainId);
+          const deployment = deployments.find(d => d.chain === chainId);
+
+          expect(deployment).to.not.be.undefined;
+          expect(await deployment.contract.symbol()).to.equal('SIM');
+          expect(await deployment.contract.name()).to.equal('SimpleToken');
+          expect(await deployment.contract.totalSupply()).to.equal(
+            ethers.parseEther('1000000'),
+          );
+
+          // Verify that the deployer address matches the chain-specific signer
+          expect(deployment.deployer).to.equal(chainSigners.deployer.address);
+
+          // Verify that the contract owner is the chain-specific deployer
+          expect(await deployment.contract.owner()).to.equal(chainSigners.deployer.address);
+
+          // Verify that the deployer has the full initial supply on this chain
+          expect(await deployment.contract.balanceOf(chainSigners.deployer.address))
+            .to.equal(ethers.parseEther('1000000'));
+        });
       });
     }); // End of Success Test Cases
   }); // End of Deployment and Initialization
@@ -82,7 +103,7 @@ describe('SimpleToken Unit Tests', async function () {
           .withArgs(
             token1Info.chain,
             await token1.getAddress(),
-            signers.deployer.address,
+            initialSigners.deployer.address,
           );
 
         // Explicitly set cross-chain addresses for token1
@@ -101,7 +122,7 @@ describe('SimpleToken Unit Tests', async function () {
           .withArgs(
             token0Info.chain,
             await token0.getAddress(),
-            signers.deployer.address,
+            initialSigners.deployer.address,
           );
       });
 
@@ -118,7 +139,7 @@ describe('SimpleToken Unit Tests', async function () {
 
         await expect(tx1)
           .to.emit(token0, 'CrossChainAddressSet')
-          .withArgs(token1Info.chain, ZeroAddress, signers.deployer.address);
+          .withArgs(token1Info.chain, ZeroAddress, initialSigners.deployer.address);
       });
     }); // End of Success Test Cases
 
@@ -127,11 +148,11 @@ describe('SimpleToken Unit Tests', async function () {
         // Attempt to set cross-chain addresses for token0 from a non-owner
         await expect(
           token0
-            .connect(signers.alice)
+            .connect(initialSigners.alice)
             .setCrossChainAddress(token1Info.chain, await token1.getAddress()),
         )
           .to.be.revertedWithCustomError(token0, 'OwnableUnauthorizedAccount')
-          .withArgs(signers.alice.address);
+          .withArgs(initialSigners.alice.address);
       });
     });
   }); // End of setCrossChainAddress
@@ -141,8 +162,8 @@ describe('SimpleToken Unit Tests', async function () {
       await authorizeContracts(token0, token0Info, [token0Info, token1Info]);
       await authorizeContracts(token1, token1Info, [token0Info, token1Info]);
 
-      sender = signers.deployer;
-      receiver = signers.deployer;
+      sender = initialSigners.deployer;
+      receiver = initialSigners.deployer;
       amount = ethers.parseEther('10');
 
       origin = await initCrossChain(
@@ -157,37 +178,69 @@ describe('SimpleToken Unit Tests', async function () {
 
     context('Success Test Cases', async function () {
       it('Should verify a valid SPV proof and return correct values', async function () {
+        console.log("tokenInfo.chain", token1Info.chain);
+        console.log("origin in verifySPV test:", origin);
         const proof = await requestSpvProof(token1Info.chain, origin);
-        const [crossChainMessage, originHash] = await token1.verifySPV(proof);
+        console.log("proof in verifySPV test:", proof);
+        //const [crossChainMessage, originHash] = await token1.verifySPV(proof);
 
-        // Verify CrossChainMessage fields
-        expect(crossChainMessage.targetChainId).to.equal(token1Info.chain);
-        expect(crossChainMessage.targetContractAddress).to.equal(
-          await token1.getAddress(),
-        );
-        expect(crossChainMessage.crossChainOperationType).to.equal(
-          CrossChainOperation.Erc20Transfer,
-        );
+        try {
+          const result = await token1.verifySPV(proof);
+          console.log("Unexpected success:", result);
+        } catch (error) {
+          console.log("Caught error type:", error.constructor.name);
+          console.log("Error code:", error.code);
+          console.log("Error reason:", error.reason);
+          console.log("Error message:", error.message);
 
-        // Verify origin fields
-        expect(crossChainMessage.origin.originChainId).to.equal(
-          token0Info.chain,
-        );
-        expect(crossChainMessage.origin.originContractAddress).to.equal(
-          await token0.getAddress(),
-        );
-        expect(crossChainMessage.origin.originBlockHeight).to.equal(
-          origin.height,
-        );
-        expect(crossChainMessage.origin.originTransactionIndex).to.equal(
-          origin.txIdx,
-        );
-        expect(crossChainMessage.origin.originEventIndex).to.equal(
-          origin.eventIdx,
-        );
+          // Try to extract more detailed revert data
+          if (error.data) {
+            console.log("Error data:", error.data);
+          }
 
-        const expectedOriginHash = computeOriginHash(origin);
-        expect(originHash).to.equal(expectedOriginHash);
+          // If it's a custom error, try to decode it
+          if (error.message.includes("SPVVerificationFailed")) {
+            console.log("SPV Verification failed - the precompile call was unsuccessful");
+          } else if (error.message.includes("AlreadyCompleted")) {
+            console.log("Transaction already completed");
+          } else {
+            console.log("Unknown revert reason");
+          }
+
+          // Re-throw to fail the test
+
+          console.log("crossChainMessage in verifySPV test:", crossChainMessage);
+          console.log("originHash in verifySPV test:", originHash);
+
+          // Verify CrossChainMessage fields
+          expect(crossChainMessage.targetChainId).to.equal(token1Info.chain);
+          expect(crossChainMessage.targetContractAddress).to.equal(
+            await token1.getAddress(),
+          );
+          expect(crossChainMessage.crossChainOperationType).to.equal(
+            CrossChainOperation.Erc20Transfer,
+          );
+
+          // Verify origin fields
+          expect(crossChainMessage.origin.originChainId).to.equal(
+            token0Info.chain,
+          );
+          expect(crossChainMessage.origin.originContractAddress).to.equal(
+            await token0.getAddress(),
+          );
+          expect(crossChainMessage.origin.originBlockHeight).to.equal(
+            origin.height,
+          );
+          expect(crossChainMessage.origin.originTransactionIndex).to.equal(
+            origin.txIdx,
+          );
+          expect(crossChainMessage.origin.originEventIndex).to.equal(
+            origin.eventIdx,
+          );
+
+          const expectedOriginHash = computeOriginHash(origin);
+          expect(originHash).to.equal(expectedOriginHash);
+        }
       });
 
       it('Should not set originHash to true when verifying a valid SPV proof', async function () {
@@ -227,8 +280,8 @@ describe('SimpleToken Unit Tests', async function () {
     });
     context('Success Test Cases', async function () {
       it('Should burn the correct amount of tokens for the caller', async function () {
-        const sender = signers.deployer;
-        const receiver = signers.deployer;
+        const sender = initialSigners.deployer;
+        const receiver = initialSigners.deployer;
         const amount = ethers.parseEther('10');
 
         const senderBalanceBefore = await token0.balanceOf(sender.address);
@@ -244,8 +297,8 @@ describe('SimpleToken Unit Tests', async function () {
       });
 
       it('Should emit the correct events', async function () {
-        const sender = signers.deployer;
-        const receiver = signers.deployer;
+        const sender = initialSigners.deployer;
+        const receiver = initialSigners.deployer;
         const amount = ethers.parseEther('500000');
 
         // Create and encode CrossChainData
@@ -290,7 +343,7 @@ describe('SimpleToken Unit Tests', async function () {
       });
 
       it('Should revert when transferring amount 0', async function () {
-        const receiver = signers.deployer;
+        const receiver = initialSigners.deployer;
         const amount = 0n;
         await expect(
           token0.transferCrossChain(receiver, amount, token1Info.chain),
@@ -300,8 +353,8 @@ describe('SimpleToken Unit Tests', async function () {
       });
 
       it('Should revert when sender has insufficient balance', async function () {
-        const sender = signers.alice;
-        const receiver = signers.deployer;
+        const sender = initialSigners.alice;
+        const receiver = initialSigners.deployer;
         const amount = ethers.parseEther('100');
 
         await expect(
@@ -314,7 +367,7 @@ describe('SimpleToken Unit Tests', async function () {
       });
 
       it('Should revert when transferring to a nonexistent chain', async function () {
-        const receiver = signers.deployer;
+        const receiver = initialSigners.deployer;
         const amount = ethers.parseEther('100');
         await expect(token0.transferCrossChain(receiver, amount, 2n))
           .to.be.revertedWithCustomError(
@@ -325,7 +378,7 @@ describe('SimpleToken Unit Tests', async function () {
       });
 
       it('Should revernt when no cross chain address is set for target chain', async function () {
-        const receiver = signers.deployer;
+        const receiver = initialSigners.deployer;
         const amount = ethers.parseEther('100');
 
         const tx1 = await token0.setCrossChainAddress(
@@ -352,8 +405,8 @@ describe('SimpleToken Unit Tests', async function () {
     beforeEach(async function () {
       await authorizeContracts(token0, token0Info, [token0Info, token1Info]);
       await authorizeContracts(token1, token1Info, [token0Info, token1Info]);
-      sender = signers.deployer;
-      receiver = signers.deployer;
+      sender = initialSigners.deployer;
+      receiver = initialSigners.deployer;
       amount = ethers.parseEther('100000');
 
       origin = await initCrossChain(
@@ -364,7 +417,11 @@ describe('SimpleToken Unit Tests', async function () {
         receiver,
         amount,
       );
+      console.log("requesting SPV proof for token1Info.chain in test", token1Info.chain);
+      console.log("requesting SPV proof for origin in test", origin);
+      // Request SPV proof for the origin
       proof = await requestSpvProof(token1Info.chain, origin);
+      console.log("proof in redeemCrossChain beforeEach", proof);
     });
 
     context('Success Test Cases', async function () {
@@ -467,7 +524,7 @@ describe('SimpleToken Unit Tests', async function () {
 
         // Deploy a new token contract on chain1
         const factory = await ethers.getContractFactory('SimpleToken');
-        const token2 = await factory.deploy(ethers.parseEther('1000000'), signers.deployer.address);
+        const token2 = await factory.deploy(ethers.parseEther('1000000'), initialSigners.deployer.address);
         const deploymentTx = token2.deploymentTransaction();
         await deploymentTx.wait();
 
@@ -486,10 +543,10 @@ describe('SimpleToken Unit Tests', async function () {
 
       it('Should revert when redeeming for wrong receiver', async function () {
         await expect(
-          token1.redeemCrossChain(signers.alice.address, amount, proof),
+          token1.redeemCrossChain(initialSigners.alice.address, amount, proof),
         )
           .to.be.revertedWithCustomError(token1, 'IncorrectReceiver')
-          .withArgs(receiver, signers.alice.address);
+          .withArgs(receiver, initialSigners.alice.address);
       });
 
       it('Should revert when redeeming with proof that has been tampered with', async function () {

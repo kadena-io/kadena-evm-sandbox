@@ -64,6 +64,45 @@ async function initCrossChain(
   };
 }
 
+/*
+// Call our chainweb SPV api with the necesasry proof parameters
+async function getProof(trgChain, origin) {
+  console.log("Inside getProof in utils.js");
+  console.log("trgChain:", trgChain);
+  console.log("origin:", origin);
+
+  return fetch(
+    `http://localhost:1848/chainweb/0.0/evm-development/chain/${trgChain}/spv/chain/${origin.chain}/height/${origin.height}/transaction/${origin.txIdx}/event/${origin.eventIdx}`
+   
+  );
+}
+
+// Request cross-chain transfer SPV proof
+async function requestSpvProof(targetChain, origin) {
+  console.log("Inside requestSpvProof in utils.js");
+  console.log("targetChain:", targetChain);
+  console.log("origin:", origin);
+  const spvCall = await getProof(targetChain, origin);
+  console.log("spvCall:", spvCall);
+  const proof = await spvCall.json();
+  const proofStr = JSON.stringify(proof);
+  const hexProof = "0x" + Buffer.from(proofStr, "utf8").toString("hex");
+  return hexProof;
+}
+  */
+
+async function createTamperedProof(targetChain, origin) {
+  const spvCall = await getProof(targetChain, origin);
+  const proofBytes = await spvCall.arrayBuffer();
+  let bytes = new Uint8Array(proofBytes);
+
+  // Corrupt middle of proof
+  const midPoint = Math.floor(bytes.length / 2);
+  bytes[midPoint] = 0xff; // Change single byte to invalid value
+
+  return "0x" + Buffer.from(bytes).toString("hex");
+}
+
 // Redeem cross-chain transfer tokens
 async function redeemCrossChain(
   targetToken,
@@ -72,7 +111,7 @@ async function redeemCrossChain(
   amount,
   proof,
 ) {
-  
+
   await switchChain(targetTokenInfo.chain);
   console.log(`Redeeming tokens on chain ${targetTokenInfo.network.name}`);
   let response2 = await targetToken.redeemCrossChain(
@@ -117,9 +156,8 @@ const CrossChainOperation = {
   Erc20TransferFrom: 2,
 };
 
-async function getSigners() {
-  const chains = await chainweb.getChainIds();
-  await chainweb.switchChain(chains[0]);
+async function getSigners(chainId) {
+  await chainweb.switchChain(chainId);
 
   const [deployer, alice, bob, carol] = await ethers.getSigners();
   return {
@@ -138,4 +176,5 @@ module.exports = {
   CrossChainOperation,
   getSigners,
   deployMocks,
+  requestSpvProof
 };

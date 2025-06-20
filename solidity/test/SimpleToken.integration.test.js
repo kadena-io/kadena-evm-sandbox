@@ -20,8 +20,9 @@ describe('SimpleToken Integration Tests', async function () {
 
   beforeEach(async function () {
     // chainweb.switchChain() or switchNetwork("chain name") can be used to switch to a different chain
-    chains = await getChainIds();
-    signers = await getSigners();
+     chains = await getChainIds();
+     signers = await getSigners(chains[0]); // get signers for the first chain
+     console.log("signers", signers)
     const deployed = await deployContractOnChains({
       name: 'SimpleToken',
       constructorArgs: [ethers.parseUnits('1000000'), signers.deployer.address],
@@ -93,6 +94,8 @@ describe('SimpleToken Integration Tests', async function () {
     it('Should transfer tokens to different address from chain in position 1 to chain in poistion 0', async function () {
       // Switch to chain in position 1 and get signer bob on that chain. This is a hardhat thing - a signer has a network context.
       // Not needed in other test cases because the contract is by default called by the first signer on the chain where the contract is deployed.
+      // This shows an alternat way of getting a signer on another chain as alternative to using the function in utils.js
+  
       await switchChain(chains[1]);
       const [, , chain1Bob] = await ethers.getSigners(); // Get Bob's signer on that chain
       const sender = chain1Bob; // Use this Bob as sender
@@ -206,10 +209,12 @@ describe('SimpleToken Integration Tests', async function () {
     });
 
     it('Should allow third party to redeem on behalf of receiver', async function () {
-      // Switch to chain in position 1 and get signer carol on that chain. This is a hardhat thing - a signer has a network context.
+      // Switch to chain in position 1 and get signer bob on that chain. This is a hardhat thing - a signer has a network context.
       // Not needed in other test cases because the contract is by default called by the first signer on the chain where the contract is deployed.
+      // This shows an alternat way of getting a signer on another chain as alternative to using the function in utils.js
+      console.log("chains in test case", chains);
       await switchChain(chains[1]);
-      const [, , , chain1Carol] = await ethers.getSigners();
+      const [, , , chain1Carol] = await ethers.getSigners(chains[1]);
       const sender = signers.alice;
       const receiver = signers.bob;
       const redeemer = chain1Carol;

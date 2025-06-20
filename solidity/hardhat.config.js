@@ -30,11 +30,12 @@ module.exports = {
     },
     sandbox: {
       type: 'external',
-      chains: 5,
+      chains: 2,
       accounts: devnetAccounts.accounts.map((account) => account.privateKey),
       chainIdOffset: 1789,
       chainwebChainIdOffset: 20,
-      externalHostUrl: "http://localhost:1848/chainweb/0.0/evm-development/"
+      externalHostUrl: "http://localhost:1848/chainweb/0.0/evm-development",
+      logging: 'debug',
 
     },
   },

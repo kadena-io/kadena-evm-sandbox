@@ -4,6 +4,8 @@ pragma solidity 0.8.28;
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 
+import "hardhat/console.sol";
+
 /**
  * @title SimpleToken
  * @author Kadena Team
@@ -184,6 +186,7 @@ contract SimpleToken is ERC20("SimpleToken", "SIM"), Ownable {
         uint256 amount,
         bytes calldata proof
     ) external {
+      console.log("Inside SimpleToken.redeemCrossChain");
         (
             CrossChainMessage memory crossChainMessage,
             bytes32 originHash
@@ -291,11 +294,64 @@ contract SimpleToken is ERC20("SimpleToken", "SIM"), Ownable {
         view
         returns (CrossChainMessage memory crossChainMessage, bytes32 originHash)
     {
+        console.log("Inside SimpleToken.verifySPV");
+        console.log("proof");
+        console.logBytes(proof);
         (bool success, bytes memory data) = VALIDATE_PROOF_PRECOMPILE
             .staticcall(proof);
+
+        console.log("data");
+        console.logBytes(data);
+        console.log("data.length");
+        console.log(data.length);
+
         require(success, SPVVerificationFailed());
         crossChainMessage = abi.decode(data, (CrossChainMessage));
+        console.log(
+            "crossChainMessage.targetChainId",
+            crossChainMessage.targetChainId
+        );
+        console.log(
+            "crossChainMessage.targetContractAddress",
+            crossChainMessage.targetContractAddress
+        );
+        console.log(
+            "crossChainMessage.crossChainOperationType",
+            crossChainMessage.crossChainOperationType
+        );
+        console.log(
+            "crossChainMessage.crossChainData"
+        );
+        console.logBytes(crossChainMessage.crossChainData);
+        console.log(
+            "crossChainMessage.origin.originChainId",
+            crossChainMessage.origin.originChainId
+        );
+        console.log(
+            "crossChainMessage.origin.originContractAddress",
+            crossChainMessage.origin.originContractAddress
+        );
+        console.log(
+            "crossChainMessage.origin.originBlockHeight",
+            crossChainMessage.origin.originBlockHeight
+        );
+        console.log(
+            "crossChainMessage.origin.originTransactionIndex",
+            crossChainMessage.origin.originTransactionIndex
+        );
+        console.log(
+            "crossChainMessage.origin.originEventIndex",
+            crossChainMessage.origin.originEventIndex
+        );
+        console.log("crossChainMessage.origin");
+      
         originHash = keccak256(abi.encode(crossChainMessage.origin));
+        console.log("originHash");
+        console.logBytes32(originHash);
+        console.log(
+            "completed[originHash]",
+            completed[originHash]
+        );
         require(!completed[originHash], AlreadyCompleted(originHash));
     }
 

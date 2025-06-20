@@ -31,14 +31,28 @@ export async function stopAndRemoveNetwork() {
   }
 }
 
-export async function generateDockerComposeAndStartNetwork() {
-  await createDockerComposeFile();
+export async function generateDockerComposeAndStartNetwork(
+  project?: DevnetProject
+) {
+  await createDockerComposeFile(project);
   await startNetwork();
 }
 
-export async function createDockerComposeFile() {
+type DevnetProject =
+  | 'minimal'
+  | 'kadena-dev'
+  | 'kadena-dev-singleton-evm'
+  | 'appdev'
+  | 'pact'
+  | 'mining-pool';
+
+export async function createDockerComposeFile(project?: DevnetProject) {
   console.log(`Generating ${DOCKER_COMPOSE_FILE}...`);
-  await $devnet`uv run python ./compose.py > ${DOCKER_COMPOSE_FILE}`;
+  if (project) {
+    await $devnet`uv run python ./compose.py --project ${project} > ${DOCKER_COMPOSE_FILE}`;
+  } else {
+    await $devnet`uv run python ./compose.py > ${DOCKER_COMPOSE_FILE}`;
+  }
 }
 
 export async function startNetwork() {
@@ -53,7 +67,7 @@ interface DevnetChainStatus {
   type: string;
 }
 
-interface DevnetStatus {
+export interface DevnetStatus {
   chains: DevnetChainStatus[];
   cutHeight: number;
 }

@@ -5,3 +5,7 @@ solidity/cache
 solidity/build
 solidity/artifacts
 yarn.lock
+
+# non-standard projects for devnet
+config
+!config/default

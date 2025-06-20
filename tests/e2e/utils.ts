@@ -39,7 +39,7 @@ export function createLogger({
       fractionalSecondDigits: 3,
     });
 
-  return <T>(message: string, arg?: T): T | undefined => {
+  return <T extends any | undefined>(message: string, arg?: T): T => {
     // if context is not provided, use the caller function name
     if (!context) {
       const stack = new Error().stack;
@@ -58,4 +58,31 @@ export function createLogger({
       return arg;
     }
   };
+}
+
+export function fetchWithRetry(
+  url: string,
+  options: RequestInit = {},
+  retries = 3,
+  delay = 1000
+): Promise<Response> {
+  return new Promise((resolve, reject) => {
+    const attemptFetch = (attempt: number) => {
+      fetch(url, options)
+        .then((response) => {
+          if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+          }
+          resolve(response);
+        })
+        .catch((error) => {
+          if (attempt < retries) {
+            setTimeout(() => attemptFetch(attempt + 1), delay);
+          } else {
+            reject(error);
+          }
+        });
+    };
+    attemptFetch(0);
+  });
 }

@@ -146,9 +146,14 @@ services:
             source: bootnode-chain-spec-20
             target: /config/chain-spec.json
         container_name: bootnode-evm-20
+        depends_on:
+            bootnode-evm-init-20:
+                condition: service_completed_successfully
         entrypoint:
         - /app/kadena-reth
         - node
+        - --datadir=/root/ethereum
+        - --chain=/config/chain-spec.json
         - --metrics=0.0.0.0:9001
         - --log.file.directory=/root/logs
         - --addr=0.0.0.0
@@ -159,21 +164,18 @@ services:
         - --http
         - --http.addr=0.0.0.0
         - --http.port=8545
-        - --http.api=admin,debug,eth,net,trace,txpool,web3,rpc,reth,ots
+        - --http.api=eth,net,web3
         - --ws
         - --ws.addr=0.0.0.0
         - --ws.port=8546
-        - --ws.api=admin,debug,eth,net,trace,txpool,web3,rpc,reth,ots
+        - --ws.api=eth,net,web3
         - --disable-nat
         - --nat=none
         - --disable-dns-discovery
         - --discovery.port=30323
-        - --chain=/config/chain-spec.json
         - --engine.persistence-threshold=0
         - --engine.memory-block-buffer-target=0
         - --p2p-secret-key=/run/secrets/p2p-secret
-        environment:
-        - CHAINWEB_CHAIN_ID=20
         expose:
         - '8545'
         - '8546'
@@ -182,7 +184,7 @@ services:
         - 30323/tcp
         - 30323/udp
         hostname: bootnode-evm-20
-        image: ${EVM_IMAGE:-ghcr.io/kadena-io/kadena-reth:sha-eff370d}
+        image: ${RETH_IMAGE:-ghcr.io/kadena-io/kadena-reth:sha-eff370d}
         networks:
             bootnode-internal: null
             p2p: null
@@ -200,7 +202,7 @@ services:
                 hard: 65535
                 soft: 65535
         volumes:
-        - bootnode-evm-20_data:/root/.local/share/reth/1789/
+        - bootnode-evm-20_data:/root/ethereum/
         - bootnode_logs:/root/logs/
     bootnode-evm-21:
         configs:
@@ -208,9 +210,14 @@ services:
             source: bootnode-chain-spec-21
             target: /config/chain-spec.json
         container_name: bootnode-evm-21
+        depends_on:
+            bootnode-evm-init-21:
+                condition: service_completed_successfully
         entrypoint:
         - /app/kadena-reth
         - node
+        - --datadir=/root/ethereum
+        - --chain=/config/chain-spec.json
         - --metrics=0.0.0.0:9001
         - --log.file.directory=/root/logs
         - --addr=0.0.0.0
@@ -221,21 +228,18 @@ services:
         - --http
         - --http.addr=0.0.0.0
         - --http.port=8545
-        - --http.api=admin,debug,eth,net,trace,txpool,web3,rpc,reth,ots
+        - --http.api=eth,net,web3
         - --ws
         - --ws.addr=0.0.0.0
         - --ws.port=8546
-        - --ws.api=admin,debug,eth,net,trace,txpool,web3,rpc,reth,ots
+        - --ws.api=eth,net,web3
         - --disable-nat
         - --nat=none
         - --disable-dns-discovery
         - --discovery.port=30324
-        - --chain=/config/chain-spec.json
         - --engine.persistence-threshold=0
         - --engine.memory-block-buffer-target=0
         - --p2p-secret-key=/run/secrets/p2p-secret
-        environment:
-        - CHAINWEB_CHAIN_ID=21
         expose:
         - '8545'
         - '8546'
@@ -244,7 +248,7 @@ services:
         - 30324/tcp
         - 30324/udp
         hostname: bootnode-evm-21
-        image: ${EVM_IMAGE:-ghcr.io/kadena-io/kadena-reth:sha-eff370d}
+        image: ${RETH_IMAGE:-ghcr.io/kadena-io/kadena-reth:sha-eff370d}
         networks:
             bootnode-internal: null
             p2p: null
@@ -262,7 +266,7 @@ services:
                 hard: 65535
                 soft: 65535
         volumes:
-        - bootnode-evm-21_data:/root/.local/share/reth/1790/
+        - bootnode-evm-21_data:/root/ethereum/
         - bootnode_logs:/root/logs/
     bootnode-evm-22:
         configs:
@@ -270,9 +274,14 @@ services:
             source: bootnode-chain-spec-22
             target: /config/chain-spec.json
         container_name: bootnode-evm-22
+        depends_on:
+            bootnode-evm-init-22:
+                condition: service_completed_successfully
         entrypoint:
         - /app/kadena-reth
         - node
+        - --datadir=/root/ethereum
+        - --chain=/config/chain-spec.json
         - --metrics=0.0.0.0:9001
         - --log.file.directory=/root/logs
         - --addr=0.0.0.0
@@ -283,21 +292,18 @@ services:
         - --http
         - --http.addr=0.0.0.0
         - --http.port=8545
-        - --http.api=admin,debug,eth,net,trace,txpool,web3,rpc,reth,ots
+        - --http.api=eth,net,web3
         - --ws
         - --ws.addr=0.0.0.0
         - --ws.port=8546
-        - --ws.api=admin,debug,eth,net,trace,txpool,web3,rpc,reth,ots
+        - --ws.api=eth,net,web3
         - --disable-nat
         - --nat=none
         - --disable-dns-discovery
         - --discovery.port=30325
-        - --chain=/config/chain-spec.json
         - --engine.persistence-threshold=0
         - --engine.memory-block-buffer-target=0
         - --p2p-secret-key=/run/secrets/p2p-secret
-        environment:
-        - CHAINWEB_CHAIN_ID=22
         expose:
         - '8545'
         - '8546'
@@ -306,7 +312,7 @@ services:
         - 30325/tcp
         - 30325/udp
         hostname: bootnode-evm-22
-        image: ${EVM_IMAGE:-ghcr.io/kadena-io/kadena-reth:sha-eff370d}
+        image: ${RETH_IMAGE:-ghcr.io/kadena-io/kadena-reth:sha-eff370d}
         networks:
             bootnode-internal: null
             p2p: null
@@ -324,7 +330,7 @@ services:
                 hard: 65535
                 soft: 65535
         volumes:
-        - bootnode-evm-22_data:/root/.local/share/reth/1791/
+        - bootnode-evm-22_data:/root/ethereum/
         - bootnode_logs:/root/logs/
     bootnode-evm-23:
         configs:
@@ -332,9 +338,14 @@ services:
             source: bootnode-chain-spec-23
             target: /config/chain-spec.json
         container_name: bootnode-evm-23
+        depends_on:
+            bootnode-evm-init-23:
+                condition: service_completed_successfully
         entrypoint:
         - /app/kadena-reth
         - node
+        - --datadir=/root/ethereum
+        - --chain=/config/chain-spec.json
         - --metrics=0.0.0.0:9001
         - --log.file.directory=/root/logs
         - --addr=0.0.0.0
@@ -345,21 +356,18 @@ services:
         - --http
         - --http.addr=0.0.0.0
         - --http.port=8545
-        - --http.api=admin,debug,eth,net,trace,txpool,web3,rpc,reth,ots
+        - --http.api=eth,net,web3
         - --ws
         - --ws.addr=0.0.0.0
         - --ws.port=8546
-        - --ws.api=admin,debug,eth,net,trace,txpool,web3,rpc,reth,ots
+        - --ws.api=eth,net,web3
         - --disable-nat
         - --nat=none
         - --disable-dns-discovery
         - --discovery.port=30326
-        - --chain=/config/chain-spec.json
         - --engine.persistence-threshold=0
         - --engine.memory-block-buffer-target=0
         - --p2p-secret-key=/run/secrets/p2p-secret
-        environment:
-        - CHAINWEB_CHAIN_ID=23
         expose:
         - '8545'
         - '8546'
@@ -368,7 +376,7 @@ services:
         - 30326/tcp
         - 30326/udp
         hostname: bootnode-evm-23
-        image: ${EVM_IMAGE:-ghcr.io/kadena-io/kadena-reth:sha-eff370d}
+        image: ${RETH_IMAGE:-ghcr.io/kadena-io/kadena-reth:sha-eff370d}
         networks:
             bootnode-internal: null
             p2p: null
@@ -386,7 +394,7 @@ services:
                 hard: 65535
                 soft: 65535
         volumes:
-        - bootnode-evm-23_data:/root/.local/share/reth/1792/
+        - bootnode-evm-23_data:/root/ethereum/
         - bootnode_logs:/root/logs/
     bootnode-evm-24:
         configs:
@@ -394,9 +402,14 @@ services:
             source: bootnode-chain-spec-24
             target: /config/chain-spec.json
         container_name: bootnode-evm-24
+        depends_on:
+            bootnode-evm-init-24:
+                condition: service_completed_successfully
         entrypoint:
         - /app/kadena-reth
         - node
+        - --datadir=/root/ethereum
+        - --chain=/config/chain-spec.json
         - --metrics=0.0.0.0:9001
         - --log.file.directory=/root/logs
         - --addr=0.0.0.0
@@ -407,21 +420,18 @@ services:
         - --http
         - --http.addr=0.0.0.0
         - --http.port=8545
-        - --http.api=admin,debug,eth,net,trace,txpool,web3,rpc,reth,ots
+        - --http.api=eth,net,web3
         - --ws
         - --ws.addr=0.0.0.0
         - --ws.port=8546
-        - --ws.api=admin,debug,eth,net,trace,txpool,web3,rpc,reth,ots
+        - --ws.api=eth,net,web3
         - --disable-nat
         - --nat=none
         - --disable-dns-discovery
         - --discovery.port=30327
-        - --chain=/config/chain-spec.json
         - --engine.persistence-threshold=0
         - --engine.memory-block-buffer-target=0
         - --p2p-secret-key=/run/secrets/p2p-secret
-        environment:
-        - CHAINWEB_CHAIN_ID=24
         expose:
         - '8545'
         - '8546'
@@ -430,7 +440,7 @@ services:
         - 30327/tcp
         - 30327/udp
         hostname: bootnode-evm-24
-        image: ${EVM_IMAGE:-ghcr.io/kadena-io/kadena-reth:sha-eff370d}
+        image: ${RETH_IMAGE:-ghcr.io/kadena-io/kadena-reth:sha-eff370d}
         networks:
             bootnode-internal: null
             p2p: null
@@ -448,7 +458,122 @@ services:
                 hard: 65535
                 soft: 65535
         volumes:
-        - bootnode-evm-24_data:/root/.local/share/reth/1793/
+        - bootnode-evm-24_data:/root/ethereum/
+        - bootnode_logs:/root/logs/
+    bootnode-evm-init-20:
+        command:
+        - 'true'
+        configs:
+        -   mode: '0440'
+            source: bootnode-chain-spec-20
+            target: /config/chain-spec.json
+        container_name: bootnode-evm-init-20
+        entrypoint:
+        - /bin/sh
+        - -c
+        hostname: bootnode-evm-init-20
+        image: ${RETH_IMAGE:-ghcr.io/kadena-io/kadena-reth:sha-eff370d}
+        networks:
+            bootnode-internal: null
+        restart: 'no'
+        ulimits:
+            nofile:
+                hard: 65535
+                soft: 65535
+        volumes:
+        - bootnode-evm-20_data:/root/.ethereum/
+        - bootnode_logs:/root/logs/
+    bootnode-evm-init-21:
+        command:
+        - 'true'
+        configs:
+        -   mode: '0440'
+            source: bootnode-chain-spec-21
+            target: /config/chain-spec.json
+        container_name: bootnode-evm-init-21
+        entrypoint:
+        - /bin/sh
+        - -c
+        hostname: bootnode-evm-init-21
+        image: ${RETH_IMAGE:-ghcr.io/kadena-io/kadena-reth:sha-eff370d}
+        networks:
+            bootnode-internal: null
+        restart: 'no'
+        ulimits:
+            nofile:
+                hard: 65535
+                soft: 65535
+        volumes:
+        - bootnode-evm-21_data:/root/.ethereum/
+        - bootnode_logs:/root/logs/
+    bootnode-evm-init-22:
+        command:
+        - 'true'
+        configs:
+        -   mode: '0440'
+            source: bootnode-chain-spec-22
+            target: /config/chain-spec.json
+        container_name: bootnode-evm-init-22
+        entrypoint:
+        - /bin/sh
+        - -c
+        hostname: bootnode-evm-init-22
+        image: ${RETH_IMAGE:-ghcr.io/kadena-io/kadena-reth:sha-eff370d}
+        networks:
+            bootnode-internal: null
+        restart: 'no'
+        ulimits:
+            nofile:
+                hard: 65535
+                soft: 65535
+        volumes:
+        - bootnode-evm-22_data:/root/.ethereum/
+        - bootnode_logs:/root/logs/
+    bootnode-evm-init-23:
+        command:
+        - 'true'
+        configs:
+        -   mode: '0440'
+            source: bootnode-chain-spec-23
+            target: /config/chain-spec.json
+        container_name: bootnode-evm-init-23
+        entrypoint:
+        - /bin/sh
+        - -c
+        hostname: bootnode-evm-init-23
+        image: ${RETH_IMAGE:-ghcr.io/kadena-io/kadena-reth:sha-eff370d}
+        networks:
+            bootnode-internal: null
+        restart: 'no'
+        ulimits:
+            nofile:
+                hard: 65535
+                soft: 65535
+        volumes:
+        - bootnode-evm-23_data:/root/.ethereum/
+        - bootnode_logs:/root/logs/
+    bootnode-evm-init-24:
+        command:
+        - 'true'
+        configs:
+        -   mode: '0440'
+            source: bootnode-chain-spec-24
+            target: /config/chain-spec.json
+        container_name: bootnode-evm-init-24
+        entrypoint:
+        - /bin/sh
+        - -c
+        hostname: bootnode-evm-init-24
+        image: ${RETH_IMAGE:-ghcr.io/kadena-io/kadena-reth:sha-eff370d}
+        networks:
+            bootnode-internal: null
+        restart: 'no'
+        ulimits:
+            nofile:
+                hard: 65535
+                soft: 65535
+        volumes:
+        - bootnode-evm-24_data:/root/.ethereum/
         - bootnode_logs:/root/logs/
     bootnode-frontend:
         configs:

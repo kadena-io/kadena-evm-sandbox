@@ -92,7 +92,19 @@
     "pragueTime": 0,
     "shanghaiTime": 0,
     "terminalTotalDifficulty": 0,
-    "terminalTotalDifficultyPassed": true
+    "terminalTotalDifficultyPassed": true,
+    "blobSchedule": {
+      "cancun": {
+        "target": 0,
+        "max": 0,
+        "baseFeeUpdateFraction": 3338477
+      },
+      "prague": {
+        "target": 0,
+        "max": 0,
+        "baseFeeUpdateFraction": 5007716
+      }
+    }
   },
   "difficulty": "0x0",
   "extraData": "0x",

@@ -222,7 +222,7 @@ describe("SimpleToken Unit Tests", async function () {
           .withArgs(2n);
       });
 
-      it("Should revernt when no cross chain address is set for target chain", async function () {
+      it("Should revert when no cross chain address is set for target chain", async function () {
         const receiver = signers.deployer;
         const amount = ethers.parseEther("100");
 
@@ -436,8 +436,8 @@ describe("SimpleToken Unit Tests", async function () {
     // Can't test error cases without changing the precompile implementation
     context("Success Test Cases", async function () {
       it("Should return the correct chainweb chain id", async function () {
-        // Token0 is deployed on chain 0
-        // Token1 is deployed on chain 1
+        // Token0 is deployed on chain 20
+        // Token1 is deployed on chain 21
         // getChainwebChainId() should return the correct chain id for each token, regardless of the current network
         expect(await token0.getChainwebChainId()).to.equal(20n);
         expect(await token1.getChainwebChainId()).to.equal(21n);

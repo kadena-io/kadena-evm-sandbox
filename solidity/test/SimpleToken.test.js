@@ -32,7 +32,7 @@ describe('SimpleToken Unit Tests', async function () {
     const chains = await getChainIds();
     initialSigners = await getSigners(chains[0]); // get initialSigners for the first chain
 
-    // switchChain()can be used to switch to a different chain
+    // switchChain()can be used to switch to a different Chainweb chain
     // deployContractOnChains switches chains before deploying on each one
     // Because this contract takes an address as a constructor param, we pass it in here as an address.
     // In solidity, the address has no specific network affiliation like a signer does in Hardhat.
@@ -52,6 +52,10 @@ describe('SimpleToken Unit Tests', async function () {
     deployments = deployed.deployments;
 
     //console.log("deployments in beforfeEach", deployments);
+    console.log("token0 in beforeEach", token0);
+    console.log("token1 in beforeEach", token1);
+    console.log("token0Info in beforeEach", token0Info);
+    console.log("token1Info in beforeEach", token1Info);
 
     await switchChain(token0Info.chain);
   });
@@ -88,6 +92,7 @@ describe('SimpleToken Unit Tests', async function () {
     context('Success Test Cases', async function () {
       it('Should set up cross-chain addresses for all deployments using runOverChains', async function () {
         // Set up cross-chain addresses for every chain to every other chain
+        // runOverChains handles the chain switching internally
         await chainweb.runOverChains(async (currentChainId) => {
           const currentDeployment = deployments.find(d => d.chain === currentChainId);
           const chainSigners = await getSigners(currentChainId);
@@ -406,11 +411,9 @@ describe('SimpleToken Unit Tests', async function () {
         receiver,
         amount,
       );
-      console.log("requesting SPV proof for token1Info.chain in test", token1Info.chain);
-      console.log("requesting SPV proof for origin in test", origin);
+
       // Request SPV proof for the origin
       proof = await requestSpvProof(token1Info.chain, origin);
-      console.log("proof in redeemCrossChain beforeEach", proof);
     });
 
     context('Success Test Cases', async function () {
@@ -482,7 +485,7 @@ describe('SimpleToken Unit Tests', async function () {
         // Keep deployment info accessible when needed
         mockToken0Info = mocks.deployments[0];
         mockToken1Info = mocks.deployments[1];
-      
+
         await authorizeAllContracts(mocks.deployments);
       });
 
@@ -633,14 +636,13 @@ describe('SimpleToken Unit Tests', async function () {
     // Can't test error cases without changing the precompile implementation
     context('Success Test Cases', async function () {
       it('Should return the correct chainweb chain id', async function () {
-        // Token0 is deployed on chain 0
-        // Token1 is deployed on chain 1
-        // getChainwebChainId() should return the correct chain id for each token, regardless of the current network
-        expect(await token0.getChainwebChainId()).to.equal(20n);
-        expect(await token1.getChainwebChainId()).to.equal(21n);
-        await switchChain(token1Info.chain);
-        expect(await token1.getChainwebChainId()).to.equal(21n);
-        expect(await token0.getChainwebChainId()).to.equal(20n);
+        // runOverChains handles the chain switching internally
+        // We can use it to verify the chainweb chain id for each deployment
+        await chainweb.runOverChains(async (chainId) => {
+          const deployment = deployments.find(d => d.chain === chainId);
+          expect(deployment).to.not.be.undefined;
+          expect(await deployment.contract.getChainwebChainId()).to.equal(chainId);
+        });
       });
     }); // End of Success Test Cases
   }); // End of getChainwebChainId

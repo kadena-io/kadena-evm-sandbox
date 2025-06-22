@@ -3,7 +3,8 @@
     "scripts": {
         "build": "npx hardhat compile",
         "test": "npx hardhat test",
-        "deploy": "npx hardhat run scripts/deploy.js"
+        "deploy": "npx hardhat run scripts/deploy.js",
+        "deploy:sandbox": "npx hardhat run scripts/deploy.js --chainweb sandbox"
     },
     "devDependencies": {
         "@kadena/hardhat-chainweb": "^1.4.8",

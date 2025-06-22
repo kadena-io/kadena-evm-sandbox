@@ -10,11 +10,16 @@ async function main() {
   });
 
 
-
   if (deployed.deployments.length === 0) {
     console.log('No contracts deployed');
     return;
   }
+
+  console.log('Contracts deployed');
+
+  deployed.deployments.forEach(async (deployment) => {
+    console.log(`${deployment.address} on ${deployment.chain}`);
+  });
 
   await chainweb.runOverChains(async (chainId) => {
     // Find the deployment for this specific chain
@@ -60,11 +65,9 @@ async function main() {
 
 
 
-  console.log('Contracts deployed');
 
-  deployed.deployments.forEach(async (deployment) => {
-    console.log(`${deployment.address} on ${deployment.chain}`);
-  });
+
+  console.log("SimpleToken deployment process completed");
 }
 
 main()

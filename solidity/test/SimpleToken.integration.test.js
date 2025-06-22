@@ -23,7 +23,7 @@ describe('SimpleToken Integration Tests', async function () {
     chains = await getChainIds();
     initialSigners = await getSigners(chains[0]); // get initialSigners for the first chain
 
-    // switchChain()can be used to switch to a different chain
+    // switchChain()can be used to switch to a different  // switchChain()can be used to switch to a different Chainweb chain
     // deployContractOnChains switches chains before deploying on each one
     // Because this contract takes an address as a constructor param, we pass it in here as an address.
     // In solidity, the address has no specific network affiliation like a signer does in Hardhat.

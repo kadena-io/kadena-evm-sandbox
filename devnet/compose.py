@@ -987,8 +987,9 @@ def debug(nodes: list[str]) -> Service:
         "environment": {
             "HEIGHT": "${HEIGHT:-latest}",
             "CL_NODES": "${CL_NODES:-"
-            + ",".join([n + "-consensus" for n in nodes])
-            + "}",
+                + ",".join([n + "-consensus" for n in nodes])
+                + "}",
+            "JWT_SECRET": f"${{JWT_SECRET:-{jwtsecret}}}",
         },
         "command": [
             """

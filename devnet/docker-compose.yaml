@@ -685,6 +685,7 @@ services:
         environment:
             CL_NODES: ${CL_NODES:-bootnode-consensus}
             HEIGHT: ${HEIGHT:-latest}
+            JWT_SECRET: ${JWT_SECRET:-10b45e8907ab12dd750f688733e73cf433afadfd2f270e5b75a6b8fff22dd352}
         networks:
             bootnode-internal: null
             p2p: null

@@ -1,5 +1,6 @@
 require("@nomicfoundation/hardhat-toolbox");
 require('@kadena/hardhat-chainweb');
+require('@kadena/hardhat-kadena-create2');
 require("hardhat-switch-network");
 require("@nomicfoundation/hardhat-verify");
 

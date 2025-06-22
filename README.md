@@ -222,7 +222,7 @@ To shut down the network and remove containers:
 
 If you want to experiment with using the Chainweb EVM development network with other Hardhat projects, you must configure the Hardhat project to connect to the Chainweb EVM development network.
 You must also configure the Hardhat project to include account information—addresses and balances—for all available accounts.
-In the `kadena-evm-sandbox` directory, the `solidity` directory provides an example of a simple Hardhat project with a Hardhat configuration file, Solidity smart contract, and a test file.
+In the `kadena-evm-sandbox` directory, the `solidity` directory provides an example of a simple Hardhat project with a Hardhat configuration file, Solidity smart contract, and test files. This project als has the `@kadena/hardhat-chainweb` and `@kadena/hardhat-kadena-create2` Harhat V2 plugins configured. The `@kadena/hardhat-chainweb` simulates Kadena Chainweb EVM's multi-chain enivornment so that you can develop in Hardhat V2 and later deploy to testnet and mainnet, as usual. It also supports configuration for smart contract verification and for deploying to chains that would normally be configured as external networks in Hardhat. This local sandbox is configured to represent that. When available, the testnet configuration will be added. The `@kadena/hardhat-kadena-create2` provides functionality for deterministic deployment. This makes it easy to deploy a smart contract to all chains with the same address.
 
 The `solidity` project includes the following files to configure the Chainweb EVM development network:
 
@@ -237,6 +237,37 @@ cd solidity
 npx hardhat test
 ```
 
+or the npm script
+```
+npm run test
+
+```
+
+You can also run the example deployment scripts using the following npm scripts to deploy the SimpleToken contract
+
+```
+npm run deploy:hardhat
+
+```
+
+```
+npm run deploy sandbox
+
+```
+
+To deploy detemrinistcially using CREATE2, run
+
+```
+npm run deploy-create2:hardhat
+
+```
+
+or
+
+```
+npm run deploy-create2 sandbox
+
+```
 ### Modifying the Hardhat project
 
 To integrate with the Chainweb EVM development network:
@@ -248,24 +279,26 @@ To integrate with the Chainweb EVM development network:
    For example:
 
    ```javascript
-   require("@nomicfoundation/hardhat-toolbox");
-   require("@nomicfoundation/hardhat-verify");
-   const path = require("path");
-   const fs = require("fs");
+    require("@nomicfoundation/hardhat-toolbox");
+    require('@kadena/hardhat-chainweb');
+    require('@kadena/hardhat-kadena-create2');
+    require("hardhat-switch-network");
+    require("@nomicfoundation/hardhat-verify");
 
-   // Read and parse the accounts file
-   const devnetAccountsPath = path.join(__dirname, "devnet-accounts.json");
-   const devnetAccountsFile = fs.readFileSync(devnetAccountsPath, "utf8");
-   const devnetAccounts = JSON.parse(devnetAccountsFile);
+    const { readFileSync } = require("fs");
 
-   // Validate account configuration
-   const requiredAccounts = 20;
-   if (devnetAccounts.accounts.length !== requiredAccounts) {
-     throw new Error(
-       `Expected ${requiredAccounts} accounts in devnet-accounts.json, found ${devnetAccounts.accounts.length}`
-     );
-   }
+    const devnetAccounts = JSON.parse(
+      readFileSync("./devnet-accounts.json", "utf-8")
+    );
+
    ```
+   and include 
+
+  ```javascript
+    accounts: devnetAccounts.accounts.map((account) => account.privateKey),
+
+  ```
+  in your Hardhat Chainweb configuration.
 
 4. Copy and paste the code to configure network information from the `solidity/hardhat.config.js` file into the `hardhat.config.js` file for your project.
 
@@ -294,60 +327,32 @@ To integrate with the Chainweb EVM development network:
 
   
 ```javascript
-    etherscan: {
-    apiKey: {
-      sandbox20: "abc", // Any non-empty string works for Blockscout
-      sandbox21: "abc",
-      sandbox22: "abc",
-      sandbox23: "abc",
-      sandbox24: "abc",
-    },
-    customChains: [
-      {
-        network: "sandbox20",
-        chainId: 1789,
-        urls: {
-          apiURL: "http://chain-20.evm.kadena.local:8000/api/",
-          browserURL: "http://chain-20.evm.kadena.local:8000/"
-        }
-      },
-      {
-        network: "sandbox21",
-        chainId: 1790,
-        urls: {
-          apiURL: "http://chain-21.evm.kadena.local:8000/api/",
-          browserURL: "http://chain-21.evm.kadena.local:8000/"
-        }
-      },
-      {
-        network: "sandbox22",
-        chainId: 1791,
-        urls: {
-          apiURL: "http://chain-22.evm.kadena.local:8000/api/",
-          browserURL: "http://chain-22.evm.kadena.local:8000/"
-        }
-      },
-      {
-        network: "sandbox23",
-        chainId: 1792,
-        urls: {
-          apiURL: "http://chain-23.evm.kadena.local:8000/api/",
-          browserURL: "http://chain-23.evm.kadena.local:8000/"
-        }
-      },
-      {
-        network: "sandbox24",
-        chainId: 1793,
-        urls: {
-          apiURL: "http://chain-24.evm.kadena.local:8000/api/",
-          browserURL: "http://chain-24.evm.kadena.local:8000/"
-        }
-      },
-    ]
-  },
+etherscan: {
+  apiKey: 'abc', // Any non-empty string works for Blockscout
+  apiURLTemplate: 'http://chain-{cid}.evm.kadena.internal:8000/api/',
+  browserURLTemplate: 'http://chain-{cid}.evm.kadena.internal:8000/',
+},
 
 ``` 
 
+The full config looks like this
+
+```javascript
+ sandbox: {
+      type: 'external',
+      chains: 5,
+      accounts: devnetAccounts.accounts.map((account) => account.privateKey),
+      chainIdOffset: 1789,
+      chainwebChainIdOffset: 20,
+      externalHostUrl: "http://localhost:1848/chainweb/0.0/evm-development",
+      etherscan: {
+        apiKey: 'abc', // Any non-empty string works for Blockscout
+        apiURLTemplate: 'http://chain-{cid}.evm.kadena.internal:8000/api/',
+        browserURLTemplate: 'http://chain-{cid}.evm.kadena.internal:8000/',
+      },
+    },
+
+```
 6. Save your changes and close the `hardhat.config.js` file.
 
 ### Compiling and testing integration
@@ -373,7 +378,7 @@ npx hardhat run scripts/deploy.js
 
 The npm convenience script 
 ```
-npm run deploy 
+npm run deploy:hardhat
 
 ```
 can also be used.
@@ -431,7 +436,6 @@ npx hardhat run scripts/deploy.js --chainweb sandbox
 
 The `--chainweb` switch acts like the Hardhat `--network` switch. 
 
-Note: The unit tests currently only run against two chains, which is the current Kadena Hardhat Chainweb Plugin hardhat config. 
 
 For more information and more examples of using this plugin, which was created to allow interaction with multiple Chainweb chains, see the Kadena Hardhat Chainweb [plugin](https://www.npmjs.com/package/@kadena/hardhat-chainweb).
 
@@ -469,7 +473,9 @@ Normally when using Hardhat ethers in tests, the call creates a new contract ins
 
 ` await chainweb.switchChain(chainId);`
 
-must be called in order to switch to the correct chain and get the signers with the correct network context for that chain.
+must be called in order to switch to the correct chain and get the signers with the correct network context for that chain. 
+
+If you use the `@kadena/hardhat-chainweb` `runOverChains` function, the chain switching will be done for you.
 
 You can find examples of switching chains in the `solidity/test/SimpleToken.test.js` and  `solidity/test/SimpleToken.integration.test.js` test files.
 

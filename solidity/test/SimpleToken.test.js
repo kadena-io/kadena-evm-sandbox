@@ -650,32 +650,26 @@ describe('SimpleToken Unit Tests', async function () {
   describe('getCrossChainAddress', async function () {
     context('Success Test Cases', async function () {
       it('Should return the correct cross chain address', async function () {
-        // Explicitly set cross-chain addresses for token0
-        const tx1 = await token0.setCrossChainAddress(
-          token1Info.chain,
-          await token1.getAddress(),
-        );
-        await tx1.wait();
-        expect(await token0.getCrossChainAddress(token1Info.chain)).to.equal(
-          await token1.getAddress(),
-        );
-        expect(await token0.getCrossChainAddress(token0Info.chain)).to.equal(
-          ZeroAddress,
-        );
+        await authorizeAllContracts(deployments);
 
-        // Explicitly set cross-chain addresses for token1
-        await switchChain(token1Info.chain);
-        const tx2 = await token1.setCrossChainAddress(
-          token0Info.chain,
-          await token0.getAddress(),
-        );
-        await tx2.wait();
-        expect(await token1.getCrossChainAddress(token0Info.chain)).to.equal(
-          await token0.getAddress(),
-        );
-        expect(await token1.getCrossChainAddress(token1Info.chain)).to.equal(
-          ZeroAddress,
-        );
+        await chainweb.runOverChains(async (chainId) => {
+          //test the getCrossChainAddress function on each deployment
+          const deployment = deployments.find(d => d.chain === chainId);
+          expect(deployment).to.not.be.undefined;
+
+          // For every other chain, check the cross-chain address mapping
+          for (const other of deployments) {
+            if (other.chain !== chainId) {
+              // Should be set to the other contract's address
+              expect(await deployment.contract.getCrossChainAddress(other.chain))
+                .to.equal(other.address);
+            } else {
+              // Should be ZeroAddress for self
+              expect(await deployment.contract.getCrossChainAddress(chainId))
+                .to.equal(ZeroAddress);
+            }
+          }
+        });
       });
     }); // End of Success Test Cases
   }); // End of getCrossChainAddress

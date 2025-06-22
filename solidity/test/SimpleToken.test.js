@@ -2,13 +2,12 @@ const { expect } = require('chai');
 const { ethers, chainweb } = require('hardhat');
 const { ZeroAddress } = require('ethers');
 const {
-  authorizeContracts,
+  authorizeAllContracts,
   initCrossChain,
   CrossChainOperation,
   redeemCrossChain,
   getSigners,
   deployMocks,
-  //requestSpvProof
 } = require('./utils/utils');
 const {
   deployContractOnChains,
@@ -52,7 +51,7 @@ describe('SimpleToken Unit Tests', async function () {
 
     deployments = deployed.deployments;
 
-    console.log("deployments in beforfeEach", deployments);
+    //console.log("deployments in beforfeEach", deployments);
 
     await switchChain(token0Info.chain);
   });
@@ -85,121 +84,120 @@ describe('SimpleToken Unit Tests', async function () {
     }); // End of Success Test Cases
   }); // End of Deployment and Initialization
 
-describe('setCrossChainAddress', async function () {
-  context('Success Test Cases', async function () {
-    it('Should set up cross-chain addresses for all deployments using runOverChains', async function () {
-      // Set up cross-chain addresses for every chain to every other chain
-      await chainweb.runOverChains(async (currentChainId) => {
-        const currentDeployment = deployments.find(d => d.chain === currentChainId);
-        const chainSigners = await getSigners(currentChainId);
-        
-        // Set addresses for all other chains
-        for (const targetDeployment of deployments) {
-          if (targetDeployment.chain !== currentChainId) {
-            const tx = await currentDeployment.contract.setCrossChainAddress(
-              targetDeployment.chain,
-              targetDeployment.address
-            );
-            await tx.wait();
-            
-            // Verify the address was set correctly
-            expect(await currentDeployment.contract.getCrossChainAddress(targetDeployment.chain))
-              .to.equal(targetDeployment.address);
-            
-            // Verify the event was emitted correctly
-            await expect(tx)
-              .to.emit(currentDeployment.contract, 'CrossChainAddressSet')
-              .withArgs(
-                targetDeployment.chain,
-                targetDeployment.address,
-                chainSigners.deployer.address
-              );
-          }
-        }
-      });
-    });
-
-    it('Should verify all cross-chain addresses are accessible from all chains', async function () {
-      // First set up all addresses (could be in beforeEach)
-      await chainweb.runOverChains(async (currentChainId) => {
-        const currentDeployment = deployments.find(d => d.chain === currentChainId);
-        
-        for (const targetDeployment of deployments) {
-          if (targetDeployment.chain !== currentChainId) {
-            const tx = await currentDeployment.contract.setCrossChainAddress(
-              targetDeployment.chain,
-              targetDeployment.address
-            );
-            await tx.wait();
-          }
-        }
-      });
-      
-      // Then verify all addresses are correctly set
-      await chainweb.runOverChains(async (chainId) => {
-        const deployment = deployments.find(d => d.chain === chainId);
-        
-        for (const otherDeployment of deployments) {
-          if (otherDeployment.chain !== chainId) {
-            const storedAddress = await deployment.contract.getCrossChainAddress(otherDeployment.chain);
-            expect(storedAddress).to.equal(otherDeployment.address);
-          }
-        }
-      });
-    });
-
-    it('Should allow setting cross-chain addresses to zero address on all chains', async function () {
-      // Pick one target chain to set to zero across all source chains
-      const targetChainId = deployments[1].chain;
-      
-      await chainweb.runOverChains(async (currentChainId) => {
-        if (currentChainId !== targetChainId) {
+  describe('setCrossChainAddress', async function () {
+    context('Success Test Cases', async function () {
+      it('Should set up cross-chain addresses for all deployments using runOverChains', async function () {
+        // Set up cross-chain addresses for every chain to every other chain
+        await chainweb.runOverChains(async (currentChainId) => {
           const currentDeployment = deployments.find(d => d.chain === currentChainId);
           const chainSigners = await getSigners(currentChainId);
-          
-          const tx = await currentDeployment.contract.setCrossChainAddress(
-            targetChainId,
-            ZeroAddress
-          );
-          await tx.wait();
-          
-          expect(await currentDeployment.contract.getCrossChainAddress(targetChainId))
-            .to.equal(ZeroAddress);
-          
-          await expect(tx)
-            .to.emit(currentDeployment.contract, 'CrossChainAddressSet')
-            .withArgs(targetChainId, ZeroAddress, chainSigners.deployer.address);
-        }
-      });
-    });
-  }); // End of Success Test Cases
 
-  context('Error Test Cases', async function () {
-    it('Should fail to set cross-chain addresses for non-owner on all chains', async function () {
-      await chainweb.runOverChains(async (chainId) => {
-        const deployment = deployments.find(d => d.chain === chainId);
-        const chainSigners = await getSigners(chainId);
-        const targetChain = deployments.find(d => d.chain !== chainId)?.chain;
-        
-        if (targetChain) {
-          // Try to set cross-chain address as alice (non-owner)
-          await expect(
-            deployment.contract
-              .connect(chainSigners.alice)
-              .setCrossChainAddress(targetChain, deployment.address)
-          )
-            .to.be.revertedWithCustomError(deployment.contract, 'OwnableUnauthorizedAccount')
-            .withArgs(chainSigners.alice.address);
-        }
+          // Set addresses for all other chains
+          for (const targetDeployment of deployments) {
+            if (targetDeployment.chain !== currentChainId) {
+              const tx = await currentDeployment.contract.setCrossChainAddress(
+                targetDeployment.chain,
+                targetDeployment.address
+              );
+              await tx.wait();
+
+              // Verify the address was set correctly
+              expect(await currentDeployment.contract.getCrossChainAddress(targetDeployment.chain))
+                .to.equal(targetDeployment.address);
+
+              // Verify the event was emitted correctly
+              await expect(tx)
+                .to.emit(currentDeployment.contract, 'CrossChainAddressSet')
+                .withArgs(
+                  targetDeployment.chain,
+                  targetDeployment.address,
+                  chainSigners.deployer.address
+                );
+            }
+          }
+        });
       });
-    });
-  }); // End of 'Error Test Cases
-}); // End of setCrossChainAddress
+
+      it('Should verify all cross-chain addresses are accessible from all chains', async function () {
+        // First set up all addresses (could be in beforeEach)
+        await chainweb.runOverChains(async (currentChainId) => {
+          const currentDeployment = deployments.find(d => d.chain === currentChainId);
+
+          for (const targetDeployment of deployments) {
+            if (targetDeployment.chain !== currentChainId) {
+              const tx = await currentDeployment.contract.setCrossChainAddress(
+                targetDeployment.chain,
+                targetDeployment.address
+              );
+              await tx.wait();
+            }
+          }
+        });
+
+        // Then verify all addresses are correctly set
+        await chainweb.runOverChains(async (chainId) => {
+          const deployment = deployments.find(d => d.chain === chainId);
+
+          for (const otherDeployment of deployments) {
+            if (otherDeployment.chain !== chainId) {
+              const storedAddress = await deployment.contract.getCrossChainAddress(otherDeployment.chain);
+              expect(storedAddress).to.equal(otherDeployment.address);
+            }
+          }
+        });
+      });
+
+      it('Should allow setting cross-chain addresses to zero address on all chains', async function () {
+        // Pick one target chain to set to zero across all source chains
+        const targetChainId = deployments[1].chain;
+
+        await chainweb.runOverChains(async (currentChainId) => {
+          if (currentChainId !== targetChainId) {
+            const currentDeployment = deployments.find(d => d.chain === currentChainId);
+            const chainSigners = await getSigners(currentChainId);
+
+            const tx = await currentDeployment.contract.setCrossChainAddress(
+              targetChainId,
+              ZeroAddress
+            );
+            await tx.wait();
+
+            expect(await currentDeployment.contract.getCrossChainAddress(targetChainId))
+              .to.equal(ZeroAddress);
+
+            await expect(tx)
+              .to.emit(currentDeployment.contract, 'CrossChainAddressSet')
+              .withArgs(targetChainId, ZeroAddress, chainSigners.deployer.address);
+          }
+        });
+      });
+    }); // End of Success Test Cases
+
+    context('Error Test Cases', async function () {
+      it('Should fail to set cross-chain addresses for non-owner on all chains', async function () {
+        await chainweb.runOverChains(async (chainId) => {
+          const deployment = deployments.find(d => d.chain === chainId);
+          const chainSigners = await getSigners(chainId);
+          const targetChain = deployments.find(d => d.chain !== chainId)?.chain;
+
+          if (targetChain) {
+            // Try to set cross-chain address as alice (non-owner)
+            await expect(
+              deployment.contract
+                .connect(chainSigners.alice)
+                .setCrossChainAddress(targetChain, deployment.address)
+            )
+              .to.be.revertedWithCustomError(deployment.contract, 'OwnableUnauthorizedAccount')
+              .withArgs(chainSigners.alice.address);
+          }
+        });
+      });
+    }); // End of 'Error Test Cases
+  }); // End of setCrossChainAddress
 
   describe('verifySPV', async function () {
     beforeEach(async function () {
-      await authorizeContracts(token0, token0Info, [token0Info, token1Info]);
-      await authorizeContracts(token1, token1Info, [token0Info, token1Info]);
+      await authorizeAllContracts(deployments);
 
       sender = initialSigners.deployer;
       receiver = initialSigners.deployer;
@@ -216,70 +214,24 @@ describe('setCrossChainAddress', async function () {
     });
 
     context('Success Test Cases', async function () {
-      it('Should verify a valid SPV proof and return correct values', async function () {
-        console.log("tokenInfo.chain", token1Info.chain);
-        console.log("origin in verifySPV test:", origin);
+      it("Should verify a valid SPV proof and return correct values", async function () {
         const proof = await requestSpvProof(token1Info.chain, origin);
-        console.log("proof in verifySPV test:", proof);
-        //const [crossChainMessage, originHash] = await token1.verifySPV(proof);
+        const [crossChainMessage, originHash] = await token1.verifySPV(proof);
 
-        try {
-          const result = await token1.verifySPV(proof);
-          console.log("Unexpected success:", result);
-        } catch (error) {
-          console.log("Caught error type:", error.constructor.name);
-          console.log("Error code:", error.code);
-          console.log("Error reason:", error.reason);
-          console.log("Error message:", error.message);
+        // Verify CrossChainMessage fields
+        expect(crossChainMessage.targetChainId).to.equal(token1Info.chain);
+        expect(crossChainMessage.targetContractAddress).to.equal(await token1.getAddress());
+        expect(crossChainMessage.crossChainOperationType).to.equal(CrossChainOperation.Erc20Transfer);
 
-          // Try to extract more detailed revert data
-          if (error.data) {
-            console.log("Error data:", error.data);
-          }
+        // Verify origin fields
+        expect(crossChainMessage.origin.originChainId).to.equal(token0Info.chain);
+        expect(crossChainMessage.origin.originContractAddress).to.equal(await token0.getAddress());
+        expect(crossChainMessage.origin.originBlockHeight).to.equal(origin.height);
+        expect(crossChainMessage.origin.originTransactionIndex).to.equal(origin.txIdx);
+        expect(crossChainMessage.origin.originEventIndex).to.equal(origin.eventIdx);
 
-          // If it's a custom error, try to decode it
-          if (error.message.includes("SPVVerificationFailed")) {
-            console.log("SPV Verification failed - the precompile call was unsuccessful");
-          } else if (error.message.includes("AlreadyCompleted")) {
-            console.log("Transaction already completed");
-          } else {
-            console.log("Unknown revert reason");
-          }
-
-          // Re-throw to fail the test
-
-          console.log("crossChainMessage in verifySPV test:", crossChainMessage);
-          console.log("originHash in verifySPV test:", originHash);
-
-          // Verify CrossChainMessage fields
-          expect(crossChainMessage.targetChainId).to.equal(token1Info.chain);
-          expect(crossChainMessage.targetContractAddress).to.equal(
-            await token1.getAddress(),
-          );
-          expect(crossChainMessage.crossChainOperationType).to.equal(
-            CrossChainOperation.Erc20Transfer,
-          );
-
-          // Verify origin fields
-          expect(crossChainMessage.origin.originChainId).to.equal(
-            token0Info.chain,
-          );
-          expect(crossChainMessage.origin.originContractAddress).to.equal(
-            await token0.getAddress(),
-          );
-          expect(crossChainMessage.origin.originBlockHeight).to.equal(
-            origin.height,
-          );
-          expect(crossChainMessage.origin.originTransactionIndex).to.equal(
-            origin.txIdx,
-          );
-          expect(crossChainMessage.origin.originEventIndex).to.equal(
-            origin.eventIdx,
-          );
-
-          const expectedOriginHash = computeOriginHash(origin);
-          expect(originHash).to.equal(expectedOriginHash);
-        }
+        const expectedOriginHash = computeOriginHash(origin);
+        expect(originHash).to.equal(expectedOriginHash);
       });
 
       it('Should not set originHash to true when verifying a valid SPV proof', async function () {
@@ -314,8 +266,7 @@ describe('setCrossChainAddress', async function () {
 
   describe('transferCrossChain', async function () {
     beforeEach(async function () {
-      await authorizeContracts(token0, token0Info, [token0Info, token1Info]);
-      await authorizeContracts(token1, token1Info, [token0Info, token1Info]);
+      await authorizeAllContracts(deployments);
     });
     context('Success Test Cases', async function () {
       it('Should burn the correct amount of tokens for the caller', async function () {
@@ -442,8 +393,7 @@ describe('setCrossChainAddress', async function () {
     let proof;
 
     beforeEach(async function () {
-      await authorizeContracts(token0, token0Info, [token0Info, token1Info]);
-      await authorizeContracts(token1, token1Info, [token0Info, token1Info]);
+      await authorizeAllContracts(deployments);
       sender = initialSigners.deployer;
       receiver = initialSigners.deployer;
       amount = ethers.parseEther('100000');
@@ -525,21 +475,15 @@ describe('setCrossChainAddress', async function () {
 
       beforeEach(async function () {
         const mocks = await deployMocks();
+        console.log("mocks in beforeEach", mocks);
         mockToken0 = mocks.deployments[0].contract;
         mockToken1 = mocks.deployments[1].contract;
 
         // Keep deployment info accessible when needed
         mockToken0Info = mocks.deployments[0];
         mockToken1Info = mocks.deployments[1];
-
-        await authorizeContracts(mockToken0, mockToken0Info, [
-          mockToken0Info,
-          mockToken1Info,
-        ]);
-        await authorizeContracts(mockToken1, mockToken1Info, [
-          mockToken0Info,
-          mockToken1Info,
-        ]);
+      
+        await authorizeAllContracts(mocks.deployments);
       });
 
       it('Should revert on second redeem', async function () {
@@ -694,7 +638,7 @@ describe('setCrossChainAddress', async function () {
         // getChainwebChainId() should return the correct chain id for each token, regardless of the current network
         expect(await token0.getChainwebChainId()).to.equal(20n);
         expect(await token1.getChainwebChainId()).to.equal(21n);
-        await switchNetwork(token1Info.network.name);
+        await switchChain(token1Info.chain);
         expect(await token1.getChainwebChainId()).to.equal(21n);
         expect(await token0.getChainwebChainId()).to.equal(20n);
       });

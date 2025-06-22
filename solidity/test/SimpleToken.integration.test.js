@@ -1,7 +1,7 @@
 const { expect } = require('chai');
 const { ethers, chainweb } = require('hardhat');
 const {
-  authorizeContracts,
+  authorizeAllContracts,
   crossChainTransfer,
   initCrossChain,
   redeemCrossChain,
@@ -11,7 +11,8 @@ const {
 const { requestSpvProof, switchChain, deployContractOnChains, getChainIds } = chainweb;
 
 describe('SimpleToken Integration Tests', async function () {
-  let signers;
+  let deployments = [];
+  let initialSigners;
   let token0;
   let token1;
   let token0Info;
@@ -19,15 +20,17 @@ describe('SimpleToken Integration Tests', async function () {
   let chains;
 
   beforeEach(async function () {
-    // chainweb.switchChain() or switchNetwork("chain name") can be used to switch to a different chain
-     chains = await getChainIds();
-     signers = await getSigners(chains[0]); // get signers for the first chain
-     console.log("signers", signers)
+    chains = await getChainIds();
+    initialSigners = await getSigners(chains[0]); // get initialSigners for the first chain
+
+    // switchChain()can be used to switch to a different chain
+    // deployContractOnChains switches chains before deploying on each one
+    // Because this contract takes an address as a constructor param, we pass it in here as an address.
+    // In solidity, the address has no specific network affiliation like a signer does in Hardhat.
     const deployed = await deployContractOnChains({
       name: 'SimpleToken',
-      constructorArgs: [ethers.parseUnits('1000000'), signers.deployer.address],
+      constructorArgs: [ethers.parseUnits('1000000'), initialSigners.deployer.address],
     });
-
     // Store contract instances for direct calls
     token0 = deployed.deployments[0].contract;
     token1 = deployed.deployments[1].contract;
@@ -36,20 +39,21 @@ describe('SimpleToken Integration Tests', async function () {
     token0Info = deployed.deployments[0];
     token1Info = deployed.deployments[1];
 
-    // The owner/deployer transfers tokens to other accounts so that they can transfer tokens cross-chain. This is a setup step.
-    await token0.transfer(signers.alice.address, ethers.parseEther('1000000')); // Alice has 1M tokens on the "from" chain
-    await token1.transfer(signers.bob.address, ethers.parseEther('1000000')); // Bob has 1M tokens on the "to" chain
+    deployments = deployed.deployments;
 
-    await authorizeContracts(token0, token0Info, [token0Info, token1Info]);
-    await authorizeContracts(token1, token1Info, [token0Info, token1Info]);
+    // The owner/deployer transfers tokens to other accounts so that they can transfer tokens cross-chain. This is a setup step.
+    await token0.transfer(initialSigners.alice.address, ethers.parseEther('1000000')); // Alice has 1M tokens on the "from" chain
+    await token1.transfer(initialSigners.bob.address, ethers.parseEther('1000000')); // Bob has 1M tokens on the "to" chain
+
+    await authorizeAllContracts(deployments);
 
     await switchChain(token0Info.chain);
   });
 
   context('Success Test Cases', async function () {
     it('Should transfer tokens to same address from one chain to another', async function () {
-      const sender = signers.alice;
-      const receiver = signers.alice;
+      const sender = initialSigners.alice;
+      const receiver = initialSigners.alice;
       const amount = ethers.parseEther('500');
 
       const senderBalanceBefore = await token0.balanceOf(sender.address);
@@ -70,8 +74,8 @@ describe('SimpleToken Integration Tests', async function () {
     });
 
     it('Should transfer tokens to different address from one chain to another', async function () {
-      const sender = signers.alice;
-      const receiver = signers.bob;
+      const sender = initialSigners.alice;
+      const receiver = initialSigners.bob;
       const amount = ethers.parseEther('250000');
 
       const senderBalanceBefore = await token0.balanceOf(sender.address);
@@ -99,7 +103,7 @@ describe('SimpleToken Integration Tests', async function () {
       await switchChain(chains[1]);
       const [, , chain1Bob] = await ethers.getSigners(); // Get Bob's signer on that chain
       const sender = chain1Bob; // Use this Bob as sender
-      const receiver = signers.alice; // Use other chain's  Alice as receiver
+      const receiver = initialSigners.alice; // Use other chain's  Alice as receiver
       const amount = ethers.parseEther('10');
 
       // Verify Bob has tokens on "from" chain
@@ -126,8 +130,8 @@ describe('SimpleToken Integration Tests', async function () {
     });
 
     it("Should transfer sender's full balance", async function () {
-      const sender = signers.alice;
-      const receiver = signers.bob;
+      const sender = initialSigners.alice;
+      const receiver = initialSigners.bob;
 
       const senderBalanceBefore = await token0.balanceOf(sender.address);
       const receiverBalanceBefore = await token1.balanceOf(receiver.address);
@@ -148,9 +152,9 @@ describe('SimpleToken Integration Tests', async function () {
     });
 
     it('Should complete multiple consecutive transfers from sender to different receivers correctly', async function () {
-      const sender = signers.alice;
-      const receiver1 = signers.bob;
-      const receiver2 = signers.carol;
+      const sender = initialSigners.alice;
+      const receiver1 = initialSigners.bob;
+      const receiver2 = initialSigners.carol;
       const amount1 = ethers.parseEther('100');
       const amount2 = ethers.parseEther('200');
 
@@ -215,8 +219,8 @@ describe('SimpleToken Integration Tests', async function () {
       console.log("chains in test case", chains);
       await switchChain(chains[1]);
       const [, , , chain1Carol] = await ethers.getSigners(chains[1]);
-      const sender = signers.alice;
-      const receiver = signers.bob;
+      const sender = initialSigners.alice;
+      const receiver = initialSigners.bob;
       const redeemer = chain1Carol;
       const amount = ethers.parseEther('100');
 
@@ -253,8 +257,8 @@ describe('SimpleToken Integration Tests', async function () {
 
   context('Error Test Cases', async function () {
     it('Should fail when attempting multiple transfers that exceed balance', async function () {
-      const sender = signers.alice;
-      const receiver = signers.bob;
+      const sender = initialSigners.alice;
+      const receiver = initialSigners.bob;
       const balance = await token0.balanceOf(sender.address);
       const amount = balance / 2n + ethers.parseEther('1');
 
@@ -285,7 +289,7 @@ describe('SimpleToken Integration Tests', async function () {
 
     // This test case is skipped because the VALIDATE_PROOF_PRECOMPILE is not yet fully implemented
     it.skip('Should fail when trying to redeem before transfer is initiated', async function () {
-      const receiver = signers.bob;
+      const receiver = initialSigners.bob;
       const amount = ethers.parseEther('100');
 
       // Create fake origin

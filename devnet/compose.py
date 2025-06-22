@@ -166,8 +166,8 @@ def jwtsecret_config(project_name, node_name: str, update: bool = False) -> None
     os.makedirs(config_dir(project_name, node_name), exist_ok=True)
     file = f"{config_dir(project_name,node_name)}/jwtsecret"
     if update or not os.path.exists(file):
-        with open(file, "w") as f:
-            f.write(jwtsecret)
+        with open(file, "wb") as f:
+            f.write(jwtsecret.encode('ascii'))
 
 
 def payload_provider_config(

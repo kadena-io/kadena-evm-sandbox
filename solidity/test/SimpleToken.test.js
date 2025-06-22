@@ -51,12 +51,6 @@ describe('SimpleToken Unit Tests', async function () {
 
     deployments = deployed.deployments;
 
-    //console.log("deployments in beforfeEach", deployments);
-    console.log("token0 in beforeEach", token0);
-    console.log("token1 in beforeEach", token1);
-    console.log("token0Info in beforeEach", token0Info);
-    console.log("token1Info in beforeEach", token1Info);
-
     await switchChain(token0Info.chain);
   });
 
@@ -478,7 +472,6 @@ describe('SimpleToken Unit Tests', async function () {
 
       beforeEach(async function () {
         const mocks = await deployMocks();
-        console.log("mocks in beforeEach", mocks);
         mockToken0 = mocks.deployments[0].contract;
         mockToken1 = mocks.deployments[1].contract;
 

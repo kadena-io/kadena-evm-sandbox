@@ -216,7 +216,6 @@ describe('SimpleToken Integration Tests', async function () {
       // Switch to chain in position 1 and get signer bob on that chain. This is a hardhat thing - a signer has a network context.
       // Not needed in other test cases because the contract is by default called by the first signer on the chain where the contract is deployed.
       // This shows an alternat way of getting a signer on another chain as alternative to using the function in utils.js
-      console.log("chains in test case", chains);
       await switchChain(chains[1]);
       const [, , , chain1Carol] = await ethers.getSigners(chains[1]);
       const sender = initialSigners.alice;

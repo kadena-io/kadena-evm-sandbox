@@ -16,7 +16,16 @@ from secp256k1 import PrivateKey
 from typing import TypedDict, Any
 
 DEFAULT_CHAINWEB_NODE_IMAGE = "ghcr.io/kadena-io/evm-devnet-chainweb-node:latest"
-DEFAULT_EVM_IMAGE = "ghcr.io/kadena-io/kadena-reth:sha-eff370d"
+DEFAULT_MINING_CLIENT_IMAGE = "ghcr.io/kadena-io/chainweb-mining-client:latest"
+
+# This does not yet include any precompiles.
+DEFAULT_GETH_IMAGE = "ethereum/client-go"
+
+# This includes 
+# - a prototypic ERC-20 x-chain SPV precompile,
+# - a performance improvement for faster payload production.
+# - untested experimental support for non-monotonic updates.
+DEFAULT_RETH_IMAGE = "ghcr.io/kadena-io/kadena-reth:sha-eff370d"
 
 # The Ethereum network ID (chainID) base for the EVM chains in Kadena devnets.
 #
@@ -25,6 +34,9 @@ DEFAULT_EVM_IMAGE = "ghcr.io/kadena-io/kadena-reth:sha-eff370d"
 # different values.
 #
 NET_ID_BASE = 1789
+
+# Default EVM implementation to use.
+EVM_IMPL="reth"
 
 # #############################################################################
 # BOILERPLATE
@@ -353,7 +365,7 @@ def nginx_index_html(project_name, node_name, evm_cids, port=1848):
 #   - https://hostname/chainweb/0.0/{networkName}/chain/{chainId}/evm  = rpc endpoint
 
 
-def nginx_proxy_config(project_name, node_name, evm_cids):
+def nginx_proxy_config(project_name, node_name, evm_cids, mining):
     dir = config_dir(project_name, node_name)
     os.makedirs(dir, exist_ok=True)
 
@@ -401,11 +413,14 @@ http {{
             add_header Access-Control-Allow-Origin *;
         }}
 
-        location = /mining-trigger {{
+{''.join(
+        f"""location = /mining-trigger {{
             internal;
             proxy_pass http://{node_name}-mining-trigger:11848/trigger;
             proxy_set_header X-Original-URI $request_uri;
-        }}
+        }}""") if mining else ''
+}
+
 {''.join(
         f"""
         location /chainweb/0.0/evm-development/chain/{cid}/evm/rpc {{
@@ -642,31 +657,31 @@ def chainweb_consensus_service(
 
     return result
 
-
 # ############################################################################# #
 # EVM Services
 
-
-def evm_chain(
+def evm_init_service(
     node_name: str,
     cid: int,
     *,
-    boot_enodes: list[str] = [],
-    is_bootnode=False,
-    exposed=False
+    evm_impl: str = "reth",
 ) -> Service:
-    apis = "admin,debug,eth,net,trace,txpool,web3,rpc,reth,ots"  # ,flashbots,miner,mev"
+    if evm_impl == "reth":
+        image = f"${{RETH_IMAGE:-{DEFAULT_RETH_IMAGE}}}"
+        command = [ "true" ]
+    elif evm_impl == "geth":
+        image = f"${{GETH_IMAGE:-{DEFAULT_GETH_IMAGE}}}"
+        command = [ 
+            '[ -d "/root/.ethereum/geth" ] || geth init /config/chain-spec.json'
+        ]
+    else:
+        raise ValueError(f"Unknown EVM implementation: {evm_impl}")
+
     result: Service = {
-        "container_name": f"{node_name}-evm-{cid}",
-        "hostname": f"{node_name}-evm-{cid}",
-        "restart": "unless-stopped",
-        "image": f"${{EVM_IMAGE:-{DEFAULT_EVM_IMAGE}}}",
-        "secrets": [
-            {
-                "source": f"{node_name}-jwtsecret",
-                "target": "jwtsecret",
-            }
-        ],
+        "container_name": f"{node_name}-evm-init-{cid}",
+        "hostname": f"{node_name}-evm-init-{cid}",
+        "restart": "no",
+        "image": image,
         "configs": [
             {
                 "source": f"{node_name}-chain-spec-{cid}",
@@ -675,25 +690,44 @@ def evm_chain(
             }
         ],
         "volumes": [
-            f"{node_name}-evm-{cid}_data:/root/.local/share/reth/{NET_ID_BASE + cid - 20}/",
+            f"{node_name}-evm-{cid}_data:/root/.ethereum/",
             f"{node_name}_logs:/root/logs/",
         ],
         "networks": {
             f"{node_name}-internal": None,
-            "p2p": None,
         },
-        "expose": [
-            "8545",
-            "8546",
-            "8551",
-            "9001",
-            f"{30303 + cid}/tcp",
-            f"{30303 + cid}/udp",
-        ],
         "ulimits": {"nofile": {"soft": 65535, "hard": 65535}},
-        "entrypoint": [
+        "entrypoint": [ "/bin/sh", "-c" ],
+        "command": command,
+    }
+    return result
+
+def evm_service(
+    node_name: str,
+    cid: int,
+    *,
+    boot_enodes: list[str] = [],
+    is_bootnode=False,
+    exposed=False,
+    evm_impl: str = "reth",
+    use_private_apis: bool = False,
+) -> Service:
+
+    # apis:
+    default_apis = "eth,net,web3"
+    private_apis = "admin,debug,trace,txpool"
+
+    if evm_impl == "reth":
+        private_apis = private_apis + "rpc,reth,ots"  # ,flashbots,miner,mev"
+        apis = default_apis + "," + private_apis if use_private_apis else default_apis
+        image = f"${{RETH_IMAGE:-{DEFAULT_RETH_IMAGE}}}"
+        nodekey_arg = "--p2p-secret-key=/run/secrets/p2p-secret"
+        entrypoint = [
             "/app/kadena-reth",
             "node",
+            "--datadir=/root/ethereum",
+            "--chain=/config/chain-spec.json",
+            # metrics
             "--metrics=0.0.0.0:9001",
             "--log.file.directory=/root/logs",
             # p2p
@@ -718,12 +752,83 @@ def evm_chain(
             "--nat=none",
             "--disable-dns-discovery",
             f"--discovery.port={30303 + cid}",
-            # chainweb
-            "--chain=/config/chain-spec.json",
+            # persistence
             "--engine.persistence-threshold=0",
             "--engine.memory-block-buffer-target=0"
+        ]
+    elif evm_impl == "geth":
+        private_apis = private_apis + "personal" # ,miner"
+        apis = default_apis + "," + private_apis if use_private_apis else default_apis
+        image = f"${{GETH_IMAGE:-{DEFAULT_GETH_IMAGE}}}"
+        nodekey_arg = "--nodekey=/run/secrets/p2p-secret"
+        entrypoint = [
+            "geth",
+            "--datadir=/root/ethereum",
+            "--networkid=" + str(NET_ID_BASE + cid - 20),
+            # p2p
+            f"--port={30303 + cid}",
+            # authrpc
+            "--authrpc.jwtsecret=/run/secrets/jwtsecret",
+            "--authrpc.addr=0.0.0.0",
+            "--authrpc.port=8551",
+            "--authrpc.vhosts=*",
+            # http
+            "--http",
+            "--http.addr=0.0.0.0",
+            "--http.port=8545",
+            f"--http.api={apis}",
+            # websocket
+            "--ws",
+            "--ws.addr=0.0.0.0",
+            "--ws.port=8546",
+            f"--ws.api={apis}",
+            # discovery
+            "--nat=none",
+            "--nodiscover",
+            f"--discovery.port={30303 + cid}",
+        ]
+    else:
+        raise ValueError(f"Unknown EVM implementation: {evm_impl}")
+
+    result: Service = {
+        "container_name": f"{node_name}-evm-{cid}",
+        "hostname": f"{node_name}-evm-{cid}",
+        "restart": "unless-stopped",
+        "image": image,
+        "depends_on": {
+            f"{node_name}-evm-init-{cid}": {"condition": "service_completed_successfully"}
+        },
+        "secrets": [
+            {
+                "source": f"{node_name}-jwtsecret",
+                "target": "jwtsecret",
+            }
         ],
-        "environment": [f"CHAINWEB_CHAIN_ID={cid}"],
+        "configs": [
+            {
+                "source": f"{node_name}-chain-spec-{cid}",
+                "target": "/config/chain-spec.json",
+                "mode": "0440",
+            }
+        ],
+        "volumes": [
+            f"{node_name}-evm-{cid}_data:/root/ethereum/",
+            f"{node_name}_logs:/root/logs/",
+        ],
+        "networks": {
+            f"{node_name}-internal": None,
+            "p2p": None,
+        },
+        "expose": [
+            "8545",
+            "8546",
+            "8551",
+            "9001",
+            f"{30303 + cid}/tcp",
+            f"{30303 + cid}/udp",
+        ],
+        "ulimits": {"nofile": {"soft": 65535, "hard": 65535}},
+        "entrypoint": entrypoint,
         "ports": [],
     }
 
@@ -736,16 +841,13 @@ def evm_chain(
 
     # bootnode
     if is_bootnode:
-        result["entrypoint"] += [
-            "--p2p-secret-key=/run/secrets/p2p-secret",
-        ]
+        result["entrypoint"] += [ nodekey_arg ]
         result["secrets"] += [
             {
                 "source": f"{node_name}-evm-{cid}-p2p-secret",
                 "target": "p2p-secret",
             }
         ]
-
     if boot_enodes is not None and len(boot_enodes) > 0:
         result["entrypoint"] += [f"--bootnodes={",".join(boot_enodes)}"]
 
@@ -762,7 +864,7 @@ def chainweb_mining_client(
     result: Service = {
         "container_name": f"{node_name}-mining-client",
         "hostname": f"{node_name}-mining-client",
-        "image": "${MINING_CLIENT_IMAGE:-ghcr.io/kadena-io/chainweb-mining-client:latest}",
+        "image": f"${{MINING_CLIENT_IMAGE:-{DEFAULT_MINING_CLIENT_IMAGE}}}",
         "platform": "linux/amd64",
         "restart": "unless-stopped",
         "depends_on": {f"{node_name}-consensus": {"condition": "service_healthy"}},
@@ -937,6 +1039,7 @@ def chainweb_node(
     mining_mode: str | None = None,
     has_frontend: bool = False,
     exposed: bool = False,
+    evm_impl: str = "reth",
 ) -> Spec:
     jwtsecret_config(project_name, node_name)
     payload_provider_config(project_name, mining_mode is not None, node_name, evm_cids, pact_cids)
@@ -985,12 +1088,21 @@ def chainweb_node(
             ),
         }
         | {
-            f"{node_name}-evm-{cid}": evm_chain(
+            f"{node_name}-evm-init-{cid}": evm_init_service(
+                node_name,
+                cid,
+                evm_impl=evm_impl,
+            )
+            for cid in evm_cids
+        }
+        | {
+            f"{node_name}-evm-{cid}": evm_service(
                 node_name,
                 cid,
                 boot_enodes = boot_enodes(cid) if not is_bootnode else [],
                 is_bootnode=is_bootnode,
                 exposed=exposed,
+                evm_impl=evm_impl,
             )
             for cid in evm_cids
         },
@@ -999,7 +1111,7 @@ def chainweb_node(
     if has_frontend:
 
         # Create nginx reverse proxy configuration for exposed nodes
-        nginx_proxy_config(project_name, node_name, evm_cids)
+        nginx_proxy_config(project_name, node_name, evm_cids, mining=False if mining_mode is None else True)
         nginx_index_html(project_name, node_name, evm_cids)
         cdir = config_dir(project_name, node_name)
 
@@ -1096,6 +1208,7 @@ def default_project(update_secrets: bool = False) -> Spec:
     # Create boostrap information
     evm_cids = list(range(20, 25))
     pact_cids = list(range(0, 20))
+    evm_impl = EVM_IMPL
 
     # Create bootstrap node IDs
     evm_bootnodes("default", "bootnode", evm_cids, update=update_secrets)
@@ -1116,6 +1229,7 @@ def default_project(update_secrets: bool = False) -> Spec:
                 mining_mode="on-demand",
                 exposed=True,
                 has_frontend=True,
+                evm_impl=evm_impl,
             ),
             other_services(['bootnode']),
         ]
@@ -1131,6 +1245,7 @@ def minimal_project(update_secrets: bool = False) -> Spec:
     # Create boostrap information
     evm_cids = list(range(20, 25))
     pact_cids = list(range(0, 20))
+    evm_impl = EVM_IMPL
 
     # Create bootstrap node IDs
     evm_bootnodes("minimal", "bootnode", evm_cids, update=update_secrets)
@@ -1154,6 +1269,7 @@ def minimal_project(update_secrets: bool = False) -> Spec:
                 mining_mode="simulation",
                 exposed=True,
                 has_frontend=False,
+                evm_impl=evm_impl,
             ),
         ]
     )
@@ -1164,6 +1280,7 @@ def minimal_project(update_secrets: bool = False) -> Spec:
 #
 def kadena_dev_project(update_secrets: bool = False) -> Spec:
     nodes = ["bootnode", "appdev", "miner-1", "miner-2"]
+    evm_impl = EVM_IMPL
 
     # Create boostrap information
     evm_cids = list(range(20, 25))
@@ -1188,6 +1305,7 @@ def kadena_dev_project(update_secrets: bool = False) -> Spec:
                 mining_mode=None,
                 exposed=False,
                 has_frontend=False,
+                evm_impl=evm_impl,
             ),
             chainweb_node(
                 "kadena-dev",
@@ -1198,6 +1316,7 @@ def kadena_dev_project(update_secrets: bool = False) -> Spec:
                 mining_mode="simulation",
                 exposed=False,
                 has_frontend=False,
+                evm_impl=evm_impl,
             ),
             chainweb_node(
                 "kadena-dev",
@@ -1208,6 +1327,7 @@ def kadena_dev_project(update_secrets: bool = False) -> Spec:
                 mining_mode="simulation",
                 exposed=False,
                 has_frontend=False,
+                evm_impl=evm_impl,
             ),
             chainweb_node(
                 "kadena-dev",
@@ -1218,6 +1338,7 @@ def kadena_dev_project(update_secrets: bool = False) -> Spec:
                 mining_mode=None,
                 exposed=True,
                 has_frontend=True,
+                evm_impl=evm_impl,
             ),
             other_services(nodes),
         ]
@@ -1227,6 +1348,7 @@ def kadena_dev_project(update_secrets: bool = False) -> Spec:
 def kadena_dev_singleton_evm_project(update_secrets: bool = False) -> Spec:
     project_name = "kadena-dev-singleton-evm"
     nodes = ["bootnode", "miner-1", "miner-2"]
+    evm_impl = EVM_IMPL
 
     # Create boostrap information
     evm_cids = list(range(1))
@@ -1251,6 +1373,7 @@ def kadena_dev_singleton_evm_project(update_secrets: bool = False) -> Spec:
                 mining_mode=None,
                 exposed=False,
                 has_frontend=False,
+                evm_impl=evm_impl,
             ),
             chainweb_node(
                 project_name,
@@ -1261,6 +1384,7 @@ def kadena_dev_singleton_evm_project(update_secrets: bool = False) -> Spec:
                 mining_mode="simulation",
                 exposed=False,
                 has_frontend=False,
+                evm_impl=evm_impl,
             ),
             chainweb_node(
                 project_name,
@@ -1271,6 +1395,7 @@ def kadena_dev_singleton_evm_project(update_secrets: bool = False) -> Spec:
                 mining_mode="simulation",
                 exposed=False,
                 has_frontend=False,
+                evm_impl=evm_impl,
             ),
             debug_services(nodes),
         ]
@@ -1296,13 +1421,14 @@ def kadena_dev_singleton_evm_project(update_secrets: bool = False) -> Spec:
 #
 def app_dev_project(exposed_evm_chains, exposed_pact_chains, update_secrets) -> Spec:
     nodes = ["bootnode", "appdev"]
+    evm_impl = EVM_IMPL
 
     # Create boostrap information
     evm_cids = list(range(20, 25))
     pact_cids = list(range(0, 20))
 
     # Create bootstrap node IDs
-    evm_bootnodes("add-dev", "bootnode", evm_cids, update=update_secrets)
+    evm_bootnodes("app-dev", "bootnode", evm_cids, update=update_secrets)
 
     top: Spec = spec
     top["name"] = "chainweb-evm"
@@ -1320,6 +1446,7 @@ def app_dev_project(exposed_evm_chains, exposed_pact_chains, update_secrets) -> 
                 mining_mode="constant-delay",
                 exposed=False,
                 has_frontend=False,
+                evm_impl=evm_impl,
             ),
             chainweb_node(
                 "app-dev",
@@ -1330,6 +1457,7 @@ def app_dev_project(exposed_evm_chains, exposed_pact_chains, update_secrets) -> 
                 mining_mode=None,
                 exposed=True,
                 has_frontend=True,
+                evm_impl=evm_impl,
             ),
             other_services(nodes),
         ]
@@ -1343,6 +1471,7 @@ def app_dev_project(exposed_evm_chains, exposed_pact_chains, update_secrets) -> 
 #
 def pact_project(update_secrets: bool = False) -> Spec:
     nodes = ["bootnode", "appdev"]
+    evm_impl = EVM_IMPL
 
     evm_cids = list(range(20, 25))
     pact_cids = list(range(0, 20))
@@ -1366,6 +1495,7 @@ def pact_project(update_secrets: bool = False) -> Spec:
                 mining_mode="constant-delay",
                 exposed=False,
                 has_frontend=False,
+                evm_impl=evm_impl,
             ),
             chainweb_node(
                 "pact",
@@ -1376,6 +1506,7 @@ def pact_project(update_secrets: bool = False) -> Spec:
                 mining_mode=None,
                 exposed=True,
                 has_frontend=True,
+                evm_impl=evm_impl,
             ),
             other_services(nodes),
         ]
@@ -1391,6 +1522,7 @@ def pact_project(update_secrets: bool = False) -> Spec:
 #
 def mining_pool_project(update_secrets: bool = False) -> Spec:
     nodes = ["bootnode"]
+    evm_impl = EVM_IMPL
 
     # Create boostrap information
     evm_cids = list(range(20, 25))
@@ -1415,6 +1547,7 @@ def mining_pool_project(update_secrets: bool = False) -> Spec:
                 mining_mode="stratum",
                 exposed=False,
                 has_frontend=False,
+                evm_impl=evm_impl,
             ),
             other_services(nodes),
         ]

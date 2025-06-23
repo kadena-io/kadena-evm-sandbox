@@ -62,11 +62,6 @@ async function main() {
     }
   });
 
-
-
-
-
-
   console.log("SimpleToken deployment process completed");
 }
 

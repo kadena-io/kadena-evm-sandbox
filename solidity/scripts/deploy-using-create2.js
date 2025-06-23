@@ -19,18 +19,18 @@ async function main() {
     create2Factory: factoryAddress,
     salt: salt,
   });
-  console.log('Contracts deployed');
+
+  console.log('Contracts deployed:');
   deployed.deployments.forEach(async (deployment) => {
     console.log(`${deployment.address} on ${deployment.chain}`);
   });
 
-  console.log('Contracts deployed');
   // Filter out failed deployments
   const successfulDeployments = deployed.deployments.filter((d) => d !== null);
 
   if (successfulDeployments.length > 0) {
     console.log(
-      `Faucet successfully deployed to ${successfulDeployments.length} chains`,
+      `Contract successfully deployed to ${successfulDeployments.length} chains`,
     );
 
     // Create a map of deployments by chain ID for easy lookup
@@ -86,7 +86,7 @@ async function main() {
           console.log(`Attempting to verify contract on chain ${chainId}...`);
           await run('verify:verify', {
             address: contractAddress,
-            constructorArguments: [ethers.parseUnits('1000000')],
+            constructorArguments: [ethers.parseUnits('1000000'), deployer.address],
             force: true,
           });
 
@@ -97,10 +97,6 @@ async function main() {
             verifyError.message,
           );
         }
-
-        deployed.deployments.forEach(async (deployment) => {
-          console.log(`${deployment.address} on ${deployment.chain}`);
-        });
       }
     });
   }

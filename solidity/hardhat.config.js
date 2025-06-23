@@ -3,6 +3,7 @@ require('@kadena/hardhat-chainweb');
 require('@kadena/hardhat-kadena-create2');
 require("hardhat-switch-network");
 require("@nomicfoundation/hardhat-verify");
+require('dotenv').config();
 
 const { readFileSync } = require("fs");
 
@@ -11,6 +12,10 @@ const devnetAccounts = JSON.parse(
 );
 
 
+ console.log("DEPLOYER_PRIVATE_KEY in hardhat config:", process.env.DEPLOYER_PRIVATE_KEY);
+ if (!process.env.DEPLOYER_PRIVATE_KEY) {
+  throw new Error("DEPLOYER_PRIVATE_KEY is not set in .env");
+}
 
 /** @type import('hardhat/config').HardhatUserConfig */
 module.exports = {
@@ -40,6 +45,20 @@ module.exports = {
         apiKey: 'abc', // Any non-empty string works for Blockscout
         apiURLTemplate: 'http://chain-{cid}.evm.kadena.internal:8000/api/',
         browserURLTemplate: 'http://chain-{cid}.evm.kadena.internal:8000/',
+      },
+    },
+    testnet: {
+      type: 'external',
+      chains: 5,
+      accounts: [process.env.DEPLOYER_PRIVATE_KEY],
+      chainIdOffset: 5920,
+      chainwebChainIdOffset: 20,
+      externalHostUrl:
+        "https://evm-testnet.chainweb.com/chainweb/0.0/evm-testnet",
+      etherscan: {
+        apiKey: 'abc', // Any non-empty string works for Blockscout
+        apiURLTemplate: "http://chain-{cid}.evm-testnet-blockscout.chainweb.com/api/",
+        browserURLTemplate: "http://chain-{cid}.evm-testnet-blockscout.chainweb.com"
       },
     },
   },

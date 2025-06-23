@@ -15,6 +15,9 @@
     "0x47fAE86F6416e6115a80635238AFd2F18D69926B": {
       "balance": "0xd3c21bcecceda1000000"
     },
+    "0x49eed2ac33f09e931bd660f0168417b9614485b6": {
+      "balance": "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+    },
     "0x7e99c2f1731D3750b74A2a0623C1F1DcB8cCa45e": {
       "balance": "0xd3c21bcecceda1000000"
     },
@@ -72,6 +75,18 @@
   "config": {
     "arrowGlacierBlock": 0,
     "berlinBlock": 0,
+    "blobSchedule": {
+      "cancun": {
+        "baseFeeUpdateFraction": 3338477,
+        "max": 0,
+        "target": 0
+      },
+      "prague": {
+        "baseFeeUpdateFraction": 5007716,
+        "max": 0,
+        "target": 0
+      }
+    },
     "byzantiumBlock": 0,
     "cancunTime": 0,
     "chainId": 1791,
@@ -92,19 +107,7 @@
     "pragueTime": 0,
     "shanghaiTime": 0,
     "terminalTotalDifficulty": 0,
-    "terminalTotalDifficultyPassed": true,
-    "blobSchedule": {
-      "cancun": {
-        "target": 0,
-        "max": 0,
-        "baseFeeUpdateFraction": 3338477
-      },
-      "prague": {
-        "target": 0,
-        "max": 0,
-        "baseFeeUpdateFraction": 5007716
-      }
-    }
+    "terminalTotalDifficultyPassed": true
   },
   "difficulty": "0x0",
   "extraData": "0x",

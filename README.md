@@ -295,7 +295,9 @@ npm run deploy-create2 localhost
 ```
 ### Deploying to testnet
 Hardhat and the local development network (sadbox) have pre-allocated developer accounts to make it easy for developers to develop, unit test, and test deployment scripts. 
-To deploy to testnet, you should use your own deployer account. To do this, first copy the `.env.example` file:
+To deploy to testnet, you should use your own deployer account. You can get testnet KDA from the EVM Fauce in the [Kadena Developer Tools](https://tools.kadena.io/) website.
+
+Next, copy the `.env.example` file:
 
 ```sh
 cp .env.example .env

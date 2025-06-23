@@ -13,6 +13,8 @@ required_vars=(
   "BASE_CHAINWEB_NODE_PUBLIC_URL:the public URL of the chainweb node"
   "BASE_JSONRPC_HTTP_URL:the base url of JSON-RPC of chains for HTTP requests"
   "BASE_JSONRPC_WS_URL:the base url of JSON-RPC of chains for WS requests"
+  "BASE_BLOCKSCOUT_DB_PASSWORD:the password for the Blockscout database"
+  "BASE_STATS_DB_PASSWORD:the password for the stats database"
 )
 
 for entry in "${required_vars[@]}"; do

@@ -214,28 +214,67 @@ To test the simple token contract:
    ```
    
    This command executes a set of tests that deploy the sample ERC-20 token contract and check that token transfer operations succeed or revert as expected when tokens are transferred between addresses on two Chainweb EVM chains.
-   For example, you should see output similar to the following excerpt:
+      For example, you should see output similar to the following excerpt as tests are executed and new blocks are added to the chain:
 
    ```sh
+   Chainweb:  hardhat  Chains:  5  
+
+   [hardhat -] creating chains
+   [hardhat -] integrating chains into Chainweb
+   [hardhat -] Starting chain networks
+   Creating provider
    ...
-   Found 2 Kadena devnet networks: kadena_devnet0, kadena_devnet1
-   Deployed to address 0x5c8B984DEb026110310f617c5DBa96Fd39704835 with signer: 0x8849BAbdDcfC1327Ad199877861B577cEBd8A7b6 on network kadena_devnet0
-   Deployed to address 0x5c8B984DEb026110310f617c5DBa96Fd39704835 with signer: 0x8849BAbdDcfC1327Ad199877861B577cEBd8A7b6 on network kadena_devnet1
-   Authorizing 20:0x5c8B984DEb026110310f617c5DBa96Fd39704835 for 20:0x5c8B984DEb026110310f617c5DBa96Fd39704835
-   Authorizing 21:0x5c8B984DEb026110310f617c5DBa96Fd39704835 for 20:0x5c8B984DEb026110310f617c5DBa96Fd39704835
-   Authorizing 20:0x5c8B984DEb026110310f617c5DBa96Fd39704835 for 21:0x5c8B984DEb026110310f617c5DBa96Fd39704835
-   Authorizing 21:0x5c8B984DEb026110310f617c5DBa96Fd39704835 for 21:0x5c8B984DEb026110310f617c5DBa96Fd39704835
-   Transfering 500000000000000000000 tokens from 20:0x5c8B984DEb026110310f617c5DBa96Fd39704835:0xFB8Fb7f9bdc8951040a6D195764905138F7462Ed to 21:0x5c8B984DEb026110310f617c5DBa96Fd39704835:0xFB8Fb7f9bdc8951040a6D195764905138F7462Ed
-   Initiating cross-chain transfer from kadena_devnet0 to kadena_devnet1 : 21
-   transfer-crosschain status: 1, at block number 59 with hash 0x6d94c15d315dd5fa8d29abe3048835c8c7814cf367b1c2002c5a879642dc6ea6
+   Transferring 500000000000000000000 tokens from 20:0x5FbDB2315678afecb367f032d93F642f64180aa3:0x70997970C51812dc3A010C7d01b50e0d17dc79C8 to 21:0x5FbDB2315678afecb367f032d93F642f64180aa3:0x70997970C51812dc3A010C7d01b50e0d17dc79C8
+   Initiating cross-chain transfer from chainweb_hardhat20 to chainweb_hardhat21
+   Switched to 20
+   [hardhat 20] mining requested
+   [hardhat 20] current height is 16
+   [hardhat 21] current height is 15
+   [hardhat 21] make new block
+   [hardhat 20] make new block
+   transfer-crosschain status: 1, at block number 17 with hash 0x2ac3ff7aa6dae262355da187088b9f79b70ac62309b1870a65765fea38a959e7
    found log at tx 0 and event 1
-   Redeeming tokens on chain kadena_devnet1
+   waiting for SPV proof to become available on chain 21; current height 16; required height 18
+   [hardhat 21] mining requested
+   [hardhat 21] current height is 16
+   [hardhat 22] current height is 15
+   [hardhat 22] make new block
+   [hardhat 21] make new block
+   waiting for SPV proof to become available on chain 21; current height 17; required height 18
+   [hardhat 21] mining requested
+   [hardhat 21] current height is 17
+   [hardhat 22] current height is 16
+   [hardhat 22] make new block
+   [hardhat 21] make new block
+   Hex proof: 0x8b950f0ea813998d44e006b2563e4069a2db4bcadc3d5d9273f4902582489d6b000000000000000000000000000000000000000000000000000000000000002000000000000000000000000000000000000000000000000000000000000000150000000000000000000000005fbdb2315678afecb367f032d93f642f64180aa30000000000000000000000000000000000000000000000000000000000000001000000000000000000000000000000000000000000000000000000000000012000000000000000000000000000000000000000000000000000000000000000140000000000000000000000005fbdb2315678afecb367f032d93f642f64180aa3000000000000000000000000000000000000000000000000000000000000001100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001000000000000000000000000000000000000000000000000000000000000004000000000000000000000000070997970c51812dc3a010c7d01b50e0d17dc79c800000000000000000000000000000000000000000000001b1ae4d6e2ef500000
+   Switched to 21
+   Redeeming tokens on chain chainweb_hardhat21
+   [hardhat 21] mining requested
+   [hardhat 21] current height is 18
+   [hardhat 20] current height is 17
+   [hardhat 20] make new block
+   [hardhat 22] current height is 17
+   [hardhat 23] current height is 16
+   [hardhat 23] make new block
+   [hardhat 22] make new block
+   [hardhat 21] make new block
+   result at block height 19 received with status undefined
+      ✔ Should transfer tokens to same address from one chain to another (239ms)
    ...
+     38 passing (2m)
+     1 pending
+
+   [hardhat -] Stopping chain networks
+   [hardhat 20] Automine disabled
+   [hardhat 21] Automine disabled
+   [hardhat 22] Automine disabled
+   [hardhat 23] Automine disabled
+   [hardhat 24] Automine disabled
    ```
 
 ### Restarting the development network
 
-If the development network stops producing blocks or seems stuck, you can restart the `chainweb-node` service without stopping or restarting other network components.
+If the development network stops producing blocks or seems stuck, you can restart the `bootnode-consensus` service without stopping or restarting other network components.
 
 To restart the development network:
 
@@ -252,6 +291,15 @@ To shut down the network and remove containers:
 ```sh
 ./network devnet stop
 ```
+
+In some cases, you might find that stopping or restarting the network fails to return the container to a clean state.
+If this problem occurs, run the following command to forcibly remove orphan processes:
+
+```bash
+docker compose down --volumes --remove-orphans
+```
+
+After removing all containers and processes, you should be able to restart the network in a clean state.
 
 ## Modifying the network configuration
 
@@ -283,7 +331,7 @@ Alternatively, you can modify the `compose.py` script or write your own script t
 
 ## Integrating with other Hardhat projects
 
-If you want to experiment with using the Chainweb EVM development network with other Hardhat projects, you must configure the Hardhat project to connect to the Chainweb EVM development network.
+If you want to experiment with using the Chainweb EVM development environment with other Hardhat projects, you must configure the Hardhat project to connect to the Chainweb EVM development environment as an external network.
 You must also configure the Hardhat project to include account information—addresses and balances—for all available accounts.
 In the `kadena-evm-sandbox` directory, the `solidity` directory provides an example of a simple Hardhat project with a Hardhat configuration file, Solidity smart contract, and a test file.
 

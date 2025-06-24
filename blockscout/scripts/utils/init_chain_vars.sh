@@ -33,6 +33,7 @@ numberOfChains=${BASE_NUMBER_OF_CHAINS}
 start=$((chainwebChainIdOffset))
 end=$((chainwebChainIdOffset + numberOfChains - 1)) # -1 so numberOfChains is accurate
 
+export NETWORKS_META=${$BASE_FEATURED_NETWORKS:-"[]"}
 # Generate chains_meta
 chains_meta=$(generate_chains_meta "$start" "$end")
 export CHAINS_META="$chains_meta"

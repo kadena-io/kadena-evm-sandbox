@@ -4,14 +4,38 @@ source ./scripts/utils/init_chain_vars.sh "$@"
 HOSTS_FILE="/etc/hosts"
 IP="127.0.0.1"
 
+if [[ -z "$BASE_FEATURED_NETWORKS" ]]; then
+  echo "[ERROR] BASE_FEATURED_NETWORKS in .env is not set or is empty."
+  exit 1
+fi
+
+declare -a domains_to_add
+
+start=${start:-1}
+end=${end:-1}
+
 for ((i = start; i <= end; i++)); do
-  domain="chain-$i.${BASE_EXPLORER_DOMAIN}"
-  # Check if the entry already exists
-    record="$IP $domain"
+  if [[ -n "$BASE_FEATURED_NETWORKS" ]]; then
+    urls=$(echo "$BASE_FEATURED_NETWORKS" | jq -r '.[].url' 2>/dev/null)
+    for url in $urls; do
+      for ((i = start; i <= end; i++)); do
+        url_with_chain="${url//%s/$i}"
+        domain=$(echo "$url_with_chain" | awk -F[/:] '{print $4}')
+        if [[ -n "$domain" ]]; then
+          domains_to_add+=("$domain")
+          echo "$IP $domain"
+        fi
+      done
+    done
+  fi
+done
+
+for domain in "${domains_to_add[@]}"; do
+  record="$IP $domain"
   if ! grep -qE "^\s*$IP\s+$domain(\s|$)" "$HOSTS_FILE"; then
     cmd="echo -e '$record' | sudo tee -a $HOSTS_FILE > /dev/null"
     run $cmd
   else
-    echo "Domain $domain already exists in $HOSTS_FILE"  
+    echo "Domain $domain already exists in $HOSTS_FILE"
   fi
 done

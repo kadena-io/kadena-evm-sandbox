@@ -591,6 +591,7 @@ def chainweb_consensus_service(
             "--database-directory=/chainweb/db",
             "--disable-pow",
             f"--cluster-id={node_name}-consensus",
+            "--log-level=info"
         ],
         "deploy": {
             "restart_policy": {
@@ -1455,7 +1456,7 @@ def app_dev_project(exposed_evm_chains, exposed_pact_chains, update_secrets) -> 
                 exposed_evm_chains,
                 exposed_pact_chains,
                 is_bootnode=False,
-                mining_mode=None,
+                mining_mode="on-demand",
                 exposed=True,
                 has_frontend=True,
                 evm_impl=evm_impl,

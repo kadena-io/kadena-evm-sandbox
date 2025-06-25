@@ -360,7 +360,7 @@ In addition, the `solidity` project includes several sample `npm` scripts to per
 },
 ```
 
-With these scripts, you can compile, test, and deploy the solidity project using `npm run` commands.
+With these scripts, you can compile, test, and deploy the SimpleToken contract in the `solidity` project using `npm run` commands.
 For example, you can deploy a project with the same address on all chains by running the following command:
 
 ```sh
@@ -492,7 +492,7 @@ npm run deploy:hardhat
 One of the primary advantages of using the `@kadena/hardhat-chainweb` plugin is that it is specifically designed to enable you to interact with multiple Chainweb chains.
 By default, you can configure multiple networks for Hardhat, but not multiple chains in the same network.
 With the `@kadena/hardhat-chainweb` plugin, you can configure the Chainweb EVM development environment to run as a typical Hardhat network.
-You can maintain Hardhat as the default network and deploy a project using a specific set of Chainweb EVM configuration settings—like the `sandbox` settings in the solidity project—with a command like this:
+You can maintain Hardhat as the default network and deploy a project using a specific set of Chainweb EVM configuration settings—like the `sandbox` settings in the `solidity` project—with a command like this:
 
 ```sh
 npx hardhat run scripts/deploy.js --chainweb sandbox

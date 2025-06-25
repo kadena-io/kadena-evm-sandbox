@@ -1,6 +1,6 @@
 const { expect } = require("chai");
 const { ethers } = require("hardhat");
-const { ZeroHash, isHexString, getBytes  } = require("ethers");
+const { ZeroHash, isHexString, getBytes } = require("ethers");
 
 describe("ExampleHeaderOracle", function () {
     let exampleHeaderOracle;
@@ -22,15 +22,15 @@ describe("ExampleHeaderOracle", function () {
     });
 
     describe("Precompile availability check", function () {
-        it("Should check if beacon root precompile is available", async function () {
+        it("Should check if beacon root contract is available", async function () {
             const precompileAddress = "0x000F3df6D732807Ef1319fB7B8bB8522d0Beac02";
 
-            // Check if there's code at the precompile address
+            // Check if there's code at the contract address
             const code = await ethers.provider.getCode(precompileAddress);
-            console.log(`Code at precompile address: ${code}`);
+            console.log(`Code at beacon roots contract address: ${code}`);
 
-            // On a client with EIP-4788, this Should return "0x" (empty but callable)
-            // If it returns "0x", the precompile exists but has no bytecode (which is expected)
+            // Assert that the contract code is present (not "0x")
+            expect(code).to.not.equal("0x");
         });
     });
 

@@ -66,7 +66,7 @@ module.exports = {
     sepolia: {
       url: "https://ethereum-sepolia-rpc.publicnode.com",
       accounts: [process.env.DEPLOYER_PRIVATE_KEY]
-    }
+    },
   },
   mocha: {
     timeout: 300000

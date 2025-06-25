@@ -11,8 +11,6 @@ const devnetAccounts = JSON.parse(
   readFileSync("./devnet-accounts.json", "utf-8")
 );
 
-
-console.log("DEPLOYER_PRIVATE_KEY in hardhat config:", process.env.DEPLOYER_PRIVATE_KEY);
 if (!process.env.DEPLOYER_PRIVATE_KEY) {
   throw new Error("DEPLOYER_PRIVATE_KEY is not set in .env");
 }

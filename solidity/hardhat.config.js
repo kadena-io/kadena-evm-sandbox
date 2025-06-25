@@ -33,6 +33,9 @@ module.exports = {
     hardhat: {
       chains: 5,
       chainwebChainIdOffset: 20,
+      forking: {
+          url: 'https://ethereum.rpc.subquery.network/public',
+        },
     },
     sandbox: {
       type: 'external',

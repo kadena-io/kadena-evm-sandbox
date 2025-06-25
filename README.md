@@ -417,9 +417,9 @@ To integrate with the Chainweb EVM development network:
     },
    ```
 
-   Be sure to include the `accounts` key with mapping for accounts to private keys in the Chainweb configuration settings.
+   Be sure to include the `accounts` key with mapping for accounts to private keys in the Chainweb EVM configuration settings.
    
-   You can also modify the configuration settings in the `hardhat.config.js` file to customize the development environment to suite your needs.
+   You can also modify the configuration settings in the `hardhat.config.js` file to customize the development environment to suit your needs.
    For example, if you want the `sandbox` configuration to have two EVM chains instead of five, modify the `chains` setting:
 
    ```javascript
@@ -432,7 +432,9 @@ To integrate with the Chainweb EVM development network:
    }  
    ```
 
-6. (Optional) Copy and paste the code to configure `etherscan` settings from the `solidity/hardhat.config.js` file to use Blockscout in the `hardhat.config.js` file for your project.
+6. (Optional) Copy and paste the code to configure `etherscan` settings from the `solidity/hardhat.config.js` file to use Blockscout into the `hardhat.config.js` file for your project.
+   
+   Note that you must configure these settings if you want Blockscout to verify your smart contract.
    
    For example:
 
@@ -462,7 +464,7 @@ To integrate with the Chainweb EVM development network:
    },
    ```
 
-1. Save your changes and close the `hardhat.config.js` file.
+7. Save your changes and close the `hardhat.config.js` file.
    
 
 ### Compiling and testing integration
@@ -559,9 +561,10 @@ Typically, if you wanted to call a smart contract function using a different sig
 const tx = await token0.connect(alice).transferCrossChain(receiver.address, amount, token1Info.chain);
 ```
 
-Typically, if you use Hardhat `ethers` in tests, the call creates a new contract instance using the new signer `alice` in the background. 
+In `ethers` tests, this call creates a new contract instance using the new signer `alice` in the background. 
 A signer always has a network context associated with it. 
-If you want to call a contract running in Chainweb EVM, you must be aware of the Chainweb chain you are on to get the correct signing address.
+
+However, if you want to call a contract with a specific signer in Chainweb EVM, you must be aware of the Chainweb chain identifier where the contract is deployed to get the correct signing address.
 For example, you must call `await chainweb.switchChain(chainId);` to switch to the correct chain so that you get signers with the correct network context for that chain.
 
 If you use the `@kadena/hardhat-chainweb` plugin, the `runOverChains` function does the chain switching for you.
@@ -569,12 +572,14 @@ You can find examples of switching chains in the `solidity/test/SimpleToken.test
 
 ## Blockscout
 
-You can explore the Chainweb EVM development network chains using the optional [Blockscout](https://blockscout.com). Blockscout is a blockchain monitor that provides a user experience that is similar to [Etherscan](https://etherscan.io).
+You can explore the Chainweb EVM development network chains using the optional [Blockscout](https://blockscout.com) application. 
+Blockscout is a blockchain monitoring service that provides a user experience that is similar to [Etherscan](https://etherscan.io). 
+
 For additional information, see the [Blockscout README](https://github.com/blockscout/blockscout).
 
 To use Blockscout:
 
-1. Open a terminal shell and change to the `kadena-evm-sandbox` directory, if needed:
+1. Open a terminal shell and change to the `kadena-evm-sandbox` directory, if needed.
 
 1. Pull the latest images by running the following command:
 
@@ -582,13 +587,13 @@ To use Blockscout:
    ./network blockscout pull
    ```
 
-2. Add blockscout domains to the host file:
+2. Add blockscout domains to the `/etc/hosts` file by running the following command:
 
    ```sh
    ./network blockscout add-domains
    ```
 
-   This will add the following records to /etc/host 
+   This command adds the following records to the `/etc/hosts` file:
 
    - 127.0.0.1       chain-20.evm.kadena.local
    - 127.0.0.1       chain-21.evm.kadena.local
@@ -614,34 +619,13 @@ To use Blockscout:
    chain 24: http://chain-24.evm.kadena.local:8000
    ```
 
-   The Blockscout UIs for the EVM chains are available at the following URLs.
+   You can view transactions for Chainweb EVM chains in Blockscout using the following URLs.
 
    - [Chainweb EVM chain 20](http://chain-20.evm.kadena.local:8000)
    - [Chainweb EVM chain 21](http://chain-21.evm.kadena.local:8000)
    - [Chainweb EVM chain 22](http://chain-22.evm.kadena.local:8000)
    - [Chainweb EVM chain 23](http://chain-23.evm.kadena.local:8000)
    - [Chainweb EVM chain 24](http://chain-24.evm.kadena.local:8000)
-
-## Network components and chain specifications
-
-- `chainweb-node`
-  - software: [chainweb-node](https://github.com/kadena-io/chainweb-node/tree/lars/pp/evm)
-  - exported ports: 1848 (Chainweb service API)
-- `chainweb-miner`
-  - software: [chainweb-mining-client]https://github.com/kadena-io/chainweb-mining-client)
-  - worker: constant-delay with a 2s rate per chain
-- `chainweb-evm-chain0`
-  - software: [kadena-reth](https://github.com/kadena-io/kadena-reth)
-  - exported ports: 8545 (HTTP ETH RPC), 8546 (Websocket ETH RPC)
-  - Chainweb chain-id: 0
-  - Ethereum chain-id: 1789
-  - chain specification: `./devnet/config/chainweb-chain0-spec.json`
-- `chainweb-evm-chain1`
-  - software: [kadena-reth](https://github.com/kadena-io/kadena-reth)
-  - exported ports: 8555 (HTTP ETH RPC), 8556 (Websocket ETH RPC)
-  - Chainweb chain-id: 1
-  - Ethereum chain-id: 1790
-  - chain specification: `./devnet/config/chainweb-chain1-spec.json`
 
 ## Account allocations in the development network
 

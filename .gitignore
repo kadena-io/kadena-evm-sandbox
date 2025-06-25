@@ -4,3 +4,5 @@ solidity/cache
 solidity/build
 solidity/artifacts
 solidity/.env
+solidity/.env.sepolia
+solidity/.env.testnet

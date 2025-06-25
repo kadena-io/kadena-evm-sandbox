@@ -107,9 +107,8 @@ describe("ExampleHeaderOracle", function () {
       const blockNumber = await ethers.provider.getBlockNumber();
       console.log(`Current block number: ${blockNumber}`);
       
-      // This helps debug if your reth node has EIP-4788 enabled
-      console.log("If EIP-4788 is not enabled in your reth configuration, the precompile won't work");
-      console.log("Check your reth chain spec for EIP-4788 activation");
+      // This helps debug 
+      console.log("Checking we are on the corect network and can get a block number...");
     });
   });
 

@@ -378,8 +378,8 @@ To integrate with the Chainweb EVM development network:
    npm install @kadena/hardhat-chainweb @kadena/hardhat-kadena-create2
    ```
 
-3. Open the `hardhat.config.js` file for your Hardhat project in your code editor. 
-4. Copy and paste the code to import plugins and read account information from the `solidity/hardhat.config.js` file into the `hardhat.config.js` file for your project.
+3. Open the `hardhat.config.js` or `hardhat.config.ts` file for your Hardhat project in your code editor. 
+4. Copy and paste the code to import plugins and read account information from the `solidity/hardhat.config.js` file into the Hardhat configuration file for your project.
 
    For example:
 
@@ -397,7 +397,7 @@ To integrate with the Chainweb EVM development network:
    );
    ```
    
-5. Copy and paste the code to configure network information from the `solidity/hardhat.config.js` file into the `hardhat.config.js` file for your project.
+5. Copy and paste the code to configure network information from the `solidity/hardhat.config.js` file into the Hardhat configuration file for your project.
 
    For example:
 
@@ -419,7 +419,7 @@ To integrate with the Chainweb EVM development network:
 
    Be sure to include the `accounts` key with mapping for accounts to private keys in the Chainweb EVM configuration settings.
    
-   You can also modify the configuration settings in the `hardhat.config.js` file to customize the development environment to suit your needs.
+   You can also modify the configuration settings in the `hardhat.config.js` or `hardhat.config.ts` file to customize the development environment to suit your needs.
    For example, if you want the `sandbox` configuration to have two EVM chains instead of five, modify the `chains` setting:
 
    ```javascript
@@ -432,7 +432,7 @@ To integrate with the Chainweb EVM development network:
    }  
    ```
 
-6. (Optional) Copy and paste the code to configure `etherscan` settings from the `solidity/hardhat.config.js` file to use Blockscout into the `hardhat.config.js` file for your project.
+6. (Optional) Copy and paste the code to configure `etherscan` settings from the `solidity/hardhat.config.js` file to use Blockscout into the `hardhat.config.js` or `hardhat.config.ts` file for your project.
    
    Note that you must configure these settings if you want Blockscout to verify your smart contract.
    
@@ -446,7 +446,7 @@ To integrate with the Chainweb EVM development network:
    },
    ```
 
-   After updating the Hardhat configuration file, you should have a `hardhat.config.js` file with configuration settings similar to the following:
+   After updating the Hardhat configuration file, you should have a `hardhat.config.js` or `hardhat.config.ts` file with configuration settings similar to the following:
    
    ```javascript
     sandbox: {
@@ -464,7 +464,7 @@ To integrate with the Chainweb EVM development network:
    },
    ```
 
-7. Save your changes and close the `hardhat.config.js` file.
+7. Save your changes and close the `hardhat.config.js` or `hardhat.config.ts` file.
    
 
 ### Compiling and testing integration
@@ -505,7 +505,7 @@ If you want to deploy into the Chainweb EVM `sandbox` environment by default, yo
 
 To run scripts against the Chainweb EVM development `sandbox` environment:
 
-1. Open the `hardhat.config.js` file for your Hardhat project in your code editor. 
+1. Open the `hardhat.config.js` or `hardhat.config.ts` file for your Hardhat project in your code editor. 
 
 2. Add `defaultChainweb` to the network settings:
    
@@ -618,8 +618,8 @@ To use Blockscout:
    chain 23: http://chain-23.evm.kadena.local:8000
    chain 24: http://chain-24.evm.kadena.local:8000
    ```
-
-   You can view transactions for Chainweb EVM chains in Blockscout using the following URLs.
+   
+   You can view transactions executed on Chainweb EVM chains using Blockscout and the following URLs.
 
    - [Chainweb EVM chain 20](http://chain-20.evm.kadena.local:8000)
    - [Chainweb EVM chain 21](http://chain-21.evm.kadena.local:8000)
@@ -672,4 +672,4 @@ The mining accounts are:
 For additional information about Kadena Chainweb EVM, see the following resources:
 
 - [Proposal: Cross-Chain Bridging Protocol (Draft)](https://github.com/kadena-io/kadena-evm-sandbox/docs/bridging-protocol.md)
-- [Get started with Kadena Chainweb EVM](https://docs.kadena.io/guides/nodes/howto-evm)
+- [Kadena Chainweb EVM Testnet deployment](https://docs.kadena.io/guides/nodes/howto-evm)

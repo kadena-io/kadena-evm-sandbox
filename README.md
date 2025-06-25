@@ -196,7 +196,7 @@ To download and install the Chainweb EVM development network:
 
 ### Test the simple token contract
 
-To test the simple token contract:
+To test the `SimpleToken` sample contract:
 
 1. Install Hardhat and related dependencies in the development network by running the following command:
 
@@ -329,6 +329,112 @@ This example only exposes the Chainweb service API on one Pact chain (3) and one
 You can run `compose.py` script to generate the `docker-compose.yaml` file for any of the predefined project configurations.
 Alternatively, you can modify the `compose.py` script or write your own script to customize the development environment settings you want to use. 
 
+## Sample Solidity project
+
+The `solidity` directory provides an example of a simple Hardhat project with a Hardhat configuration file, Solidity smart contract, and test files. 
+This project also includes the `@kadena/hardhat-chainweb` and `@kadena/hardhat-kadena-create2` Hardhat v2 plugins as dependencies. 
+The `@kadena/hardhat-chainweb` plugin simulates Kadena Chainweb EVM's multi-chain enivornment so that you can develop in Hardhat V2 and later deploy to testnet and mainnet, as you would with any other EVM chain. The plugin also supports configuration for smart contract verification and for deploying to chains that would normally be configured as external networks in Hardhat. This local development network (sandbox) is configured to represent those external Chainweb EVM chains but with pre-allocated developer accounts. The `@kadena/hardhat-kadena-create2` provides functionality for deterministic deployment. This makes it easy to deploy a smart contract to all chains with the same address.
+
+- The `solidity/devnet-accounts.json` file contains all of the account information generated from a test BIP-44 wallet using a seed entropy value of `0x0000 0000 0000 0000 0000 0000 0000 0000` (16 zero bytes).
+- The `solidity/hardhat.config.js` file reads the account information from the `solidity/devnet-accounts.json` file for the `sandbox` local development network configuration.
+- The `solidity/hardhat.config.js` file is configured to use the `@kadena/hardhat-chainweb` and `@kadena/hardhat-kadena-create2` Harhat V2 plugins.
+
+### Running tests
+
+You can develop, test, and deploy Soldidity contracts using standard Hardhat commmands. 
+For example, you can run the unit tests for the `SimpleToken` contract against the internal Hardhat v2 network:
+
+```sh
+npx hardhat test
+```
+
+Alternatievely, you can use the `npm` script:
+
+``` sh
+npm run test
+```
+
+### Deploying
+
+To deploy the `SimpleToken` contract against the local `sandbox` development network using the `npm` script, run:
+
+```sh
+npm run deploy sandbox
+```
+
+To deploy detemrinistcially with the same address on all chains using CREATE2, run:
+
+```sh
+npm run deploy-create2 sandbox
+```
+
+To deploy the `SimpleToken` contract to the internal Hardhat network, run:
+
+```sh
+npm run deploy:hardhat
+```
+
+To deploy detemrinistcially with the same address on all chains using CREATE2, run:
+
+```sh
+npm run deploy-create2:hardhat
+```
+
+### Starting a local node
+
+To start a separate Hardhat node, run:
+
+```sh
+npx hardhat node
+```
+
+After starting the node, open another terminal, then run:
+
+```sh
+npm run deploy localhost
+```
+
+To deploy detemrinistcially with the same address on all chains using CREATE2, run:
+
+``` sh
+npm run deploy-create2 localhost
+```
+
+### Deploying to testnet
+
+Hardhat and the local `sandbox` development network have pre-allocated developer accounts to make it easy for you to develop, unit test, and test deployment scripts. 
+To deploy to Chainweb EVM Testnet, you should use your own **deployer account**. 
+You can get testnet KDA from the EVM Faucet in the [Kadena Developer Tools](https://tools.kadena.io/faucet/evm).
+
+After you have an account with testnet KDA, you can deploy the `SimpleToken` contract on Chainweb EVM Testnet.
+
+To deploy the `SimpleToken` contract:
+
+1. Copy the `.env.example` file to create your own `.env` file:
+
+   ```sh
+   cp .env.example .env
+   ```
+
+1. Change the default `DEPLOYER_PRIVATE_KEY` to your own deployer account private key.
+
+1. Run the deploy script:
+
+   ```sh
+   npm run deploy testnet
+   ```
+
+   To deploy detemrinistcially with the same address on all chains using CREATE2, run:
+
+   ```sh
+   npm run deploy-create2 testnet
+   ```
+   
+   The Kadena Hardhat Create2 [plugin](https://www.npmjs.com/package/@kadena/hardhat-kadena-create2) deploys a CREATE2 factory for you.
+
+   Note that if you deploy using Create2 multiple times against a persistent blockchain like the local development network or testnet—as opposed to the internal Hardhat node—you must to change the salt in the `solidity/scripts/deploy-using-create2.js` file. 
+   If you don't change the salt, deployment will fail with a message indicating that the contract has already been deployed.
+
 ## Integrating with other Hardhat projects
 
 If you want to experiment with using the Chainweb EVM development environment with other Hardhat projects, you must configure the Hardhat project to connect to the Chainweb EVM development environment much like you would configure a project to connect to an external network.
@@ -336,14 +442,15 @@ You must also configure the Hardhat project to include account information—add
 In the `kadena-evm-sandbox` directory, the `solidity` project includes a Hardhat configuration file that imports the Kadena client `@kadena/hardhat-chainweb` and `@kadena/hardhat-kadena-create2` plugins. 
 
 - The `@kadena/hardhat-chainweb` plugin simulates the Kadena Chainweb EVM multi-chain network within the Hardhat development environment. 
-  This plugin enables you to develop applications using Hardhat v2, and later, to test and deploy to Kadena test and production networks with standard Hardhat commands. 
+  This plugin enables you to develop, test, and deploy smart contracts using Hardhat v2 for local, test, and production Chainweb networks. 
   The plugin also provides configuration settings that enable smart contract verification and deploying to chains that would normally be configured as external networks in Hardhat. 
-  The `sandbox` settings in the `solidity` project provide an example of this configuration for a five-chain network.
+  
+  The `sandbox` configuration settings in the `solidity` project provide an example of this configuration for a five-chain network.
 
 - The `@kadena/hardhat-kadena-create2` plugin provides functionality for **deterministic deployment**. 
-  This plugin enables you to deploy a smart contract to all chains with the same address.
+  This plugin enables you to deploy a smart contract with the same address on all chains.
 
-The` hardhat.config.js` file for the `solidity` project also reads the account information from the `solidity/devnet-accounts.json` file to prepare a default set of accounts and balance allocations for the Chainweb EVM development environment.
+The `hardhat.config.js` file also reads account information from the `solidity/devnet-accounts.json` file to prepare a default set of accounts and balances for the Chainweb EVM development environment.
 The `solidity/devnet-accounts.json` file contains account information generated from a BIP-44 wallet using a seed entropy value of `0x0000 0000 0000 0000 0000 0000 0000 0000` (16 zero bytes).
 
 After a project is configured to use the Chainweb EVM development configuration settings and accounts, you can compile, test, and deploy the project using standard `hardhat test` commands.
@@ -360,19 +467,19 @@ In addition, the `solidity` project includes several sample `npm` scripts to per
 },
 ```
 
-With these scripts, you can compile, test, and deploy the SimpleToken contract in the `solidity` project using `npm run` commands.
+With these scripts, you can compile, test, and deploy the `SimpleToken` contract using `npm run` commands.
 For example, you can deploy a project with the same address on all chains by running the following command:
 
 ```sh
 npm run deploy-create2 sandbox
 ```
 
-### Modifying the Hardhat project
+### Modifying your Hardhat project
 
-To integrate with the Chainweb EVM development network:
+To integrate your project with the Kadena Chainweb EVM development network and plugins:
 
 1. Copy the `solidity/devnet-accounts.json` file into the root directory of your Hardhat project.
-2. Install the `@kadena/hardhat-chainweb` and `@kadena/hardhat-kadena-create2` plugin libraries in the root directory of your project:
+2. Install the `@kadena/hardhat-chainweb` and `@kadena/hardhat-kadena-create2` plugins in the root directory of your project:
    
    ```sh
    npm install @kadena/hardhat-chainweb @kadena/hardhat-kadena-create2
@@ -466,7 +573,6 @@ To integrate with the Chainweb EVM development network:
 
 7. Save your changes and close the `hardhat.config.js` or `hardhat.config.ts` file.
    
-
 ### Compiling and testing integration
 
 After configuring your Hardhat project to use the Chainweb EVM development environment, you can compile, test, and deploy the project using standard `hardhat` commands.
@@ -488,6 +594,7 @@ For example, to deploy a Hardhat project on the Chainweb EVM you have configured
 ```sh
 npm run deploy:hardhat
 ```
+can also be used.
 
 ### Specifying the Chainweb EVM development environment
 
@@ -549,6 +656,7 @@ For example, the following `transferCrossChain` transaction is signed by the acc
 ```javascript
 const tx = await token0.transferCrossChain(receiver.address, amount, token1Info.chain);
 ```
+
 
 This address is the `msg.sender` for the transaction and is displayed as the **deploying signer** when you execute the `SimpleToken` tests.
 The address is retrieved by calling the `getSigners` function in the `solidity/test/utils/utils.js` file.

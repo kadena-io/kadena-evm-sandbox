@@ -22,7 +22,7 @@ info "Blockscout started successfully."
 for ((i = 0; i < numberOfChains; i++)); do
   chainId=$((i + $chainIdOffset))
   chainWebChainId=$((i + $chainwebChainIdOffset))
-  echo "chain $chainWebChainId": "http://chain-$chainWebChainId.evm.kadena.local:8000"
+  echo "chain $chainWebChainId": "http://chain-$chainWebChainId.${BASE_EXPLORER_DOMAIN}:${BASE_GATEWAY_PUBLIC_PORT}"
 done
 
 info "Run './bs add-domains' to add domains to /etc/hosts"

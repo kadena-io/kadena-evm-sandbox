@@ -5,11 +5,13 @@ HOSTS_FILE="/etc/hosts"
 IP="127.0.0.1"
 
 for ((i = start; i <= end; i++)); do
-  domain="chain-$i.evm.kadena.local"
+  domain="chain-$i.${BASE_EXPLORER_DOMAIN}"
   # Check if the entry already exists
     record="$IP $domain"
   if ! grep -qE "^\s*$IP\s+$domain(\s|$)" "$HOSTS_FILE"; then
     cmd="echo -e '$record' | sudo tee -a $HOSTS_FILE > /dev/null"
     run $cmd
+  else
+    echo "Domain $domain already exists in $HOSTS_FILE"  
   fi
 done

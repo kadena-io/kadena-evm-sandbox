@@ -12,8 +12,8 @@ const devnetAccounts = JSON.parse(
 );
 
 
- console.log("DEPLOYER_PRIVATE_KEY in hardhat config:", process.env.DEPLOYER_PRIVATE_KEY);
- if (!process.env.DEPLOYER_PRIVATE_KEY) {
+console.log("DEPLOYER_PRIVATE_KEY in hardhat config:", process.env.DEPLOYER_PRIVATE_KEY);
+if (!process.env.DEPLOYER_PRIVATE_KEY) {
   throw new Error("DEPLOYER_PRIVATE_KEY is not set in .env");
 }
 
@@ -33,9 +33,6 @@ module.exports = {
     hardhat: {
       chains: 5,
       chainwebChainIdOffset: 20,
-      forking: {
-          url: 'https://ethereum.rpc.subquery.network/public',
-        },
     },
     sandbox: {
       type: 'external',
@@ -44,7 +41,7 @@ module.exports = {
       chainIdOffset: 1789,
       chainwebChainIdOffset: 20,
       externalHostUrl: "http://localhost:1848/chainweb/0.0/evm-development",
-       etherscan: {
+      etherscan: {
         apiKey: 'abc', // Any non-empty string works for Blockscout
         apiURLTemplate: 'http://chain-{cid}.evm.kadena.internal:8000/api/',
         browserURLTemplate: 'http://chain-{cid}.evm.kadena.internal:8000/',
@@ -64,6 +61,12 @@ module.exports = {
         browserURLTemplate: "http://chain-{cid}.evm-testnet-blockscout.chainweb.com"
       },
     },
+  },
+  networks: {
+    sepolia: {
+      url: "https://ethereum-sepolia-rpc.publicnode.com",
+      accounts: [process.env.DEPLOYER_PRIVATE_KEY]
+    }
   },
   mocha: {
     timeout: 300000

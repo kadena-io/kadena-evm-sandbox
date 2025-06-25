@@ -6,7 +6,9 @@ services:
       - 'host.docker.internal:host-gateway'
     volumes:
       - "../proxy/gateway:/etc/nginx/templates"
+      - "/var/lib/acme/evm-testnet-blockscout:/etc/nginx/ssl:ro"
     ports:
       - "${BASE_GATEWAY_PUBLIC_PORT:-8000}:80"
+      - "8443:443"
       - "8080:8080"
       - "8081:8081"

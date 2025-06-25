@@ -3,3 +3,4 @@ node_modules/
 solidity/cache
 solidity/build
 solidity/artifacts
+solidity/.env

@@ -194,6 +194,63 @@ To download and install the Chainweb EVM development network:
    
    You can call the `./network devnet status` command repeatedly to verify that the block height and cut height values are increasing.
 
+### Restarting the development network
+
+If the development network stops producing blocks or seems stuck, you can restart the `bootnode-consensus` service without stopping or restarting other network components.
+
+To restart the development network:
+
+```sh
+./network devnet restart
+```
+
+### Stopping the development network
+
+When you're finished testing, you can shut down the development network, remove all containers, and reset the database to a clean state.
+
+To shut down the network and remove containers:
+
+```sh
+./network devnet stop
+```
+
+In some cases, you might find that stopping or restarting the network fails to return the container to a clean state.
+If this problem occurs, run the following command to forcibly remove orphan processes:
+
+```bash
+docker compose down --volumes --remove-orphans
+```
+
+After removing all containers and processes, you should be able to restart the network in a clean state.
+
+### Modifying the network configuration
+
+The `devnet` folder in the `kadena-evm-sandbox` repository includes a Python script, `compose.py`, that generates the `docker-compose.yaml` file for the Chainweb EVM Docker Compose project.
+The `compose.py` script automates the creation of the `docker-compose.yaml` file with different configuration settings for the following predefined `project` use cases:
+
+- The `app-dev` project generates a configuration file optimized for application development with a single full-service bootstrap node.
+  This configuration produces blocks at a fixed rate of two seconds per chain, has mining enabled, and exposes the Chainweb service API on the chains you specify as command-line arguments.
+- The `kadena-dev` project generates a configuration file that simulates a production environment with four node roles: one bootstrap node, one application development node, and two mining nodes.
+  This configuration is optimized for testing and debugging Chainweb node backend services, such as consensus and peer-to-peer networking.
+- The `minimal` project generates a configuration file for a minimal development environment with one bootstrap node and simulated mining.
+
+To generate a `docker-compose.yaml` for one of the predefined project use cases, add the `--project` command-line option and the use case project name to the `compose.py` script.
+For example, you can run the following command to generate a `docker-compose.yaml` file that simulates a production environment and then starts the network using that configuration:
+
+```bash
+python3.13 compose.py --project kadena-dev > docker-compose.yaml && docker compose up -d
+```
+
+To generate a `docker-compose.yaml` that's optimized for application development, you can run a command similar to the following:
+
+```bash
+python3.13 compose.py --project app-dev --exposed-chains "3, 20" > docker-compose.yaml && docker compose up -d
+```
+
+This example only exposes the Chainweb service API on one Pact chain (3) and one EVM chain (20).
+You can run `compose.py` script to generate the `docker-compose.yaml` file for any of the predefined project configurations.
+Alternatively, you can modify the `compose.py` script or write your own script to customize the development environment settings you want to use.
+
 ## Test the sample Solidity project
 
 The `solidity` directory provides an example of a simple Hardhat project with a Hardhat configuration file, Solidity smart contract, and test files. 
@@ -218,7 +275,7 @@ npx hardhat test
 ```
 
 The `solidity` project also provides sample `npm` scripts to perform common tasks.
-To execute unit tests for the SimpleToken contract using a sample `npm` script, run:
+To execute unit tests for the `SimpleToken` contract using a sample `npm` script, run:
 
 ``` sh
 npm run test
@@ -302,64 +359,7 @@ To deploy the `SimpleToken` contract:
    
    If you use this script, the [Kadena Hardhat Create2 plugin](https://www.npmjs.com/package/@kadena/hardhat-kadena-create2) deploys a Create2 factory for you.
    You should note that deploying with Create2 multiple times against a persistent blockchain like the Chainweb EVM Testnet—as opposed to the internal Hardhat node—you must to change the salt in the `solidity/scripts/deploy-using-create2.js` file before each deployment. 
-   If you don't change the salt, the deployment will fail with a message indicating that the contract has already been deployed.
-
-### Restarting the development network
-
-If the development network stops producing blocks or seems stuck, you can restart the `bootnode-consensus` service without stopping or restarting other network components.
-
-To restart the development network:
-
-```sh
-./network devnet restart
-```
-
-### Stopping the development network
-
-When you're finished testing, you can shut down the development network, remove all containers, and reset the database to a clean state.
-
-To shut down the network and remove containers:
-
-```sh
-./network devnet stop
-```
-
-In some cases, you might find that stopping or restarting the network fails to return the container to a clean state.
-If this problem occurs, run the following command to forcibly remove orphan processes:
-
-```bash
-docker compose down --volumes --remove-orphans
-```
-
-After removing all containers and processes, you should be able to restart the network in a clean state.
-
-## Modifying the network configuration
-
-The `devnet` folder in the `kadena-evm-sandbox` repository includes a Python script, `compose.py`, that generates the `docker-compose.yaml` file for the Chainweb EVM Docker Compose project.
-The `compose.py` script automates the creation of the `docker-compose.yaml` file with different configuration settings for the following predefined `project` use cases:
-
-- The `app-dev` project generates a configuration file optimized for application development with a single full-service bootstrap node.
-  This configuration produces blocks at a fixed rate of two seconds per chain, has mining enabled, and exposes the Chainweb service API on the chains you specify as command-line arguments.
-- The `kadena-dev` project generates a configuration file that simulates a production environment with four node roles: one bootstrap node, one application development node, and two mining nodes.
-  This configuration is optimized for testing and debugging Chainweb node backend services, such as consensus and peer-to-peer networking.
-- The `minimal` project generates a configuration file for a minimal development environment with one bootstrap node and simulated mining.
-
-To generate a `docker-compose.yaml` for one of the predefined project use cases, add the `--project` command-line option and the use case project name to the `compose.py` script.
-For example, you can run the following command to generate a `docker-compose.yaml` file that simulates a production environment and then starts the network using that configuration:
-
-```bash
-python3.13 compose.py --project kadena-dev > docker-compose.yaml && docker compose up -d
-```
-
-To generate a `docker-compose.yaml` that's optimized for application development, you can run a command similar to the following:
-
-```bash
-python3.13 compose.py --project app-dev --exposed-chains "3, 20" > docker-compose.yaml && docker compose up -d
-```
-
-This example only exposes the Chainweb service API on one Pact chain (3) and one EVM chain (20).
-You can run `compose.py` script to generate the `docker-compose.yaml` file for any of the predefined project configurations.
-Alternatively, you can modify the `compose.py` script or write your own script to customize the development environment settings you want to use. 
+   If you don't change the salt, the deployment will fail with a message indicating that the contract has already been deployed. 
 
 ## Integrating with other Hardhat projects
 
@@ -511,7 +511,6 @@ For example, to deploy a Hardhat project on the Chainweb EVM you have configured
 ```sh
 npm run deploy:hardhat
 ```
-can also be used.
 
 ### Specifying the Chainweb EVM development environment
 
@@ -548,9 +547,9 @@ To run scripts against the Chainweb EVM development `sandbox` environment:
       chainwebChainIdOffset: 20,
       externalHostUrl: "http://localhost:1848/chainweb/0.0/evm-development/"
     },
-  },
-  defaultChainweb: 'sandbox',
-  ```
+   },
+   defaultChainweb: 'sandbox',
+   ```
 
 1. Run `hardhat` deployment script or the `npm run deploy` command:
    

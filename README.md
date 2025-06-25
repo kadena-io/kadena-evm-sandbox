@@ -550,10 +550,8 @@ For example, the following `transferCrossChain` transaction is signed by the acc
 const tx = await token0.transferCrossChain(receiver.address, amount, token1Info.chain);
 ```
 
-This address is the `msg.sender` for the transaction. 
-
-In the test files in the `solidity/test` directory, this address the **deploying signer** you see displayed when you execute the tests.
-This signer is simply the first signer retrieved by the `getSigners` function in the `solidity/test/utils/utils.js` file.
+This address is the `msg.sender` for the transaction and is displayed as the **deploying signer** when you execute the `SimpleToken` tests.
+The address is retrieved by calling the `getSigners` function in the `solidity/test/utils/utils.js` file.
 
 Typically, if you wanted to call a smart contract function using a different signer—for example, `alice`—you could call the function like this:
   
@@ -562,12 +560,13 @@ const tx = await token0.connect(alice).transferCrossChain(receiver.address, amou
 ```
 
 In `ethers` tests, this call creates a new contract instance using the new signer `alice` in the background. 
-A signer always has a network context associated with it. 
+It's important to note, however, that the signer address always has a **network context** associated with it. 
 
-However, if you want to call a contract with a specific signer in Chainweb EVM, you must be aware of the Chainweb chain identifier where the contract is deployed to get the correct signing address.
-For example, you must call `await chainweb.switchChain(chainId);` to switch to the correct chain so that you get signers with the correct network context for that chain.
+For contracts deployed on Chainweb EVM, the network context is slightly more complex because you must know the Chainweb chain identifier where the contract is deployed to get the correct signing address.
 
-If you use the `@kadena/hardhat-chainweb` plugin, the `runOverChains` function does the chain switching for you.
+For example, if you want to call a contract with a specific signer, you must call `await chainweb.switchChain(chainId);` to switch to the correct chain so that you get signers with the correct network context for that chain.
+
+However, if you install the `@kadena/hardhat-chainweb` plugin, you can use the `runOverChains` function to handle the chain switching for you.
 You can find examples of switching chains in the `solidity/test/SimpleToken.test.js` and `solidity/test/SimpleToken.integration.test.js` test files.
 
 ## Blockscout

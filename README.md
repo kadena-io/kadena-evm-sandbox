@@ -266,7 +266,7 @@ The `solidity` project also includes a `devnet-accounts.json` file with account 
 The Hardhat configuration file reads this account information to generate accounts for you to use in the local `sandbox` development network configuration.
 
 ### Set Up
-Install dependencie:
+### Installing dependencies
 
 ```sh
 npm install

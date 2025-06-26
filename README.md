@@ -265,7 +265,6 @@ The project is also configured by default use to the `@kadena/hardhat-chainweb` 
 The `solidity` project also includes a `devnet-accounts.json` file with account information generated from a test BIP-44 wallet using a seed entropy value of `0x0000 0000 0000 0000 0000 0000 0000 0000` (16 zero bytes).
 The Hardhat configuration file reads this account information to generate accounts for you to use in the local `sandbox` development network configuration.
 
-### Set Up
 ### Installing dependencies
 
 ```sh

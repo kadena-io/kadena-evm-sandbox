@@ -12,10 +12,9 @@ sleep 2
 for ((i = 0; i < numberOfChains; i++)); do
   chainId=$((i + $chainIdOffset))
   chainWebChainId=$((i + $chainwebChainIdOffset))
-  run "CHAIN_ID=$chainId CHAINWEB_CHAIN_ID=$chainWebChainId docker compose -p bs_chain_${chainWebChainId} --env-file ./envs/chain-common.env -f common-docker-compose.yaml up -d $compose_action"
+  run "CHAIN_ID=$chainId CHAINWEB_CHAIN_ID=$chainWebChainId docker compose -p bs_chain_${chainWebChainId} --env-file ./envs/chain-common.env -f chain-n-docker-compose.yaml up -d $compose_action"
 done
 
-run "docker compose -p bs_gateway -f gateway-docker-compose.yaml up -d $compose_action"  
 
 info "Blockscout started successfully."
 

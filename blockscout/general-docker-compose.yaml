@@ -8,7 +8,7 @@ services:
       file: ./services/databases.yml
       service: db-init
     networks:
-      - service-network  
+      - service-network
 
   db:
     depends_on:
@@ -18,15 +18,14 @@ services:
       file: ./services/databases.yml
       service: db
     networks:
-      - service-network  
+      - service-network
 
   stats-db-init:
     extends:
       file: ./services/databases.yml
       service: stats-db-init
     networks:
-      - service-network  
-
+      - service-network
 
   stats-db:
     depends_on:
@@ -36,41 +35,50 @@ services:
       file: ./services/databases.yml
       service: stats-db
     networks:
-      - service-network  
+      - service-network
 
   visualizer:
     extends:
       file: ./services/visualizer.yml
       service: visualizer
     networks:
-      - proxy-network   
+      - proxy-network
+    labels:
+      caddy: 'http://*.${BASE_EXPLORER_DOMAIN}'
+      caddy.handle_path: '/visualizer'
+      caddy.handle_path.0_reverse_proxy: '{{ upstreams 8050 }}'
 
   sig-provider:
     extends:
       file: ./services/sig-provider.yml
       service: sig-provider
     networks:
-      - service-network          
+      - service-network
 
   smart-contract-verifier:
     extends:
       file: ./services/smart-contract-verifier.yml
       service: smart-contract-verifier
     ports:
-      - "4000:8050"  
+      - '4000:8050'
     networks:
-      - service-network       
+      - service-network
+      - proxy-network
 
-
+  proxy:
+    extends:
+      file: ./services/caddy-gateway.yml
+      service: proxy
+    ports:
+      - '${BASE_GATEWAY_PUBLIC_PORT:-8000}:80'
+    networks:
+      - proxy-network
 
 networks:
   proxy-network:
-    name: proxy-network  
+    name: proxy-network
     driver: bridge
 
   service-network:
     name: service-network
     driver: bridge
-  
-
-

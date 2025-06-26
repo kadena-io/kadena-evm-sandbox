@@ -120,13 +120,14 @@ contract WrongOperationTypeToken is ERC20('SimpleToken', 'SIM'), Ownable {
   error InvalidChainwebChainId();
 
   /**
-   * @notice Constructor
-   * @dev Sets caller as owner and mints the initial supply to owner
-   * @param initialSupply The initial supply of the token
-   */
-  constructor(uint256 initialSupply) Ownable(msg.sender) {
-    _mint(msg.sender, initialSupply);
-  }
+     * @notice Constructor
+     * @dev Sets caller as owner and mints the initial supply to owner
+     * @param initialSupply The initial supply of the token
+     * @param owner The address of the owner of the contract
+     */
+    constructor(uint256 initialSupply, address owner) Ownable(owner) {
+        _mint(owner, initialSupply);
+    }
 
   /**
    * @notice Transfers tokens to a specific address on the given target chain

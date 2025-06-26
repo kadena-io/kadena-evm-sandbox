@@ -710,7 +710,7 @@ def evm_service(
     is_bootnode=False,
     exposed=False,
     evm_impl: str = "reth",
-    use_private_apis: bool = False,
+    use_private_apis: bool = True,
 ) -> Service:
 
     # apis:
@@ -718,7 +718,8 @@ def evm_service(
     private_apis = "admin,debug,trace,txpool"
 
     if evm_impl == "reth":
-        private_apis = private_apis + "rpc,reth,ots"  # ,flashbots,miner,mev"
+        # available apis: admin,debug,eth,net,trace,txpool,web3,rpc,reth,ots,flashbots,miner,mev
+        private_apis = private_apis + ",rpc,reth,ots"  # ,flashbots,miner,mev"
         apis = default_apis + "," + private_apis if use_private_apis else default_apis
         image = f"${{RETH_IMAGE:-{DEFAULT_RETH_IMAGE}}}"
         nodekey_arg = "--p2p-secret-key=/run/secrets/p2p-secret"
@@ -757,7 +758,7 @@ def evm_service(
             "--engine.memory-block-buffer-target=0"
         ]
     elif evm_impl == "geth":
-        private_apis = private_apis + "personal" # ,miner"
+        private_apis = private_apis + ",personal" # ,miner"
         apis = default_apis + "," + private_apis if use_private_apis else default_apis
         image = f"${{GETH_IMAGE:-{DEFAULT_GETH_IMAGE}}}"
         nodekey_arg = "--nodekey=/run/secrets/p2p-secret"

@@ -164,11 +164,11 @@ services:
         - --http
         - --http.addr=0.0.0.0
         - --http.port=8545
-        - --http.api=eth,net,web3
+        - --http.api=eth,net,web3,admin,debug,trace,txpool,rpc,reth,ots
         - --ws
         - --ws.addr=0.0.0.0
         - --ws.port=8546
-        - --ws.api=eth,net,web3
+        - --ws.api=eth,net,web3,admin,debug,trace,txpool,rpc,reth,ots
         - --disable-nat
         - --nat=none
         - --disable-dns-discovery
@@ -228,11 +228,11 @@ services:
         - --http
         - --http.addr=0.0.0.0
         - --http.port=8545
-        - --http.api=eth,net,web3
+        - --http.api=eth,net,web3,admin,debug,trace,txpool,rpc,reth,ots
         - --ws
         - --ws.addr=0.0.0.0
         - --ws.port=8546
-        - --ws.api=eth,net,web3
+        - --ws.api=eth,net,web3,admin,debug,trace,txpool,rpc,reth,ots
         - --disable-nat
         - --nat=none
         - --disable-dns-discovery
@@ -292,11 +292,11 @@ services:
         - --http
         - --http.addr=0.0.0.0
         - --http.port=8545
-        - --http.api=eth,net,web3
+        - --http.api=eth,net,web3,admin,debug,trace,txpool,rpc,reth,ots
         - --ws
         - --ws.addr=0.0.0.0
         - --ws.port=8546
-        - --ws.api=eth,net,web3
+        - --ws.api=eth,net,web3,admin,debug,trace,txpool,rpc,reth,ots
         - --disable-nat
         - --nat=none
         - --disable-dns-discovery
@@ -356,11 +356,11 @@ services:
         - --http
         - --http.addr=0.0.0.0
         - --http.port=8545
-        - --http.api=eth,net,web3
+        - --http.api=eth,net,web3,admin,debug,trace,txpool,rpc,reth,ots
         - --ws
         - --ws.addr=0.0.0.0
         - --ws.port=8546
-        - --ws.api=eth,net,web3
+        - --ws.api=eth,net,web3,admin,debug,trace,txpool,rpc,reth,ots
         - --disable-nat
         - --nat=none
         - --disable-dns-discovery
@@ -420,11 +420,11 @@ services:
         - --http
         - --http.addr=0.0.0.0
         - --http.port=8545
-        - --http.api=eth,net,web3
+        - --http.api=eth,net,web3,admin,debug,trace,txpool,rpc,reth,ots
         - --ws
         - --ws.addr=0.0.0.0
         - --ws.port=8546
-        - --ws.api=eth,net,web3
+        - --ws.api=eth,net,web3,admin,debug,trace,txpool,rpc,reth,ots
         - --disable-nat
         - --nat=none
         - --disable-dns-discovery

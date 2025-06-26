@@ -265,8 +265,21 @@ The project is also configured by default use to the `@kadena/hardhat-chainweb` 
 The `solidity` project also includes a `devnet-accounts.json` file with account information generated from a test BIP-44 wallet using a seed entropy value of `0x0000 0000 0000 0000 0000 0000 0000 0000` (16 zero bytes).
 The Hardhat configuration file reads this account information to generate accounts for you to use in the local `sandbox` development network configuration.
 
-### Running tests
+### Set Up
+Install dependencie:
 
+```sh
+npm install
+
+```
+Copy the `.env.example` file to create your own `.env` file. It is not used by the tests, but Hardhat will complain if .env doesn't exist because it is referenced in
+the testnet configuration.
+
+```sh
+cp .env.example .env
+```
+
+### Running tests
 You can develop, test, and deploy Solidity contracts using standard Hardhat commands. 
 For example, you can run the unit tests for the `SimpleToken` contract against the internal Hardhat v2 network:
 

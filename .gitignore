@@ -1,7 +1,8 @@
 node_modules/
 .vscode/
-package-lock.json
 solidity/cache
 solidity/build
 solidity/artifacts
-yarn.lock
+solidity/.env
+solidity/.env.sepolia
+solidity/.env.testnet

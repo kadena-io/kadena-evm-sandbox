@@ -9,6 +9,9 @@ services:
       # - BASE_EXPLORER_DOMAIN=${BASE_EXPLORER_DOMAIN}  # Add domain variable
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
+      # adding for debugging purposes 
+      # no config needs to be provided, it will be overwritten by the labels
+      - ./caddy_data:/config
     ports:
       - 80:80
       - 443:443

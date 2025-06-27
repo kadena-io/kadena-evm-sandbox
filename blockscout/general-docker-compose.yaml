@@ -45,8 +45,9 @@ services:
       - proxy-network
     labels:
       caddy: 'http://*.${BASE_EXPLORER_DOMAIN}'
-      caddy.handle_path: '/visualizer'
-      caddy.handle_path.0_reverse_proxy: '{{ upstreams 8050 }}'
+      caddy.@match_visualizer: "expression path_regexp('^/(visualizer|api/v1/solidity:visualize-contracts)')"
+      caddy.handle: '@match_visualizer'
+      caddy.handle.reverse_proxy: '{{ upstreams 8050 }}'
 
   sig-provider:
     extends:

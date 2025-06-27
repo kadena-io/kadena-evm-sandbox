@@ -34,13 +34,9 @@ end=$((chainwebChainIdOffset + numberOfChains - 1)) # -1 so numberOfChains is ac
 
 if [[ "${BASE_TLS_ENABLED}" == "true" ]]; then
   export HTTP_PROTOCOL="https"
-  export WS_PROTOCOL="wss"
-  export CADDY_EXPORT_PORT="443"
   export BASE_GATEWAY_PUBLIC_PORT="${BASE_GATEWAY_PUBLIC_HTTPS_PORT:-443}"
 else
   export HTTP_PROTOCOL="http"
-  export WS_PROTOCOL="ws"
-  export CADDY_EXPORT_PORT="80"
   export BASE_GATEWAY_PUBLIC_PORT="${BASE_GATEWAY_PUBLIC_HTTP_PORT:-80}"
 fi
 

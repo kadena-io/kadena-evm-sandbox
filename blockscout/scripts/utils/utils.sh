@@ -33,7 +33,7 @@ generate_chains_meta() {
 
   for ((i = start; i <= end; i++)); do
     url="https://chain-$i.${BASE_EXPLORER_DOMAIN}$port/" 
-    item="{\"title\":\"testnet@chain$i\",\"url\":\"$url\",\"group\":\"Mainnets\",\"icon\":\"${url}assets/configs/network_icon.svg\"}"
+    item="{\"title\":\"chain$i\",\"url\":\"$url\",\"group\":\"${BASE_CHAINWEB_NAME}\",\"icon\":\"${url}assets/configs/network_icon.svg\"}"
     json+="$item"
     if [[ $i -lt $end ]]; then
       json+=","

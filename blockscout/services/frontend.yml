@@ -1,6 +1,6 @@
 services:
   frontend:
-    image: ghcr.io/kadena-io/blockscout-frontend:${FRONTEND_DOCKER_TAG:-sha-debe1c61479805e493b25b34943c21960c4b62b6}
+    image: ghcr.io/kadena-io/blockscout-frontend:${FRONTEND_DOCKER_TAG:-sha-0549c821f038fedc0d5c9301d5d750fae127b4d4}
     platform: linux/amd64
     pull_policy: always
     restart: always

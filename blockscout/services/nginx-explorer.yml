@@ -9,6 +9,11 @@ services:
     environment:
       BACK_PROXY_PASS: ${BACK_PROXY_PASS:-http://backend:4000}
       FRONT_PROXY_PASS: ${FRONT_PROXY_PASS:-http://frontend:3000}
+    volumes:
+      - "../proxy:/etc/nginx/templates"
+      - "/var/lib/acme/evm-testnet-blockscout:/etc/nginx/ssl:ro"
     ports:
       - target: 80
         published: 80
+      - target: 443
+        published: 443

@@ -84,7 +84,7 @@ describe('SimpleToken Unit Tests', async function () {
 
   describe('setCrossChainAddress', async function () {
     context('Success Test Cases', async function () {
-      it('Should set up cross-chain addresses for all deployments using runOverChains', async function () {
+      it('Should set up cross-chain addresses for all deployments on all chains', async function () {
         // Set up cross-chain addresses for every chain to every other chain
         // runOverChains handles the chain switching internally
         await chainweb.runOverChains(async (currentChainId) => {
@@ -198,8 +198,15 @@ describe('SimpleToken Unit Tests', async function () {
     beforeEach(async function () {
       await authorizeAllContracts(deployments);
 
-      sender = initialSigners.deployer;
-      receiver = initialSigners.deployer;
+      // Get sender on the "from" chain
+      const fromChainSigners = await getSigners(token0Info.chain);
+      sender = fromChainSigners.deployer;
+
+      // Need to get the receiver associated with the "to" chain. Hardhat associates a signer with a
+      // specific network
+      const toChainSigners = await getSigners(token1Info.chain);
+      receiver = toChainSigners.deployer;
+
       amount = ethers.parseEther('10');
 
       origin = await initCrossChain(
@@ -393,8 +400,15 @@ describe('SimpleToken Unit Tests', async function () {
 
     beforeEach(async function () {
       await authorizeAllContracts(deployments);
-      sender = initialSigners.deployer;
-      receiver = initialSigners.deployer;
+
+      // Get sender on the "from" chain
+      const fromChainSigners = await getSigners(token0Info.chain);
+      sender = fromChainSigners.deployer;
+
+      // Need to get the receiver associated with the "to" chain. Hardhat associates a signer with a
+      // specific network
+      const toChainSigners = await getSigners(token1Info.chain);
+      receiver = toChainSigners.deployer;
       amount = ethers.parseEther('100000');
 
       origin = await initCrossChain(
@@ -405,8 +419,6 @@ describe('SimpleToken Unit Tests', async function () {
         receiver,
         amount,
       );
-
-      // Request SPV proof for the origin
       proof = await requestSpvProof(token1Info.chain, origin);
     });
 

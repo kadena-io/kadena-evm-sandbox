@@ -2,7 +2,14 @@ const { ethers, chainweb } = require('hardhat');
 
 async function main() {
   const verificationDelay = 10000; // Delay in milliseconds before verification
+
+  // Make sure we're on the first chainweb chain
+  const chains = await chainweb.getChainIds();
+  await chainweb.switchChain(chains[0]);
   const [deployer] = await ethers.getSigners();
+  
+
+  console.log(`Deploying contracts with deployer account: ${deployer.address} on network: ${network.name}`);
 
   const deployed = await chainweb.deployContractOnChains({
     name: 'SimpleToken',

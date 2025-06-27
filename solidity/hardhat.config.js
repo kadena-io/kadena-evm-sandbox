@@ -11,8 +11,6 @@ const devnetAccounts = JSON.parse(
   readFileSync("./devnet-accounts.json", "utf-8")
 );
 
-
- console.log("DEPLOYER_PRIVATE_KEY in hardhat config:", process.env.DEPLOYER_PRIVATE_KEY);
  if (!process.env.DEPLOYER_PRIVATE_KEY) {
   throw new Error("DEPLOYER_PRIVATE_KEY is not set in .env");
 }
@@ -57,8 +55,8 @@ module.exports = {
         "https://evm-testnet.chainweb.com/chainweb/0.0/evm-testnet",
       etherscan: {
         apiKey: 'abc', // Any non-empty string works for Blockscout
-        apiURLTemplate: "http://chain-{cid}.evm-testnet-blockscout.chainweb.com/api/",
-        browserURLTemplate: "http://chain-{cid}.evm-testnet-blockscout.chainweb.com"
+        apiURLTemplate: "https://chain-{cid}.evm-testnet-blockscout.chainweb.com/api/",
+        browserURLTemplate: "https://chain-{cid}.evm-testnet-blockscout.chainweb.com"
       },
     },
   },

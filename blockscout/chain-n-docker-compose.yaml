@@ -61,7 +61,7 @@ services:
       - service-network 
       - default
     labels:
-      caddy.@match_backend: "expression path_regexp('^/(api($|/)|socket|sitemap\\.xml|auth/auth0|auth/auth0/callback|auth/logout)')"
+      caddy.@match_backend: "expression path_regexp('^/(api($|/)|socket|sitemap.xml|auth/auth0|auth/auth0/callback|auth/logout)')"
       caddy: http://chain-${CHAINWEB_CHAIN_ID}.${BASE_EXPLORER_DOMAIN}
       caddy.handle: "@match_backend"
       caddy.handle.reverse_proxy: "{{ upstreams 4000 }}"

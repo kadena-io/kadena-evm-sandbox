@@ -17,5 +17,4 @@ services:
     networks:
       - proxy-network
     labels:
-      caddy.debug: ""
-      caddy.email: "test@test.com"
+      caddy.email: ${BASE_SUPPORT_EMAIL}

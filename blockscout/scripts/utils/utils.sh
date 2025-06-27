@@ -32,7 +32,7 @@ generate_chains_meta() {
   fi
 
   for ((i = start; i <= end; i++)); do
-    url="http://chain-$i.${BASE_EXPLORER_DOMAIN}$port/" 
+    url="https://chain-$i.${BASE_EXPLORER_DOMAIN}$port/" 
     item="{\"title\":\"testnet@chain$i\",\"url\":\"$url\",\"group\":\"Mainnets\",\"icon\":\"${url}assets/configs/network_icon.svg\"}"
     json+="$item"
     if [[ $i -lt $end ]]; then

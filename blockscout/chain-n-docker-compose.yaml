@@ -62,7 +62,7 @@ services:
       - default
     labels:
       caddy.@match_backend: "expression path_regexp('^/(api($|/)|socket|sitemap.xml|auth/auth0|auth/auth0/callback|auth/logout)')"
-      caddy: http://chain-${CHAINWEB_CHAIN_ID}.${BASE_EXPLORER_DOMAIN}
+      caddy: chain-${CHAINWEB_CHAIN_ID}.${BASE_EXPLORER_DOMAIN}
       caddy.handle: "@match_backend"
       caddy.handle.reverse_proxy: "{{ upstreams 4000 }}"
 
@@ -94,8 +94,9 @@ services:
       - proxy-network
       - default   
     labels:
-      caddy: "http://chain-${CHAINWEB_CHAIN_ID}.${BASE_EXPLORER_DOMAIN}"
+      caddy: "chain-${CHAINWEB_CHAIN_ID}.${BASE_EXPLORER_DOMAIN}"
       caddy.reverse_proxy: "{{ upstreams 3000 }}"
+      caddy.tls: internal
       caddy.handle_path: "/visualizer/*"
       caddy.handle_path.0_rewrite: "* {uri}"
       caddy.handle_path.0_reverse_proxy: "visualizer:8050"
@@ -114,7 +115,7 @@ services:
       - service-network 
       - default
     labels:
-      caddy: http://chain-${CHAINWEB_CHAIN_ID}.${BASE_EXPLORER_DOMAIN}
+      caddy: chain-${CHAINWEB_CHAIN_ID}.${BASE_EXPLORER_DOMAIN}
       caddy.handle_path: "/stats/*"
       caddy.handle_path.0_rewrite: "* {uri}"
       caddy.handle_path.reverse_proxy: "{{ upstreams 8050 }}"

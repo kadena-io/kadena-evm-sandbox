@@ -12,8 +12,6 @@ services:
       # adding for debugging purposes 
       # no config needs to be provided, it will be overwritten by the labels
       - ./caddy_data:/config
-    ports:
-      - "${BASE_GATEWAY_PUBLIC_PORT:-80}:80"
     healthcheck:
       disable: true
     networks:

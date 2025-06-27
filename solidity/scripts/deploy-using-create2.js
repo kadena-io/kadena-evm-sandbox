@@ -5,7 +5,12 @@ async function main() {
     ? parseInt(process.env.VERIFICATION_DELAY)
     : 10000; // Default 10 seconds
 
+  // Make sure we're on the first chainweb chain
+  const chains = await chainweb.getChainIds();
+  await chainweb.switchChain(chains[0]);
   const [deployer] = await ethers.getSigners();
+  console.log(`Deploying contracts with deployer account: ${deployer.address} on network: ${network.name}`);
+
   const [factoryAddress] = await chainweb.create2.deployCreate2Factory();
   console.log(`Create2 factory deployed at: ${factoryAddress}`);
 

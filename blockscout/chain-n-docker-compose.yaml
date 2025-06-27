@@ -57,8 +57,14 @@ services:
       - ETHEREUM_JSONRPC_TRACE_URL=${ETHEREUM_JSONRPC_TRACE_URL}
       - DATABASE_URL=${DATABASE_URL}
     networks:
+      - proxy-network
       - service-network 
-      - default     
+      - default
+    labels:
+      caddy.@match_backend: "expression path_regexp('^/(api($|/)|socket|sitemap.xml|auth/auth0|auth/auth0/callback|auth/logout)')"
+      caddy: chain-${CHAINWEB_CHAIN_ID}.${BASE_EXPLORER_DOMAIN}
+      caddy.handle: "@match_backend"
+      caddy.handle.reverse_proxy: "{{ upstreams 4000 }}"
 
   frontend:
     depends_on:
@@ -83,9 +89,16 @@ services:
       - NEXT_PUBLIC_NETWORK_NAME=${NEXT_PUBLIC_NETWORK_NAME}
       - NEXT_PUBLIC_NETWORK_RPC_URL=${NEXT_PUBLIC_NETWORK_RPC_URL}
       - NEXT_PUBLIC_FEATURED_NETWORKS=${NEXT_PUBLIC_FEATURED_NETWORKS}
+      - HOSTNAME=0.0.0.0
     networks:
+      - proxy-network
       - default   
-
+    labels:
+      caddy: "chain-${CHAINWEB_CHAIN_ID}.${BASE_EXPLORER_DOMAIN}"
+      caddy.reverse_proxy: "{{ upstreams 3000 }}"
+      caddy.handle_path: "/visualizer/*"
+      caddy.handle_path.0_rewrite: "* {uri}"
+      caddy.handle_path.0_reverse_proxy: "visualizer:8050"
 
   stats:
     depends_on:
@@ -97,8 +110,14 @@ services:
       file: ./services/stats.yml
       service: stats
     networks:
+      - proxy-network
       - service-network 
-      - default      
+      - default
+    labels:
+      caddy: chain-${CHAINWEB_CHAIN_ID}.${BASE_EXPLORER_DOMAIN}
+      caddy.handle_path: "/stats/*"
+      caddy.handle_path.0_rewrite: "* {uri}"
+      caddy.handle_path.reverse_proxy: "{{ upstreams 8050 }}"
 
   user-ops-indexer:
     depends_on:
@@ -118,18 +137,3 @@ services:
     networks:
       - service-network  
       - default  
- 
-  
-  proxy:
-    restart: on-failure
-    depends_on:
-      - backend
-      - frontend
-      - stats
-    extends:
-      file: ./services/nginx.yml
-      service: proxy
-    networks:
-     - default    
-     - proxy-network
-

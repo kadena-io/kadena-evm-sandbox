@@ -25,14 +25,14 @@ generate_chains_meta() {
   local end=$2
   local json="["
 
-  if [[ "$BASE_GATEWAY_PUBLIC_PORT" == "80" ]]; then
+  if [[ "$BASE_GATEWAY_PUBLIC_PORT" == "80" || "$BASE_GATEWAY_PUBLIC_PORT" == "443" ]]; then
     port=""
   else
     port=":$BASE_GATEWAY_PUBLIC_PORT"
   fi
 
   for ((i = start; i <= end; i++)); do
-    url="http://chain-$i.${BASE_EXPLORER_DOMAIN}$port/" 
+    url="https://chain-$i.${BASE_EXPLORER_DOMAIN}$port/" 
     item="{\"title\":\"chain$i\",\"url\":\"$url\",\"group\":\"${BASE_CHAINWEB_NAME}\",\"icon\":\"${url}assets/configs/network_icon.svg\"}"
     json+="$item"
     if [[ $i -lt $end ]]; then

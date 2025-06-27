@@ -113,9 +113,9 @@ services:
       - default
     labels:
       caddy: http://chain-${CHAINWEB_CHAIN_ID}.${BASE_EXPLORER_DOMAIN}
-      caddy.@match_stats: "expression path_regexp('^/(api/v2/stats|api/v1/pages/main)')"
-      caddy.handle: "@match_stats"
-      caddy.handle.reverse_proxy: "{{ upstreams 8050 }}"
+      caddy.handle_path: "/stats/*"
+      caddy.handle_path.0_rewrite: "* {uri}"
+      caddy.handle_path.reverse_proxy: "{{ upstreams 8050 }}"
 
   user-ops-indexer:
     depends_on:

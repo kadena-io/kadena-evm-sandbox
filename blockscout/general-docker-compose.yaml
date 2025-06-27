@@ -44,10 +44,20 @@ services:
     networks:
       - proxy-network
     labels:
-      caddy: 'http://*.${BASE_EXPLORER_DOMAIN}'
-      caddy.@match_visualizer: "expression path_regexp('^/(visualizer|api/v1/solidity:visualize-contracts)')"
-      caddy.handle: '@match_visualizer'
-      caddy.handle.reverse_proxy: '{{ upstreams 8050 }}'
+      caddy: http://${BASE_EXPLORER_DOMAIN}
+      caddy.handle_path: "/visualizer/*"
+      caddy.handle_path.0_rewrite: "* {uri}"
+      caddy.handle_path.reverse_proxy: "{{ upstreams 8050 }}"
+      # caddy.handle_path.@allowed_origins: "header Origin *chain-*.evm.kadena.internal"
+      # caddy.handle_path.1_header: "@allowed_origins Access-Control-Allow-Origin '{http.header.Origin}'"
+      # caddy.handle_path.2_header: "@allowed_origins Access-Control-Allow-Methods 'GET, POST, OPTIONS'"
+      # caddy.handle_path.3_header: "@allowed_origins Access-Control-Allow-Headers '*'"
+      # caddy.handle_path.0_header: "@allowed_origins Access-Control-Allow-Credentials 'true'"
+      
+      # caddy_0: http://chain-21.${BASE_EXPLORER_DOMAIN}
+      # caddy_0.handle_path: "/visualizer/*"
+      # caddy_0.handle_path.0_rewrite: "* {uri}"
+      # caddy_0.handle_path.reverse_proxy: "{{ upstreams 8050 }}"
 
   sig-provider:
     extends:

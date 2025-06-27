@@ -1,6 +1,8 @@
 services:
   frontend:
     image: ghcr.io/blockscout/frontend:${FRONTEND_DOCKER_TAG:-latest}
+    extra_hosts:
+      - 'chain-${CHAINWEB_CHAIN_ID}.${BASE_EXPLORER_DOMAIN}:host-gateway'
     pull_policy: always
     restart: always
     env_file:

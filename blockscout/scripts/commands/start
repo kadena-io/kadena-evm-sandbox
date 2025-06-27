@@ -21,7 +21,7 @@ info "Blockscout started successfully."
 for ((i = 0; i < numberOfChains; i++)); do
   chainId=$((i + $chainIdOffset))
   chainWebChainId=$((i + $chainwebChainIdOffset))
-  echo "chain $chainWebChainId": "https://chain-$chainWebChainId.${BASE_EXPLORER_DOMAIN}:${BASE_GATEWAY_PUBLIC_PORT}"
+  echo "chain $chainWebChainId": "${HTTP_PROTOCOL}://chain-$chainWebChainId.${BASE_EXPLORER_DOMAIN}:${BASE_GATEWAY_PUBLIC_PORT}"
 done
 
 info "Run './bs add-domains' to add domains to /etc/hosts"

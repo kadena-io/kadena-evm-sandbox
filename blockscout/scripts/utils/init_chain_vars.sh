@@ -9,7 +9,6 @@ required_vars=(
   "BASE_CHAINWEB_CHAIN_ID_OFFSET:the chainweb-chain id of the first chain"
   "BASE_NUMBER_OF_CHAINS:number of chains"
   "BASE_EXPLORER_DOMAIN:the domain of the blockscout explorer"
-  "BASE_GATEWAY_PUBLIC_PORT:the public port of the gateway"
   "BASE_CHAINWEB_NODE_PUBLIC_URL:the public URL of the chainweb node"
   "BASE_JSONRPC_HTTP_URL:the base url of JSON-RPC of chains for HTTP requests"
   "BASE_JSONRPC_WS_URL:the base url of JSON-RPC of chains for WS requests"
@@ -32,6 +31,18 @@ numberOfChains=${BASE_NUMBER_OF_CHAINS}
 
 start=$((chainwebChainIdOffset))
 end=$((chainwebChainIdOffset + numberOfChains - 1)) # -1 so numberOfChains is accurate
+
+if [[ "${BASE_TLS_ENABLED}" == "true" ]]; then
+  export HTTP_PROTOCOL="https"
+  export WS_PROTOCOL="wss"
+  export CADDY_EXPORT_PORT="443"
+  export BASE_GATEWAY_PUBLIC_PORT="${BASE_GATEWAY_PUBLIC_HTTPS_PORT:-443}"
+else
+  export HTTP_PROTOCOL="http"
+  export WS_PROTOCOL="ws"
+  export CADDY_EXPORT_PORT="80"
+  export BASE_GATEWAY_PUBLIC_PORT="${BASE_GATEWAY_PUBLIC_HTTP_PORT:-80}"
+fi
 
 # Generate chains_meta
 chains_meta=$(generate_chains_meta "$start" "$end")

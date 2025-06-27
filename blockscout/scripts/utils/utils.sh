@@ -25,7 +25,7 @@ generate_chains_meta() {
   local end=$2
   local json="["
 
-  if [[ "$BASE_GATEWAY_PUBLIC_PORT" == "80" ]]; then
+  if [[ "$BASE_GATEWAY_PUBLIC_PORT" == "80" || "$BASE_GATEWAY_PUBLIC_PORT" == "443" ]]; then
     port=""
   else
     port=":$BASE_GATEWAY_PUBLIC_PORT"

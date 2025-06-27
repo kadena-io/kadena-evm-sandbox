@@ -19,18 +19,3 @@ services:
     labels:
       caddy.debug: ""
       caddy.email: "test@test.com"
-    #   # Main domain routing
-    #   caddy: ${BASE_EXPLORER_DOMAIN}
-    #   caddy.reverse_proxy: http://proxy:80
-      
-    #   # Stats endpoint
-    #   caddy_1: ${BASE_EXPLORER_DOMAIN}:8080
-    #   caddy_1.reverse_proxy: http://stats:8050
-      
-    #   # Visualizer endpoint
-    #   caddy_2: ${BASE_EXPLORER_DOMAIN}:8081
-    #   caddy_2.reverse_proxy: http://visualizer:8081
-      
-    #   # Automatic HTTPS configuration
-      # caddy.tls: internal
-      # caddy.auto_https: disable_redirects

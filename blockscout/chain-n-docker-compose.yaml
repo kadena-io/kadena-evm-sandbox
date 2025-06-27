@@ -96,7 +96,6 @@ services:
     labels:
       caddy: "chain-${CHAINWEB_CHAIN_ID}.${BASE_EXPLORER_DOMAIN}"
       caddy.reverse_proxy: "{{ upstreams 3000 }}"
-      caddy.tls: internal
       caddy.handle_path: "/visualizer/*"
       caddy.handle_path.0_rewrite: "* {uri}"
       caddy.handle_path.0_reverse_proxy: "visualizer:8050"

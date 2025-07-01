@@ -65,7 +65,7 @@ services:
       service: proxy
     ports:
       - '${BASE_GATEWAY_PUBLIC_HTTPS_PORT:-8443}:443'
-      - '${BASE_GATEWAY_PUBLIC_HTTP_PORT:-8080}:80'
+      - '${BASE_GATEWAY_PUBLIC_HTTP_PORT:-8000}:80'
     networks:
       - proxy-network
 

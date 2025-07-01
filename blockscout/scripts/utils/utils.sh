@@ -32,7 +32,6 @@ generate_chains_meta() {
   fi
 
   for ((i = start; i <= end; i++)); do
-
     url="${HTTP_PROTOCOL}://chain-$i.${BASE_EXPLORER_DOMAIN}$port/" 
     item="{\"title\":\"chain$i\",\"url\":\"$url\",\"group\":\"${BASE_CHAINWEB_NAME}\",\"icon\":\"${url}assets/configs/network_icon.svg\"}"
     json+="$item"

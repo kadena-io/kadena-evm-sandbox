@@ -1,0 +1,26 @@
+#!/bin/bash
+source ./scripts/utils/init_chain_vars.sh "$@"
+
+service="$1"
+
+# ✅ Check if service is allowed
+
+
+compose_action="--no-deps --pull=always"
+
+if [[ "$service" == "proxy" ]]; then
+  run "docker compose -p bs_general -f general-docker-compose.yaml up -d $compose_action $service"  
+  exit 0
+fi
+
+if [[ "$service" != "frontend" && "$service" != "backend" && "$service" != "stats" && $service != "user-ops-indexer" ]]; then
+  echo "Error: Service must be one of: frontend, backend, stats"
+  exit 1
+fi
+
+for ((i = 0; i < numberOfChains; i++)); do
+  chainId=$((i + $chainIdOffset))
+  chainWebChainId=$((i + $chainwebChainIdOffset))
+  run "CHAIN_ID=$chainId CHAINWEB_CHAIN_ID=$chainWebChainId docker compose -p bs_chain_${chainWebChainId} --env-file ./envs/chain-common.env -f chain-n-docker-compose.yaml up -d $compose_action $service"
+done
+

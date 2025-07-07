@@ -17,12 +17,13 @@ source ./scripts/utils/utils.sh
 
 blockscout-help() {
   echo -e "Commands:"
-  echo -e "  ${B}pull${R}           pull container images for all blockscout services."
-  echo -e "  ${B}start|up${R}       Start the blockscout with specified parameters. used pull images or pull if not available."
-  echo -e "  ${B}stop|down${R}      Stop the blockscout."
-  echo -e "  ${B}remove|delete${R}  Remove the blockscout data."
-  echo -e "  ${B}add-domains${R}    Add domains to the host."
-  echo -e "  ${B}static-envs${R}    create static environment variables files"
+  echo -e "  ${B}pull${R}               pull container images for all blockscout services."
+  echo -e "  ${B}start|up${R}           Start the blockscout with specified parameters. used pull images or pull if not available."
+  echo -e "  ${B}stop|down${R}          Stop the blockscout."
+  echo -e "  ${B}remove|delete${R}      Remove the blockscout data."
+  echo -e "  ${B}add-domains${R}        Add domains to the host."
+  echo -e "  ${B}static-envs${R}        create static environment variables files"
+  echo -e "  ${B}restart <service>${R}  restart the specified service. valid services are: frontend, backend, stats, user-ops-indexer, proxy"
   echo -e ""
   echo -e "Environment variables:"
   echo -e "  The script loads .env file from the current directory. You can use the .env.example.* file to create it."
@@ -70,7 +71,10 @@ case "$cmd" in
     ;;
   help|usage|h)
     blockscout-help
-    ;;  
+    ;;
+  restart)
+    $command_dir/restart "$@"
+    ;;    
   *)
     blockscout-help
     exit 1

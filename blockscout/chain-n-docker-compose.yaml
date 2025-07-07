@@ -62,7 +62,7 @@ services:
       - default
     labels:
       caddy.@match_backend: "expression path_regexp('^/(api($|/)|socket|sitemap.xml|auth/auth0|auth/auth0/callback|auth/logout)')"
-      caddy: chain-${CHAINWEB_CHAIN_ID}.${BASE_EXPLORER_DOMAIN}
+      caddy: ${HTTP_PROTOCOL}://chain-${CHAINWEB_CHAIN_ID}.${BASE_EXPLORER_DOMAIN}
       caddy.handle: "@match_backend"
       caddy.handle.reverse_proxy: "{{ upstreams 4000 }}"
 
@@ -89,12 +89,14 @@ services:
       - NEXT_PUBLIC_NETWORK_NAME=${NEXT_PUBLIC_NETWORK_NAME}
       - NEXT_PUBLIC_NETWORK_RPC_URL=${NEXT_PUBLIC_NETWORK_RPC_URL}
       - NEXT_PUBLIC_FEATURED_NETWORKS=${NEXT_PUBLIC_FEATURED_NETWORKS}
+      - NEXT_PUBLIC_API_PROTOCOL=${NEXT_PUBLIC_API_PROTOCOL}
+      - NEXT_PUBLIC_APP_PROTOCOL=${NEXT_PUBLIC_APP_PROTOCOL}
       - HOSTNAME=0.0.0.0
     networks:
       - proxy-network
       - default   
     labels:
-      caddy: "chain-${CHAINWEB_CHAIN_ID}.${BASE_EXPLORER_DOMAIN}"
+      caddy: ${HTTP_PROTOCOL}://chain-${CHAINWEB_CHAIN_ID}.${BASE_EXPLORER_DOMAIN}
       caddy.reverse_proxy: "{{ upstreams 3000 }}"
       caddy.handle_path: "/visualizer/*"
       caddy.handle_path.0_rewrite: "* {uri}"
@@ -114,7 +116,7 @@ services:
       - service-network 
       - default
     labels:
-      caddy: chain-${CHAINWEB_CHAIN_ID}.${BASE_EXPLORER_DOMAIN}
+      caddy: ${HTTP_PROTOCOL}://chain-${CHAINWEB_CHAIN_ID}.${BASE_EXPLORER_DOMAIN}
       caddy.handle_path: "/stats/*"
       caddy.handle_path.0_rewrite: "* {uri}"
       caddy.handle_path.reverse_proxy: "{{ upstreams 8050 }}"

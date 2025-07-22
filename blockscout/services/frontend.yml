@@ -1,6 +1,7 @@
 services:
   frontend:
-    image: ghcr.io/kadena-io/blockscout-frontend:${FRONTEND_DOCKER_TAG:-sha-0549c821f038fedc0d5c9301d5d750fae127b4d4}
+    image: ghcr.io/kadena-io/blockscout-frontend:main
+    # image: ghcr.io/blockscout/frontend:latest
     extra_hosts:
       - 'chain-${CHAINWEB_CHAIN_ID}.${BASE_EXPLORER_DOMAIN}:host-gateway'
     platform: linux/amd64

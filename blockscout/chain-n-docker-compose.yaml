@@ -117,7 +117,7 @@ services:
       - default
     labels:
       caddy: ${HTTP_PROTOCOL}://chain-${CHAINWEB_CHAIN_ID}.${BASE_EXPLORER_DOMAIN}
-      caddy.handle_path: "/stats/*"
+      caddy.handle_path: "/stats-service/*"
       caddy.handle_path.0_rewrite: "* {uri}"
       caddy.handle_path.reverse_proxy: "{{ upstreams 8050 }}"
 

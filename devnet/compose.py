@@ -21,7 +21,9 @@ DEFAULT_MINING_CLIENT_IMAGE = "ghcr.io/kadena-io/chainweb-mining-client:latest"
 # This does not yet include any precompiles.
 DEFAULT_GETH_IMAGE = "ethereum/client-go"
 
-# This includes 
+DEFAULT_NETHERMIND_IMAGE = "nethermind/nethermind:1.32.3"
+
+# This includes
 # - a prototypic ERC-20 x-chain SPV precompile,
 # - a performance improvement for faster payload production.
 # - untested experimental support for non-monotonic updates.
@@ -36,7 +38,7 @@ DEFAULT_RETH_IMAGE = "ghcr.io/kadena-io/kadena-reth:sha-eff370d"
 NET_ID_BASE = 1789
 
 # Default EVM implementation to use.
-EVM_IMPL="reth"
+EVM_IMPL="nethermind"
 
 # #############################################################################
 # BOILERPLATE
@@ -671,9 +673,12 @@ def evm_init_service(
         command = [ "true" ]
     elif evm_impl == "geth":
         image = f"${{GETH_IMAGE:-{DEFAULT_GETH_IMAGE}}}"
-        command = [ 
+        command = [
             '[ -d "/root/.ethereum/geth" ] || geth init /config/chain-spec.json'
         ]
+    elif evm_impl == "nethermind":
+        image = f"${{NETHDERMIND_IMAGE:-{DEFAULT_NETHERMIND_IMAGE}}}"
+        command = [ "true" ]
     else:
         raise ValueError(f"Unknown EVM implementation: {evm_impl}")
 
@@ -756,6 +761,36 @@ def evm_service(
             # persistence
             "--engine.persistence-threshold=0",
             "--engine.memory-block-buffer-target=0"
+        ]
+    elif evm_impl == "nethermind":
+        private_apis = private_apis + ",personal" # ,miner"
+        apis = default_apis + "," + private_apis if use_private_apis else default_apis
+        image = f"${{NETHERMIND_IMAGE:-{DEFAULT_NETHERMIND_IMAGE}}}"
+        nodekey_arg = "--jsonrpc-jwtsecretfile=/run/secrets/jwtsecret"
+        entrypoint = [
+            "/nethermind/nethermind",
+            "--config=none",
+            "--data-dir=/root/ethereum/.nethermind",
+            "--init-chainspecpath=/config/chain-spec.json",
+            # p2p
+            # "--network-p2phost 0.0.0.0",
+            f"--network-p2pport={30303 + cid}",
+            # discovery
+            "--init-discoveryenabled=true",
+            f"--network-discoveryport={30303 + cid}",
+            # engine
+            "--jsonrpc-enabled=true",
+            f"--jsonrpc-host=bootnode-evm-{cid}",
+            f"--jsonrpc-enginehost=bootnode-evm-{cid}",
+            "--jsonrpc-engineport=8551",
+            f"--jsonrpc-enabledmodules=[{apis}]",
+            # ws
+            "--init-websocketsenabled=true",
+            "--jsonrpc-websocketsport=8546",
+            # logging
+            # "--network-diagtracerenabled=true",
+            # f"--network-localip=127.0.0.1",
+            # f"--network-externalip=127.0.0.1"
         ]
     elif evm_impl == "geth":
         private_apis = private_apis + ",personal" # ,miner"

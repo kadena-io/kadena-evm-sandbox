@@ -150,32 +150,21 @@ services:
             bootnode-evm-init-20:
                 condition: service_completed_successfully
         entrypoint:
-        - /app/kadena-reth
-        - node
-        - --datadir=/root/ethereum
-        - --chain=/config/chain-spec.json
-        - --metrics=0.0.0.0:9001
-        - --log.file.directory=/root/logs
-        - --addr=0.0.0.0
-        - --port=30323
-        - --authrpc.jwtsecret=/run/secrets/jwtsecret
-        - --authrpc.addr=0.0.0.0
-        - --authrpc.port=8551
-        - --http
-        - --http.addr=0.0.0.0
-        - --http.port=8545
-        - --http.api=eth,net,web3,admin,debug,trace,txpool,rpc,reth,ots
-        - --ws
-        - --ws.addr=0.0.0.0
-        - --ws.port=8546
-        - --ws.api=eth,net,web3,admin,debug,trace,txpool,rpc,reth,ots
-        - --disable-nat
-        - --nat=none
-        - --disable-dns-discovery
-        - --discovery.port=30323
-        - --engine.persistence-threshold=0
-        - --engine.memory-block-buffer-target=0
-        - --p2p-secret-key=/run/secrets/p2p-secret
+        - /nethermind/nethermind
+        - --config=none
+        - --data-dir=/root/ethereum/.nethermind
+        - --init-chainspecpath=/config/chain-spec.json
+        - --network-p2pport=30323
+        - --init-discoveryenabled=true
+        - --network-discoveryport=30323
+        - --jsonrpc-enabled=true
+        - --jsonrpc-host=bootnode-evm-20
+        - --jsonrpc-enginehost=bootnode-evm-20
+        - --jsonrpc-engineport=8551
+        - --jsonrpc-enabledmodules=[eth,net,web3,admin,debug,trace,txpool,personal]
+        - --init-websocketsenabled=true
+        - --jsonrpc-websocketsport=8546
+        - --jsonrpc-jwtsecretfile=/run/secrets/jwtsecret
         expose:
         - '8545'
         - '8546'
@@ -184,7 +173,7 @@ services:
         - 30323/tcp
         - 30323/udp
         hostname: bootnode-evm-20
-        image: ${RETH_IMAGE:-ghcr.io/kadena-io/kadena-reth:sha-eff370d}
+        image: ${NETHERMIND_IMAGE:-nethermind/nethermind:1.32.3}
         networks:
             bootnode-internal: null
             p2p: null
@@ -214,32 +203,21 @@ services:
             bootnode-evm-init-21:
                 condition: service_completed_successfully
         entrypoint:
-        - /app/kadena-reth
-        - node
-        - --datadir=/root/ethereum
-        - --chain=/config/chain-spec.json
-        - --metrics=0.0.0.0:9001
-        - --log.file.directory=/root/logs
-        - --addr=0.0.0.0
-        - --port=30324
-        - --authrpc.jwtsecret=/run/secrets/jwtsecret
-        - --authrpc.addr=0.0.0.0
-        - --authrpc.port=8551
-        - --http
-        - --http.addr=0.0.0.0
-        - --http.port=8545
-        - --http.api=eth,net,web3,admin,debug,trace,txpool,rpc,reth,ots
-        - --ws
-        - --ws.addr=0.0.0.0
-        - --ws.port=8546
-        - --ws.api=eth,net,web3,admin,debug,trace,txpool,rpc,reth,ots
-        - --disable-nat
-        - --nat=none
-        - --disable-dns-discovery
-        - --discovery.port=30324
-        - --engine.persistence-threshold=0
-        - --engine.memory-block-buffer-target=0
-        - --p2p-secret-key=/run/secrets/p2p-secret
+        - /nethermind/nethermind
+        - --config=none
+        - --data-dir=/root/ethereum/.nethermind
+        - --init-chainspecpath=/config/chain-spec.json
+        - --network-p2pport=30324
+        - --init-discoveryenabled=true
+        - --network-discoveryport=30324
+        - --jsonrpc-enabled=true
+        - --jsonrpc-host=bootnode-evm-21
+        - --jsonrpc-enginehost=bootnode-evm-21
+        - --jsonrpc-engineport=8551
+        - --jsonrpc-enabledmodules=[eth,net,web3,admin,debug,trace,txpool,personal]
+        - --init-websocketsenabled=true
+        - --jsonrpc-websocketsport=8546
+        - --jsonrpc-jwtsecretfile=/run/secrets/jwtsecret
         expose:
         - '8545'
         - '8546'
@@ -248,7 +226,7 @@ services:
         - 30324/tcp
         - 30324/udp
         hostname: bootnode-evm-21
-        image: ${RETH_IMAGE:-ghcr.io/kadena-io/kadena-reth:sha-eff370d}
+        image: ${NETHERMIND_IMAGE:-nethermind/nethermind:1.32.3}
         networks:
             bootnode-internal: null
             p2p: null
@@ -278,32 +256,21 @@ services:
             bootnode-evm-init-22:
                 condition: service_completed_successfully
         entrypoint:
-        - /app/kadena-reth
-        - node
-        - --datadir=/root/ethereum
-        - --chain=/config/chain-spec.json
-        - --metrics=0.0.0.0:9001
-        - --log.file.directory=/root/logs
-        - --addr=0.0.0.0
-        - --port=30325
-        - --authrpc.jwtsecret=/run/secrets/jwtsecret
-        - --authrpc.addr=0.0.0.0
-        - --authrpc.port=8551
-        - --http
-        - --http.addr=0.0.0.0
-        - --http.port=8545
-        - --http.api=eth,net,web3,admin,debug,trace,txpool,rpc,reth,ots
-        - --ws
-        - --ws.addr=0.0.0.0
-        - --ws.port=8546
-        - --ws.api=eth,net,web3,admin,debug,trace,txpool,rpc,reth,ots
-        - --disable-nat
-        - --nat=none
-        - --disable-dns-discovery
-        - --discovery.port=30325
-        - --engine.persistence-threshold=0
-        - --engine.memory-block-buffer-target=0
-        - --p2p-secret-key=/run/secrets/p2p-secret
+        - /nethermind/nethermind
+        - --config=none
+        - --data-dir=/root/ethereum/.nethermind
+        - --init-chainspecpath=/config/chain-spec.json
+        - --network-p2pport=30325
+        - --init-discoveryenabled=true
+        - --network-discoveryport=30325
+        - --jsonrpc-enabled=true
+        - --jsonrpc-host=bootnode-evm-22
+        - --jsonrpc-enginehost=bootnode-evm-22
+        - --jsonrpc-engineport=8551
+        - --jsonrpc-enabledmodules=[eth,net,web3,admin,debug,trace,txpool,personal]
+        - --init-websocketsenabled=true
+        - --jsonrpc-websocketsport=8546
+        - --jsonrpc-jwtsecretfile=/run/secrets/jwtsecret
         expose:
         - '8545'
         - '8546'
@@ -312,7 +279,7 @@ services:
         - 30325/tcp
         - 30325/udp
         hostname: bootnode-evm-22
-        image: ${RETH_IMAGE:-ghcr.io/kadena-io/kadena-reth:sha-eff370d}
+        image: ${NETHERMIND_IMAGE:-nethermind/nethermind:1.32.3}
         networks:
             bootnode-internal: null
             p2p: null
@@ -342,32 +309,21 @@ services:
             bootnode-evm-init-23:
                 condition: service_completed_successfully
         entrypoint:
-        - /app/kadena-reth
-        - node
-        - --datadir=/root/ethereum
-        - --chain=/config/chain-spec.json
-        - --metrics=0.0.0.0:9001
-        - --log.file.directory=/root/logs
-        - --addr=0.0.0.0
-        - --port=30326
-        - --authrpc.jwtsecret=/run/secrets/jwtsecret
-        - --authrpc.addr=0.0.0.0
-        - --authrpc.port=8551
-        - --http
-        - --http.addr=0.0.0.0
-        - --http.port=8545
-        - --http.api=eth,net,web3,admin,debug,trace,txpool,rpc,reth,ots
-        - --ws
-        - --ws.addr=0.0.0.0
-        - --ws.port=8546
-        - --ws.api=eth,net,web3,admin,debug,trace,txpool,rpc,reth,ots
-        - --disable-nat
-        - --nat=none
-        - --disable-dns-discovery
-        - --discovery.port=30326
-        - --engine.persistence-threshold=0
-        - --engine.memory-block-buffer-target=0
-        - --p2p-secret-key=/run/secrets/p2p-secret
+        - /nethermind/nethermind
+        - --config=none
+        - --data-dir=/root/ethereum/.nethermind
+        - --init-chainspecpath=/config/chain-spec.json
+        - --network-p2pport=30326
+        - --init-discoveryenabled=true
+        - --network-discoveryport=30326
+        - --jsonrpc-enabled=true
+        - --jsonrpc-host=bootnode-evm-23
+        - --jsonrpc-enginehost=bootnode-evm-23
+        - --jsonrpc-engineport=8551
+        - --jsonrpc-enabledmodules=[eth,net,web3,admin,debug,trace,txpool,personal]
+        - --init-websocketsenabled=true
+        - --jsonrpc-websocketsport=8546
+        - --jsonrpc-jwtsecretfile=/run/secrets/jwtsecret
         expose:
         - '8545'
         - '8546'
@@ -376,7 +332,7 @@ services:
         - 30326/tcp
         - 30326/udp
         hostname: bootnode-evm-23
-        image: ${RETH_IMAGE:-ghcr.io/kadena-io/kadena-reth:sha-eff370d}
+        image: ${NETHERMIND_IMAGE:-nethermind/nethermind:1.32.3}
         networks:
             bootnode-internal: null
             p2p: null
@@ -406,32 +362,21 @@ services:
             bootnode-evm-init-24:
                 condition: service_completed_successfully
         entrypoint:
-        - /app/kadena-reth
-        - node
-        - --datadir=/root/ethereum
-        - --chain=/config/chain-spec.json
-        - --metrics=0.0.0.0:9001
-        - --log.file.directory=/root/logs
-        - --addr=0.0.0.0
-        - --port=30327
-        - --authrpc.jwtsecret=/run/secrets/jwtsecret
-        - --authrpc.addr=0.0.0.0
-        - --authrpc.port=8551
-        - --http
-        - --http.addr=0.0.0.0
-        - --http.port=8545
-        - --http.api=eth,net,web3,admin,debug,trace,txpool,rpc,reth,ots
-        - --ws
-        - --ws.addr=0.0.0.0
-        - --ws.port=8546
-        - --ws.api=eth,net,web3,admin,debug,trace,txpool,rpc,reth,ots
-        - --disable-nat
-        - --nat=none
-        - --disable-dns-discovery
-        - --discovery.port=30327
-        - --engine.persistence-threshold=0
-        - --engine.memory-block-buffer-target=0
-        - --p2p-secret-key=/run/secrets/p2p-secret
+        - /nethermind/nethermind
+        - --config=none
+        - --data-dir=/root/ethereum/.nethermind
+        - --init-chainspecpath=/config/chain-spec.json
+        - --network-p2pport=30327
+        - --init-discoveryenabled=true
+        - --network-discoveryport=30327
+        - --jsonrpc-enabled=true
+        - --jsonrpc-host=bootnode-evm-24
+        - --jsonrpc-enginehost=bootnode-evm-24
+        - --jsonrpc-engineport=8551
+        - --jsonrpc-enabledmodules=[eth,net,web3,admin,debug,trace,txpool,personal]
+        - --init-websocketsenabled=true
+        - --jsonrpc-websocketsport=8546
+        - --jsonrpc-jwtsecretfile=/run/secrets/jwtsecret
         expose:
         - '8545'
         - '8546'
@@ -440,7 +385,7 @@ services:
         - 30327/tcp
         - 30327/udp
         hostname: bootnode-evm-24
-        image: ${RETH_IMAGE:-ghcr.io/kadena-io/kadena-reth:sha-eff370d}
+        image: ${NETHERMIND_IMAGE:-nethermind/nethermind:1.32.3}
         networks:
             bootnode-internal: null
             p2p: null
@@ -472,7 +417,7 @@ services:
         - /bin/sh
         - -c
         hostname: bootnode-evm-init-20
-        image: ${RETH_IMAGE:-ghcr.io/kadena-io/kadena-reth:sha-eff370d}
+        image: ${NETHDERMIND_IMAGE:-nethermind/nethermind:1.32.3}
         networks:
             bootnode-internal: null
         restart: 'no'
@@ -495,7 +440,7 @@ services:
         - /bin/sh
         - -c
         hostname: bootnode-evm-init-21
-        image: ${RETH_IMAGE:-ghcr.io/kadena-io/kadena-reth:sha-eff370d}
+        image: ${NETHDERMIND_IMAGE:-nethermind/nethermind:1.32.3}
         networks:
             bootnode-internal: null
         restart: 'no'
@@ -518,7 +463,7 @@ services:
         - /bin/sh
         - -c
         hostname: bootnode-evm-init-22
-        image: ${RETH_IMAGE:-ghcr.io/kadena-io/kadena-reth:sha-eff370d}
+        image: ${NETHDERMIND_IMAGE:-nethermind/nethermind:1.32.3}
         networks:
             bootnode-internal: null
         restart: 'no'
@@ -541,7 +486,7 @@ services:
         - /bin/sh
         - -c
         hostname: bootnode-evm-init-23
-        image: ${RETH_IMAGE:-ghcr.io/kadena-io/kadena-reth:sha-eff370d}
+        image: ${NETHDERMIND_IMAGE:-nethermind/nethermind:1.32.3}
         networks:
             bootnode-internal: null
         restart: 'no'
@@ -564,7 +509,7 @@ services:
         - /bin/sh
         - -c
         hostname: bootnode-evm-init-24
-        image: ${RETH_IMAGE:-ghcr.io/kadena-io/kadena-reth:sha-eff370d}
+        image: ${NETHDERMIND_IMAGE:-nethermind/nethermind:1.32.3}
         networks:
             bootnode-internal: null
         restart: 'no'

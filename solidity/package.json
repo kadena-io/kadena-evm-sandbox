@@ -3,7 +3,7 @@
     "scripts": {
         "build": "npx hardhat compile",
         "test": "npx hardhat test",
-        "deploy:hardhat": "npx ardhat compile && npx hardhat run scripts/deploy.js",
+        "deploy:hardhat": "npx hardhat compile && npx hardhat run scripts/deploy.js",
         "deploy-create2:hardhat": "npx hardhat compile && npx hardhat run scripts/deploy-using-create2.js",
         "deploy": "npx hardhat compile && npx hardhat run scripts/deploy.js --chainweb",
         "deploy-create2": "npx hardhat compile && npx hardhat run scripts/deploy-using-create2.js --chainweb"

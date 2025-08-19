@@ -742,6 +742,7 @@ def evm_service(
             "--http",
             "--http.addr=0.0.0.0",
             "--http.port=8545",
+            "--rpc.eth-proof-window=1024",
             f"--http.api={apis}",
             # websocket
             "--ws",

@@ -41,7 +41,7 @@ describe('e2e: start network, stop node, restart node', () => {
     }
   });
 
-  test(`e2e: generate ${DOCKER_COMPOSE_FILE}`, async () => {
+  it(`e2e: generate ${DOCKER_COMPOSE_FILE}`, async () => {
     await generateDockerComposeAndStartNetwork();
 
     await waitFor(
@@ -67,9 +67,7 @@ describe('e2e: start network, stop node, restart node', () => {
     if (!evm20) {
       throw new Error('evm-20 not found in devnet status');
     }
-    const lowestHeight = devnetStatus.chains.sort(
-      (a, b) => a.height - b.height
-    )[0];
+    const lowestHeight = devnetStatus.chains.sort((a, b) => a.height - b.height)[0];
 
     console.log(`expecting lowest height to be evm-20: ${evm20.height}`);
     expect(lowestHeight).toEqual(evm20);
@@ -85,9 +83,7 @@ describe('e2e: start network, stop node, restart node', () => {
       );
     } catch (e) {
       console.log('cut-height not increasing');
-      const newEvm20 = (await getDevnetStatus()).chains.find(
-        (chain) => chain.chainId === 20
-      )!;
+      const newEvm20 = (await getDevnetStatus()).chains.find((chain) => chain.chainId === 20)!;
       if (newEvm20.height === evm20.height) {
         expect(
           newEvm20.height,

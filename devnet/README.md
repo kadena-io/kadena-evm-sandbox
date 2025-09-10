@@ -1,8 +1,25 @@
 # Devnet EVM
 
+## INIT
+
+Make sure that the following is installed, before continueing.
+
+```sh
+# The Girhub CLI
+brew install gh
+
+# This tool is required to locate and configure dependencies during the build process
+brew install pkg-config
+
+# Fast Python package and project manager
+curl -LsSf https://astral.sh/uv/install.sh | sh
+
+uv add secp256k1
+```
+
 ## Github Container Registry
 
-Create a `GITHUB_TOKEN` env var with token with `packages:read` permission to
+Create a `GITHUB_TOKEN` (Github > Profile > Settings > Developer Settings) env var with token with `packages:read` permission to
 access the docker images. Then run:
 
 ```sh

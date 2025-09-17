@@ -33,7 +33,7 @@ describe(`e2e: verify fast block production for reth`, () => {
     await generateDockerComposeAndStartNetwork();
 
     console.log('waiting for cut-height to reach 98*4...');
-    await waitForMinCutHeight(98 * 4, { timeoutSeconds: 150});
+    await waitForMinCutHeight(98 * 4, { timeoutSeconds: 150 });
 
     const devnetStatus = await getDevnetStatus();
     expect(devnetStatus.cutHeight).toBeGreaterThan(98 * 4);

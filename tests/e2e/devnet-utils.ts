@@ -1,9 +1,12 @@
 import { $, fs, path } from 'zx';
 import { waitSeconds } from './utils';
+import Docker from 'dockerode';
+
+const docker = new Docker({ socketPath: '/var/run/docker.sock' });
 
 export const CONFIG = {
   CLEAN_BEFORE: true,
-  CLEAN_AFTER: false,
+  CLEAN_AFTER: true,
   VERBOSE: false,
 };
 
@@ -46,14 +49,14 @@ export async function startNetwork() {
   await $devnet`docker compose -f ${DOCKER_COMPOSE_FILE} up -d`;
 }
 
-interface DevnetChainStatus {
+export interface DevnetChainStatus {
   chainId: number;
   height: number;
   hash: string;
   type: string;
 }
 
-interface DevnetStatus {
+export interface DevnetStatus {
   chains: DevnetChainStatus[];
   cutHeight: number;
 }
@@ -122,3 +125,29 @@ export async function waitForMinCutHeight(
     return currentHeight >= cutHeight;
   }, options);
 }
+
+export const stopContainer = async (containerIdOrName: string) => {
+  try {
+    // Get the container by ID or name
+    const container = docker.getContainer(containerIdOrName);
+
+    // Stop the container
+    await container.stop();
+    console.log(`Container ${containerIdOrName} stopped successfully.`);
+  } catch (error: any) {
+    console.error('Error stopping container:', error.message);
+  }
+};
+
+export const restartContainer = async (containerIdOrName: string) => {
+  try {
+    // Get the container by ID or name
+    const container = docker.getContainer(containerIdOrName);
+
+    // Stop the container
+    await container.restart();
+    console.log(`Container ${containerIdOrName} restarted successfully.`);
+  } catch (error: any) {
+    console.error('Error restarting container:', error.message);
+  }
+};

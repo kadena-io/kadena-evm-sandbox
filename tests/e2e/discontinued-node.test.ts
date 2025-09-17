@@ -1,4 +1,4 @@
-import { describe, test, expect, afterAll, beforeAll, it } from 'bun:test';
+import { describe, test, expect, afterAll, beforeAll } from 'bun:test';
 import {
   $devnet,
   CONFIG,
@@ -18,7 +18,7 @@ $.verbose = CONFIG.VERBOSE;
 const log = createLogger({ context: 'discontinued-node.test.ts' });
 
 describe(`e2e: verify ${DOCKER_COMPOSE_FILE} generation`, () => {
-  it(`e2e: generate ${DOCKER_COMPOSE_FILE}`, async () => {
+  test(`e2e: generate ${DOCKER_COMPOSE_FILE}`, async () => {
     await createDockerComposeFile();
     const fileExists = fs.existsSync(DOCKER_COMPOSE_FILE);
     expect(fileExists).toBe(true);
@@ -41,7 +41,7 @@ describe('e2e: start network, stop node, restart node', () => {
     }
   });
 
-  it(`e2e: generate ${DOCKER_COMPOSE_FILE}`, async () => {
+  test(`e2e: generate ${DOCKER_COMPOSE_FILE}`, async () => {
     await generateDockerComposeAndStartNetwork();
 
     await waitFor(

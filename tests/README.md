@@ -24,6 +24,6 @@ bun run test
 
 ### Timeout 30000
 
-We run the tests with `--timeout 300000` (5 minutes) to give the tests enough
+We run the tests with `--timeout 30000` (5 minutes) to give the tests enough
 time to run. Traditionally the tests are unit-tests, but in this case we are
 using it as integration tests which take longer to run.

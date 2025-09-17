@@ -39,12 +39,11 @@ describe.only(`e2e: sync nodes`, () => {
     console.log('stopped bootnode-evm-21');
 
     // wait for a 2 height (just to be sure that  all are upadted)
-    await waitForMinCutHeight(currentHeight + 98 * 1, { timeoutSeconds: 100 });
+    await waitForMinCutHeight(currentHeight + 98 * 2, { timeoutSeconds: 100 });
     const newDevnetStatus = await getDevnetStatus();
     const newChain21 = getChainStatus(21, newDevnetStatus);
     const newCurrentHeight = newDevnetStatus.cutHeight;
 
-    console.log(`evm-21 height: ${newChain21}`);
     expect(newChain21.height).toBe(chain21.height);
 
     // wait for a 2 height (just to be sure that  all are upadted)
@@ -53,7 +52,6 @@ describe.only(`e2e: sync nodes`, () => {
     await waitForMinCutHeight(newCurrentHeight + 98 * 3, { timeoutSeconds: 100 });
     const newDevnetStatus2 = await getDevnetStatus();
     const newChain21_2 = getChainStatus(21, newDevnetStatus2);
-    console.log('restarted', newChain21_2);
 
     console.log(`evm-21 height: ${newChain21_2.height}`);
     expect(newChain21_2.height).toBeGreaterThan(newChain21.height);

@@ -15,7 +15,7 @@ const getChainStatus = (chainId: number, status: DevnetStatus): DevnetChainStatu
   return status.chains.find((c) => c.chainId === chainId)!;
 };
 
-describe.only(`e2e: sync nodes`, () => {
+describe(`e2e: sync nodes`, () => {
   beforeAll(() => {
     if (CONFIG.CLEAN_BEFORE) {
       return stopAndRemoveNetwork();

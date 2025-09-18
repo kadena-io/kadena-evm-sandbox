@@ -1,4 +1,4 @@
-import { describe, test, expect, afterAll, beforeAll, it } from 'bun:test';
+import { describe, test, expect, afterAll, beforeAll } from 'bun:test';
 import {
   $devnet,
   CONFIG,
@@ -18,7 +18,7 @@ $.verbose = CONFIG.VERBOSE;
 const log = createLogger({ context: 'discontinued-node.test.ts' });
 
 describe(`e2e: verify ${DOCKER_COMPOSE_FILE} generation`, () => {
-  it(`e2e: generate ${DOCKER_COMPOSE_FILE}`, async () => {
+  test(`e2e: generate ${DOCKER_COMPOSE_FILE}`, async () => {
     await createDockerComposeFile();
     const fileExists = fs.existsSync(DOCKER_COMPOSE_FILE);
     expect(fileExists).toBe(true);
@@ -67,9 +67,7 @@ describe('e2e: start network, stop node, restart node', () => {
     if (!evm20) {
       throw new Error('evm-20 not found in devnet status');
     }
-    const lowestHeight = devnetStatus.chains.sort(
-      (a, b) => a.height - b.height
-    )[0];
+    const lowestHeight = devnetStatus.chains.sort((a, b) => a.height - b.height)[0];
 
     console.log(`expecting lowest height to be evm-20: ${evm20.height}`);
     expect(lowestHeight).toEqual(evm20);
@@ -85,9 +83,7 @@ describe('e2e: start network, stop node, restart node', () => {
       );
     } catch (e) {
       console.log('cut-height not increasing');
-      const newEvm20 = (await getDevnetStatus()).chains.find(
-        (chain) => chain.chainId === 20
-      )!;
+      const newEvm20 = (await getDevnetStatus()).chains.find((chain) => chain.chainId === 20)!;
       if (newEvm20.height === evm20.height) {
         expect(
           newEvm20.height,

@@ -116,6 +116,7 @@ function devnet-help () {
     echo -e "  ${B}devnet chain-config${R}    show chainweb chain configuration"
     echo -e "  ${B}devnet curl${R}            run a curl command from within the docker network"
     echo -e "  ${B}devnet reth-db${R}         run a reth CLI database debugging command (first argument is the chain, i.e. 0 or 1)"
+    echo -e "  ${B}devnet create2-factory${R} install a create2-factory contract on all chains"
 }
 
 function usage() {
@@ -280,6 +281,20 @@ function devnet () {
             (
                 cd "$NETWORK_DIR" &&
                 docker compose exec "chainweb-evm-chain$CHAIN" kadena-reth db --datadir="/root/.local/share/reth/$((1789 + $CHAIN))/" "$@"
+            )
+            ;;
+        create2-factory)
+            shift
+            (
+                cd "$NETWORK_DIR" &&
+                for i in 20 21 22 23 24 ; do
+                    (
+                        RPC_URL=http://localhost:1848/chainweb/0.0/evm-development/chain/${i}/evm/rpc
+                        cast send --rpc-url $RPC_URL --value $((100000 * 100 * 1000000000)) 0x3fab184622dc19b6109349b94811493bf2a45362 --private-key 0xad60b8572e3d37cf8305a164f035d90982e554b36eb0dc7ed54839a60107aa0a --legacy &&
+                        cast publish --rpc-url $RPC_URL 0xf8a58085174876e800830186a08080b853604580600e600039806000f350fe7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffe03601600081602082378035828234f58015156039578182fd5b8082525050506014600cf31ba02222222222222222222222222222222222222222222222222222222222222222a02222222222222222222222222222222222222222222222222222222222222222
+                    ) &
+                done
+                wait
             )
             ;;
         "")

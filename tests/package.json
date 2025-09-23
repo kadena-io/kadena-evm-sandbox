@@ -3,7 +3,7 @@
   "private": true,
   "scripts": {
     "test": "bun test ./src",
-    "e2e": "bun test ./e2e --timeout 3000000",
+    "e2e": "bun test ./e2e/run-multinode-with-miners.test.ts --timeout 3000000",
     "test-tx": "hardhat run ./scripts/send-basic-tx.mjs"
   },
   "devDependencies": {

@@ -2,7 +2,7 @@ import { $, fs, path } from 'zx';
 import { waitSeconds } from './utils';
 import Docker from 'dockerode';
 
-const docker = new Docker({ socketPath: '/var/run/docker.sock' });
+export const docker = new Docker({ socketPath: '/var/run/docker.sock' });
 
 export const CONFIG = {
   CLEAN_BEFORE: true,
@@ -10,43 +10,48 @@ export const CONFIG = {
   VERBOSE: false,
 };
 
-export const DOCKER_COMPOSE_FILE = '../devnet/docker-compose.yaml';
-
 export const $devnet = $({ cwd: path.join(__dirname, '../../devnet') });
 export const $root = $({ cwd: path.join(__dirname, '../../') });
 
 $.verbose = CONFIG.VERBOSE;
 
-export async function stopAndRemoveNetwork() {
+const createDockerFileName = (project?: ProjectType) => {
+  return `../devnet/docker-compose.yaml`;
+  //return `../devnet/${project}-docker-compose.yaml`;
+};
+
+export async function stopAndRemoveNetwork(project: ProjectType) {
   console.log('stopping network...');
   try {
-    await $devnet`docker compose -f ${DOCKER_COMPOSE_FILE} down -v`;
+    await $devnet`docker compose -f ${createDockerFileName(project)} down -v`;
     console.log('network stopped');
   } catch (e) {
     console.log('error stopping network:', e);
   }
-  console.log(`removing ${DOCKER_COMPOSE_FILE}`);
+  console.log(`removing ${createDockerFileName(project)}`);
   try {
-    fs.rmSync(DOCKER_COMPOSE_FILE);
-    console.log(`${DOCKER_COMPOSE_FILE} removed`);
+    fs.rmSync(createDockerFileName(project));
+    console.log(`${createDockerFileName(project)} removed`);
   } catch (e) {
-    console.log(`error removing ${DOCKER_COMPOSE_FILE}:`, e);
+    console.log(`error removing ${createDockerFileName(project)}:`, e);
   }
 }
 
-export async function generateDockerComposeAndStartNetwork() {
-  await createDockerComposeFile();
-  await startNetwork();
+export type ProjectType = 'minimal' | 'kadena-dev' | 'kadena-dev-singleton-evm' | 'appdev';
+
+export async function generateDockerComposeAndStartNetwork(project: ProjectType) {
+  await createDockerComposeFile(project);
+  await startNetwork(project);
 }
 
-export async function createDockerComposeFile() {
-  console.log(`Generating ${DOCKER_COMPOSE_FILE}...`);
-  await $devnet`uv run python ./compose.py > ${DOCKER_COMPOSE_FILE}`;
+export async function createDockerComposeFile(project: ProjectType) {
+  console.log(`Generating ${createDockerFileName(project)}...`);
+  await $devnet`uv run python ./compose.py > ${createDockerFileName(project)} --project ${project}`;
 }
 
-export async function startNetwork() {
+export async function startNetwork(project: ProjectType) {
   console.log('starting network...');
-  await $devnet`docker compose -f ${DOCKER_COMPOSE_FILE} up -d`;
+  await $devnet`docker compose -f ${createDockerFileName(project)} up -d`;
 }
 
 export interface DevnetChainStatus {
@@ -88,8 +93,8 @@ export function parseDevnetStatusOutput(output: string): DevnetStatus {
   return { chains, cutHeight };
 }
 
-export async function getDevnetStatus() {
-  const devnetStatusOut = (await $root`./network devnet status`).stdall;
+export async function getDevnetStatus(nodeName?: string) {
+  const devnetStatusOut = (await $root`./network devnet status ${nodeName || ''}`).stdall;
 
   return parseDevnetStatusOutput(devnetStatusOut);
 }
@@ -125,29 +130,3 @@ export async function waitForMinCutHeight(
     return currentHeight >= cutHeight;
   }, options);
 }
-
-export const stopContainer = async (containerIdOrName: string) => {
-  try {
-    // Get the container by ID or name
-    const container = docker.getContainer(containerIdOrName);
-
-    // Stop the container
-    await container.stop();
-    console.log(`Container ${containerIdOrName} stopped successfully.`);
-  } catch (error: any) {
-    console.error('Error stopping container:', error.message);
-  }
-};
-
-export const restartContainer = async (containerIdOrName: string) => {
-  try {
-    // Get the container by ID or name
-    const container = docker.getContainer(containerIdOrName);
-
-    // Stop the container
-    await container.restart();
-    console.log(`Container ${containerIdOrName} restarted successfully.`);
-  } catch (error: any) {
-    console.error('Error restarting container:', error.message);
-  }
-};

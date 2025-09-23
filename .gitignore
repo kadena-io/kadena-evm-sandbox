@@ -6,3 +6,5 @@ solidity/artifacts
 solidity/.env
 solidity/.env.sepolia
 solidity/.env.testnet
+
+devnet/docker-compose.yaml

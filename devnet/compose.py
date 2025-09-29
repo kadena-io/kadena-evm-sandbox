@@ -175,8 +175,10 @@ def payload_provider_config(
     mining_node: bool,
     node_name: str,
     evm_chains: list[int],
-    pact_chains: list[int]
+    pact_chains: list[int],
+    minerAddress: str | None = None,
 ) -> None:
+    innerEvmMinerAddress = minerAddress or evmMinerAddress
     config = {
         "chainweb": {
             "payloadProviders": {
@@ -188,7 +190,7 @@ def payload_provider_config(
                     }
                     |
                     ({
-                    "minerAddress": f"{evmMinerAddress}",
+                    "minerAddress": f"{innerEvmMinerAddress}",
                     }
                     if mining_node else {})
                 for cid in evm_chains
@@ -207,7 +209,7 @@ def payload_provider_config(
             }
             | {
                 "default": {
-                    "redeemAccount": "0xd42d71cdc2A0a78fE7fBE7236c19925f62C442bA",
+                    "redeemAccount": f"{innerEvmMinerAddress}",
                     "redeemChain": 0,
                 },
             }
@@ -1043,9 +1045,10 @@ def chainweb_node(
     has_frontend: bool = False,
     exposed: bool = False,
     evm_impl: str = "reth",
+    minerAddress: str | None = None,
 ) -> Spec:
     jwtsecret_config(project_name, node_name)
-    payload_provider_config(project_name, mining_mode is not None, node_name, evm_cids, pact_cids)
+    payload_provider_config(project_name, mining_mode is not None, node_name, evm_cids, pact_cids, minerAddress)
     cdir = config_dir(project_name, node_name)
 
 
@@ -1310,17 +1313,18 @@ def kadena_dev_project(update_secrets: bool = False) -> Spec:
                 has_frontend=False,
                 evm_impl=evm_impl,
             ),
-            chainweb_node(
-                "kadena-dev",
-                "miner-1",
-                evm_cids,
-                pact_cids,
-                is_bootnode=False,
-                mining_mode="simulation",
-                exposed=False,
-                has_frontend=False,
-                evm_impl=evm_impl,
-            ),
+            # chainweb_node(
+            #     "kadena-dev",
+            #     "miner-1",
+            #     evm_cids,
+            #     pact_cids,
+            #     is_bootnode=False,
+            #     mining_mode="simulation",
+            #     exposed=False,
+            #     has_frontend=False,
+            #     evm_impl=evm_impl,
+            #     minerAddress="0xd42d71cdc2A0a78fE7fBE7236c19925f62C442bA"
+            # ),
             chainweb_node(
                 "kadena-dev",
                 "miner-2",
@@ -1331,6 +1335,7 @@ def kadena_dev_project(update_secrets: bool = False) -> Spec:
                 exposed=False,
                 has_frontend=False,
                 evm_impl=evm_impl,
+                minerAddress="0x38a6BD13CC381c68751BE2cef97BD79EBcb2Bb31"
             ),
             chainweb_node(
                 "kadena-dev",

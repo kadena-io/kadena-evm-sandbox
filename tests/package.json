@@ -3,11 +3,12 @@
   "private": true,
   "scripts": {
     "test": "bun test ./src",
-    "e2e": "bun test ./e2e/run-multinode-with-miners.test.ts --timeout 3000000",
+    "e2e": "bun test ./e2e/verify-miner-rewards.test.ts --timeout 300000",
     "test-tx": "hardhat run ./scripts/send-basic-tx.mjs"
   },
   "devDependencies": {
-    "@types/bun": "latest"
+    "@types/bun": "latest",
+    "@types/dockerode": "^3.3.44"
   },
   "peerDependencies": {
     "typescript": "^5"
@@ -18,7 +19,9 @@
     "@kadena/hardhat-kadena-create2": "^1.0.2",
     "@nomicfoundation/hardhat-toolbox": "^5.0.0",
     "@nomicfoundation/hardhat-verify": "^2.0.14",
+    "dockerode": "^4.0.8",
     "hardhat": "2.24.1",
+    "viem": "^2.37.8",
     "zx": "^8.5.4"
   }
 }

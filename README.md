@@ -1,6 +1,6 @@
 ---
 title: Get started with Chainweb EVM
-description: "Deploy a private Chainweb EVM node to set up a local development network for testing."
+description: 'Deploy a private Chainweb EVM node to set up a local development network for testing.'
 id: evm-devnet
 sidebar_position: 2
 tags: [pact, chainweb, network, node operator]
@@ -11,17 +11,17 @@ tags: [pact, chainweb, network, node operator]
 The Kadena network relies on nodes that run the Chainweb consensus protocol.
 When Ethereum transitioned from a Proof-of-Work consensus model to a Proof-of-Stake consensus model, it effectively split the blockchain into separate consensus and execution layers.
 This change to the architecture enabled the Ethereum Virtual Machine (EVM) to provide an execution environment that is agnostic about the underlying consensus.
-Because the execution layer operates independently, Chainweb nodes can provide the same EVM execution environment running in parallel with Pact while maintaining the Chainweb Proof-of-Work consensus, security, and decentralization over a multi-chain network. 
+Because the execution layer operates independently, Chainweb nodes can provide the same EVM execution environment running in parallel with Pact while maintaining the Chainweb Proof-of-Work consensus, security, and decentralization over a multi-chain network.
 
 ## How it works
 
-The Chainweb consensus protocol enables multiple independent chains to share a common view of state beyond a certain block depth. 
-This common view of state enables any chain in the network to verify whether historical events beyond the required block depth occurred on any other chain. 
-For example, if a transaction occurs on chain 3, chain 3 can produce a [simple payment verification (SPV) proof](https://wiki.bitcoinsv.io/index.php/Simplified_Payment_Verification) that chain 6 can verify by checking the shared history. 
+The Chainweb consensus protocol enables multiple independent chains to share a common view of state beyond a certain block depth.
+This common view of state enables any chain in the network to verify whether historical events beyond the required block depth occurred on any other chain.
+For example, if a transaction occurs on chain 3, chain 3 can produce a [simple payment verification (SPV) proof](https://wiki.bitcoinsv.io/index.php/Simplified_Payment_Verification) that chain 6 can verify by checking the shared history.
 The only requirement for verifying the transaction is that the proof must be conveyed from the original chain, in this example, chain 3—to the target chain, in this example, chain 6.
 
 With this approach, security relies strictly on the shared consensus across the chains in the network.
-There are no relayers, oracles, validators, archives, or third-party coordinators. 
+There are no relayers, oracles, validators, archives, or third-party coordinators.
 
 The chains in the Kadena Chainweb EVM network run in parallel, but independently, allowing for concurrent transaction processing without the risk of collisions or delays.
 Because Chainweb provides a single common view of state, global security, and concurrent payload processing, Kadena Chainweb EVM enables cross-chain transactions to be executed more efficiently and at a lower cost than traditional bridging techniques.
@@ -30,17 +30,17 @@ At a high level, Kadena Chainweb EVM supports cross-chain activity in three main
 
 - An event occurs on a source chain.
 
-  For a cross-chain transfer, a user *initiates* a transaction to transfer tokens from a source chain using a smart contract.
+  For a cross-chain transfer, a user _initiates_ a transaction to transfer tokens from a source chain using a smart contract.
   The smart contract emits a well-defined cross-chain event.
 
 - An off-chain endpoint generates proof of a specific event.
-  
-  For a cross-chain transfer, a user *queries* an endpoint that generates a simple payment verification proof or another type of proof that can be validated.
+
+  For a cross-chain transfer, a user _queries_ an endpoint that generates a simple payment verification proof or another type of proof that can be validated.
   The proof must encode all of the information required to uniquely identify the event on the source chain and the contract on the target chain.
 
 - The event is observed on the target chain.
-  
-  For a cross-chain transfer, a user *relays* the proof to the target chain, where it is verified against the history shared by the source and target chains. 
+
+  For a cross-chain transfer, a user _relays_ the proof to the target chain, where it is verified against the history shared by the source and target chains.
   By checking the shared history, the contract on the target chain validates that the transfer event claimed by the user occurred on the source chain.
   The smart contract on the target chain completes the transaction, for example, by minting the number of tokens transferred from the source chain.
 
@@ -58,23 +58,23 @@ The default configuration for the development network provides five chains that 
 
 The repository includes the following directories and components:
 
-| Name | What it provides
-| ---- | ----------------
-| allocations | Files to set up an ethers project that describes a set of BIP-44 wallets and allocations to be created in the genesis block for the development network.
-| apps | Files to set up the contract, server, and frontend application that demonstrates cross-chain transactions.
-| blockscout | Files to set up an optional block explorer for the EVM chains in the development network. [Blockscout](https://www.blockscout.com/) instances provide an explorer interface and API similar to [Etherscan](https://etherscan.io).
-| devnet | A Docker compose project and files to set up the Chainweb node services for the development network.  
-| docker&#8209;bake.hcl | A script to build multi-platform images for the development network Docker compose project.
-| docs | Technical documentation about the functions and events proposed for the Kadena Chainweb EVM cross-chain bridging protocol in draft form.
-| network | An optional command-line program for starting, stopping, and monitoring the Kadena Chainweb EVM development network.
-| solidity | A Hardhat project that demonstrates the implementation of a simple ERC-20 token with support for burn and mint style transfers between the two EVM chains in the network.
+| Name                  | What it provides                                                                                                                                                                                                                  |
+| --------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| allocations           | Files to set up an ethers project that describes a set of BIP-44 wallets and allocations to be created in the genesis block for the development network.                                                                          |
+| apps                  | Files to set up the contract, server, and frontend application that demonstrates cross-chain transactions.                                                                                                                        |
+| blockscout            | Files to set up an optional block explorer for the EVM chains in the development network. [Blockscout](https://www.blockscout.com/) instances provide an explorer interface and API similar to [Etherscan](https://etherscan.io). |
+| devnet                | A Docker compose project and files to set up the Chainweb node services for the development network.                                                                                                                              |
+| docker&#8209;bake.hcl | A script to build multi-platform images for the development network Docker compose project.                                                                                                                                       |
+| docs                  | Technical documentation about the functions and events proposed for the Kadena Chainweb EVM cross-chain bridging protocol in draft form.                                                                                          |
+| network               | An optional command-line program for starting, stopping, and monitoring the Kadena Chainweb EVM development network.                                                                                                              |
+| solidity              | A Hardhat project that demonstrates the implementation of a simple ERC-20 token with support for burn and mint style transfers between the two EVM chains in the network.                                                         |
 
 ## Prerequisites and system requirements
 
 Before you set up the Kadena Chainweb EVM development environment, verify that your local computer has the required tools installed and meets the following basic requirements:
 
 - You must have [Docker](https://www.docker.com) and [Docker Compose](https://docs.docker.com/compose/) or an Open Container Initiative (OCI) compliant alternative.
-- You must have at least 4 CPU cores and 8 GB of memory available for Docker. 
+- You must have at least 4 CPU cores and 8 GB of memory available for Docker.
   You can configure CPU and memory for Docker using command-line options or Resource settings.
 - You must have a network connection to download the container images for the development network.
 - You must have a POSIX-compliant terminal shell for running command-line programs and scripts.
@@ -102,7 +102,7 @@ To download and install the Chainweb EVM development network:
    ./network help
    ```
 
-2. Pull the latest container images using the `network` command-line program by running the following command:
+1. Pull the latest container images using the `network` command-line program by running the following command:
 
    ```sh
    ./network devnet pull
@@ -110,54 +110,54 @@ To download and install the Chainweb EVM development network:
 
    You can execute `network` commands for convenience or use `docker` commands directly.
    Pulling the latest container images isn't strictly required, but it's recommended before you start the development network for the first time.
-   
+
    You should see output similar to the following:
 
    ```sh
    [+] Pulling 10/10
     ✔ bootnode-evm-22 Skipped - Image is already being pulled by bootnode-evm-21               0.0s
-    ✔ bootnode-evm-20 Skipped - Image is already being pulled by bootnode-evm-21               0.0s 
-    ✔ bootnode-evm-24 Skipped - Image is already being pulled by bootnode-evm-21               0.0s 
-    ✔ bootnode-evm-23 Skipped - Image is already being pulled by bootnode-evm-21               0.0s 
+    ✔ bootnode-evm-20 Skipped - Image is already being pulled by bootnode-evm-21               0.0s
+    ✔ bootnode-evm-24 Skipped - Image is already being pulled by bootnode-evm-21               0.0s
+    ✔ bootnode-evm-23 Skipped - Image is already being pulled by bootnode-evm-21               0.0s
     ✔ bootnode-mining-client Pulled                                                            1.7s
     ✔ allocations Pulled                                                                       1.7s
     ✔ bootnode-frontend Pulled                                                                 1.7s
     ✔ bootnode-mining-trigger Pulled                                                           1.8s
     ✔ bootnode-evm-21 Pulled                                                                   1.7s
     ✔ bootnode-consensus Pulled                                                                1.8s
-      ✔ 63467be34da6 Pull complete                                                            34.9s 
-      ✔ 036ac59a35be Pull complete                                                             6.4s 
-      ✔ 4a057fff0021 Pull complete                                                             6.3s 
+      ✔ 63467be34da6 Pull complete                                                            34.9s
+      ✔ 036ac59a35be Pull complete                                                             6.4s
+      ✔ 4a057fff0021 Pull complete                                                             6.3s
    ```
 
-3. Start the network by running the following command:
+1. Start the network by running the following command:
 
    ```sh
    ./network devnet start
    ```
 
-   This command starts the development blockchain and allocates the test account addresses. 
+   This command starts the development blockchain and allocates the test account addresses.
    You should see output similar to the following excerpt:
 
    ```sh
    [+] Running 3/4
-    ✔ Network chainweb-evm_bootnode-internal      Create...                                    0.1s 
-    ✔ Network chainweb-evm_p2p                    Created                                      0.0s 
-    ✔ Network chainweb-evm_bootnode-frontend      Create...                                    0.0s 
+    ✔ Network chainweb-evm_bootnode-internal      Create...                                    0.1s
+    ✔ Network chainweb-evm_p2p                    Created                                      0.0s
+    ✔ Network chainweb-evm_bootnode-frontend      Create...                                    0.0s
     ⠋ Volume "chainweb-evm_bootnode-evm-22_data"  Cr...                                        0.0s
    ...
     ✔ Container bootnode-evm-23                   Started                                      1.2s
     ✔ Container bootnode-evm-20                   Started                                      1.2s
-    ✔ Container bootnode-evm-22                   Started                                      1.3s 
-    ✔ Container bootnode-evm-24                   Started                                      1.7s 
-    ✔ Container bootnode-evm-21                   Started                                      1.2s 
-    ✔ Container bootnode-allocations              Started                                      1.5s 
-    ✔ Container bootnode-consensus                Healthy                                      9.3s 
-    ✔ Container bootnode-frontend                 Started                                      9.7s 
-    ✔ Container bootnode-mining-trigger           Started                                      9.5s 
-    ✔ Container bootnode-mining-client            Started                                      9.6s 
+    ✔ Container bootnode-evm-22                   Started                                      1.3s
+    ✔ Container bootnode-evm-24                   Started                                      1.7s
+    ✔ Container bootnode-evm-21                   Started                                      1.2s
+    ✔ Container bootnode-allocations              Started                                      1.5s
+    ✔ Container bootnode-consensus                Healthy                                      9.3s
+    ✔ Container bootnode-frontend                 Started                                      9.7s
+    ✔ Container bootnode-mining-trigger           Started                                      9.5s
+    ✔ Container bootnode-mining-client            Started                                      9.6s
    [+] Creating 1/1
-    ✔ Container bootnode-evm-20    Running                                                     0.0s 
+    ✔ Container bootnode-evm-20    Running                                                     0.0s
    wallets created: {
      alloc0: {
        address: '0x8849BAbdDcfC1327Ad199877861B577cEBd8A7b6',
@@ -191,7 +191,7 @@ To download and install the Chainweb EVM development network:
    ...
    cut-height:  3529
    ```
-   
+
    You can call the `./network devnet status` command repeatedly to verify that the block height and cut height values are increasing.
 
 ### Restarting the development network
@@ -253,14 +253,14 @@ Alternatively, you can modify the `compose.py` script or write your own script t
 
 ## Test the sample Solidity project
 
-The `solidity` directory provides an example of a simple Hardhat project with a Hardhat configuration file, Solidity smart contract, and test files. 
-The project is also configured by default use to the `@kadena/hardhat-chainweb` and `@kadena/hardhat-kadena-create2` Hardhat v2 plugins. 
+The `solidity` directory provides an example of a simple Hardhat project with a Hardhat configuration file, Solidity smart contract, and test files.
+The project is also configured by default use to the `@kadena/hardhat-chainweb` and `@kadena/hardhat-kadena-create2` Hardhat v2 plugins.
 
 - The `@kadena/hardhat-chainweb` plugin simplifies deployment to multiple chains without requiring you to configure individual chains as external networks when using Hardhat v2, and later.
   The plugin also supports smart contract verification.
   The `sandbox` configuration settings in the Hardhat configuration file for the `solidity` project provide an example of using the `@kadena/hardhat-chainweb` plugin to define a five-chain network.
 
-- The `@kadena/hardhat-kadena-create2` supports Create2 to enable you to deploy a smart contract with the same address on all chains. 
+- The `@kadena/hardhat-kadena-create2` supports Create2 to enable you to deploy a smart contract with the same address on all chains.
 
 The `solidity` project also includes a `devnet-accounts.json` file with account information generated from a test BIP-44 wallet using a seed entropy value of `0x0000 0000 0000 0000 0000 0000 0000 0000` (16 zero bytes).
 The Hardhat configuration file reads this account information to generate accounts for you to use in the local `sandbox` development network configuration.
@@ -271,6 +271,7 @@ The Hardhat configuration file reads this account information to generate accoun
 npm install
 
 ```
+
 Copy the `.env.example` file to create your own `.env` file. It is not used by the tests, but Hardhat will complain if .env doesn't exist because it is referenced in
 the testnet configuration.
 
@@ -279,7 +280,8 @@ cp .env.example .env
 ```
 
 ### Running tests
-You can develop, test, and deploy Solidity contracts using standard Hardhat commands. 
+
+You can develop, test, and deploy Solidity contracts using standard Hardhat commands.
 For example, you can run the unit tests for the `SimpleToken` contract against the internal Hardhat v2 network:
 
 ```sh
@@ -289,7 +291,7 @@ npx hardhat test
 The `solidity` project also provides sample `npm` scripts to perform common tasks.
 To execute unit tests for the `SimpleToken` contract using a sample `npm` script, run:
 
-``` sh
+```sh
 npm run test
 ```
 
@@ -335,14 +337,14 @@ npm run deploy localhost
 
 To deploy deterministically with the same address on all chains using Create2, run:
 
-``` sh
+```sh
 npm run deploy-create2 localhost
 ```
 
 ### Deploying to testnet
 
-Hardhat and the local `sandbox` development network have pre-allocated developer accounts to make it easy for you to develop, unit test, and test deployment scripts. 
-To deploy to Chainweb EVM Testnet, you should use your own **deployer account**. 
+Hardhat and the local `sandbox` development network have pre-allocated developer accounts to make it easy for you to develop, unit test, and test deployment scripts.
+To deploy to Chainweb EVM Testnet, you should use your own **deployer account**.
 You can get testnet KDA from the EVM Faucet in the [Kadena Developer Tools](https://tools.kadena.io/faucet/evm).
 
 After you have an account with testnet KDA, you can deploy the `SimpleToken` contract on Chainweb EVM Testnet.
@@ -368,17 +370,17 @@ To deploy the `SimpleToken` contract:
    ```sh
    npm run deploy-create2 testnet
    ```
-   
+
    If you use this script, the [Kadena Hardhat Create2 plugin](https://www.npmjs.com/package/@kadena/hardhat-kadena-create2) deploys a Create2 factory for you.
-   You should note that deploying with Create2 multiple times against a persistent blockchain like the Chainweb EVM Testnet—as opposed to the internal Hardhat node—you must to change the salt in the `solidity/scripts/deploy-using-create2.js` file before each deployment. 
-   If you don't change the salt, the deployment will fail with a message indicating that the contract has already been deployed. 
+   You should note that deploying with Create2 multiple times against a persistent blockchain like the Chainweb EVM Testnet—as opposed to the internal Hardhat node—you must to change the salt in the `solidity/scripts/deploy-using-create2.js` file before each deployment.
+   If you don't change the salt, the deployment will fail with a message indicating that the contract has already been deployed.
 
 ## Integrating with other Hardhat projects
 
 If you want to experiment with using the Chainweb EVM development environment with other Hardhat projects, you must configure the Hardhat project to connect to the Chainweb EVM development environment much like you would configure a project to connect to an external network.
 You must also configure the Hardhat project to include account information—addresses and balances—for all available accounts.
 
-You can use the `solidity` project as a template for how configure your Hardhat environment to use the `@kadena/hardhat-chainweb` plugin to develop, test, and deploy smart contracts using Hardhat v2 into local, test, and production Chainweb networks. 
+You can use the `solidity` project as a template for how configure your Hardhat environment to use the `@kadena/hardhat-chainweb` plugin to develop, test, and deploy smart contracts using Hardhat v2 into local, test, and production Chainweb networks.
 
 After a project is configured to use the Chainweb EVM development configuration settings and accounts, you can compile, test, and deploy the project using standard Hardhat commands.
 You can also compile, test, and deploy using any of the sample `npm` scripts included in the `solidity` project.
@@ -409,30 +411,28 @@ To integrate your project with the Kadena Chainweb EVM development network and p
 
 1. Copy the `solidity/devnet-accounts.json` file into the root directory of your Hardhat project.
 2. Install the `@kadena/hardhat-chainweb` and `@kadena/hardhat-kadena-create2` plugins in the root directory of your project:
-   
+
    ```sh
    npm install @kadena/hardhat-chainweb @kadena/hardhat-kadena-create2
    ```
 
-3. Open the `hardhat.config.js` or `hardhat.config.ts` file for your Hardhat project in your code editor. 
+3. Open the `hardhat.config.js` or `hardhat.config.ts` file for your Hardhat project in your code editor.
 4. Copy and paste the code to import plugins and read account information from the `solidity/hardhat.config.js` file into the Hardhat configuration file for your project.
 
    For example:
 
    ```javascript
-   require("@nomicfoundation/hardhat-toolbox");
+   require('@nomicfoundation/hardhat-toolbox');
    require('@kadena/hardhat-chainweb');
    require('@kadena/hardhat-kadena-create2');
-   require("hardhat-switch-network");
-   require("@nomicfoundation/hardhat-verify");
-   
-   const { readFileSync } = require("fs");
-   
-   const devnetAccounts = JSON.parse(
-     readFileSync("./devnet-accounts.json", "utf-8")
-   );
+   require('hardhat-switch-network');
+   require('@nomicfoundation/hardhat-verify');
+
+   const { readFileSync } = require('fs');
+
+   const devnetAccounts = JSON.parse(readFileSync('./devnet-accounts.json', 'utf-8'));
    ```
-   
+
 5. Copy and paste the code to configure network information from the `solidity/hardhat.config.js` file into the Hardhat configuration file for your project.
 
    For example:
@@ -454,7 +454,7 @@ To integrate your project with the Kadena Chainweb EVM development network and p
    ```
 
    Be sure to include the `accounts` key with mapping for accounts to private keys in the Chainweb EVM configuration settings.
-   
+
    You can also modify the configuration settings in the `hardhat.config.js` or `hardhat.config.ts` file to customize the development environment to suit your needs.
    For example, if you want the `sandbox` configuration to have two EVM chains instead of five, modify the `chains` setting:
 
@@ -465,13 +465,13 @@ To integrate your project with the Kadena Chainweb EVM development network and p
       chains: 2,
       accounts: devnetAccounts.accounts.map((account) => account.privateKey),
    ...
-   }  
+   }
    ```
 
 6. (Optional) Copy and paste the code to configure `etherscan` settings from the `solidity/hardhat.config.js` file to use Blockscout into the `hardhat.config.js` or `hardhat.config.ts` file for your project.
-   
+
    Note that you must configure these settings if you want Blockscout to verify your smart contract.
-   
+
    For example:
 
    ```javascript
@@ -483,7 +483,7 @@ To integrate your project with the Kadena Chainweb EVM development network and p
    ```
 
    After updating the Hardhat configuration file, you should have a `hardhat.config.js` or `hardhat.config.ts` file with configuration settings similar to the following:
-   
+
    ```javascript
     sandbox: {
       type: 'external',
@@ -501,7 +501,7 @@ To integrate your project with the Kadena Chainweb EVM development network and p
    ```
 
 7. Save your changes and close the `hardhat.config.js` or `hardhat.config.ts` file.
-   
+
 ### Compiling and testing integration
 
 After configuring your Hardhat project to use the Chainweb EVM development environment, you can compile, test, and deploy the project using standard `hardhat` commands.
@@ -540,10 +540,10 @@ If you want to deploy into the Chainweb EVM `sandbox` environment by default, yo
 
 To run scripts against the Chainweb EVM development `sandbox` environment:
 
-1. Open the `hardhat.config.js` or `hardhat.config.ts` file for your Hardhat project in your code editor. 
+1. Open the `hardhat.config.js` or `hardhat.config.ts` file for your Hardhat project in your code editor.
 
 2. Add `defaultChainweb` to the network settings:
-   
+
    For example:
 
    ```javascript
@@ -563,40 +563,41 @@ To run scripts against the Chainweb EVM development `sandbox` environment:
    defaultChainweb: 'sandbox',
    ```
 
-1. Run `hardhat` deployment script or the `npm run deploy` command:
-   
+3. Run `hardhat` deployment script or the `npm run deploy` command:
+
    For example, if you are using a `hardhat` deployment script:
 
    ```sh
    npx hardhat run scripts/deploy.js
    ```
-   
+
    For more information and examples of using the `@kadena/hardhat-chainweb` plugin, see the Kadena [Hardhat Chainweb plugin](https://www.npmjs.com/package/@kadena/hardhat-chainweb).
-   
+
    For more information about deterministic deployment to Chainweb EVM chains, see the Kadena [Hardhat Create2 plugin](https://www.npmjs.com/package/@kadena/hardhat-kadena-create2).
 
 ## Signing transactions and switching chains
- 
-By default, when you call a Solidity smart contract from a test file or a script using `ethers`, the transaction is executed by the first signer address and private key for the local development environment. 
-This is true whether the local development environment is the default Hardhat network or the Kadena Chainweb EVM development environment. 
+
+By default, when you call a Solidity smart contract from a test file or a script using `ethers`, the transaction is executed by the first signer address and private key for the local development environment.
+This is true whether the local development environment is the default Hardhat network or the Kadena Chainweb EVM development environment.
 For example, the following `transferCrossChain` transaction is signed by the account that corresponds to the first address in the list of addresses for the current network context:
 
 ```javascript
 const tx = await token0.transferCrossChain(receiver.address, amount, token1Info.chain);
 ```
 
-
 This address is the `msg.sender` for the transaction and is displayed as the **deploying signer** when you execute the `SimpleToken` tests.
 The address is retrieved by calling the `getSigners` function in the `solidity/test/utils/utils.js` file.
 
 Typically, if you wanted to call a smart contract function using a different signer—for example, `alice`—you could call the function like this:
-  
+
 ```javascript
-const tx = await token0.connect(alice).transferCrossChain(receiver.address, amount, token1Info.chain);
+const tx = await token0
+  .connect(alice)
+  .transferCrossChain(receiver.address, amount, token1Info.chain);
 ```
 
-In `ethers` tests, this call creates a new contract instance using the new signer `alice` in the background. 
-It's important to note, however, that the signer address always has a **network context** associated with it. 
+In `ethers` tests, this call creates a new contract instance using the new signer `alice` in the background.
+It's important to note, however, that the signer address always has a **network context** associated with it.
 
 For contracts deployed on Chainweb EVM, the network context is slightly more complex because you must know the Chainweb chain identifier where the contract is deployed to get the correct signing address.
 
@@ -607,8 +608,8 @@ You can find examples of switching chains in the `solidity/test/SimpleToken.test
 
 ## Blockscout
 
-You can explore the Chainweb EVM development network chains using the optional [Blockscout](https://blockscout.com) application. 
-Blockscout is a blockchain monitoring service that provides a user experience that is similar to [Etherscan](https://etherscan.io). 
+You can explore the Chainweb EVM development network chains using the optional [Blockscout](https://blockscout.com) application.
+Blockscout is a blockchain monitoring service that provides a user experience that is similar to [Etherscan](https://etherscan.io).
 
 For additional information, see the [Blockscout README](https://github.com/blockscout/blockscout).
 
@@ -622,7 +623,7 @@ To use Blockscout:
    ./network blockscout pull
    ```
 
-2. Add blockscout domains to the `/etc/hosts` file by running the following command:
+1. Add blockscout domains to the `/etc/hosts` file by running the following command:
 
    ```sh
    ./network blockscout add-domains
@@ -630,13 +631,13 @@ To use Blockscout:
 
    This command adds the following records to the `/etc/hosts` file:
 
-   - 127.0.0.1       chain-20.evm.kadena.local
-   - 127.0.0.1       chain-21.evm.kadena.local
-   - 127.0.0.1       chain-22.evm.kadena.local
-   - 127.0.0.1       chain-23.evm.kadena.local
-   - 127.0.0.1       chain-24.evm.kadena.local
+   - 127.0.0.1 chain-20.evm.kadena.local
+   - 127.0.0.1 chain-21.evm.kadena.local
+   - 127.0.0.1 chain-22.evm.kadena.local
+   - 127.0.0.1 chain-23.evm.kadena.local
+   - 127.0.0.1 chain-24.evm.kadena.local
 
-3. Start a Blockscout instance by running the following command:
+1. Start a Blockscout instance by running the following command:
 
    ```sh
    ./network blockscout start
@@ -644,7 +645,7 @@ To use Blockscout:
 
    After running this command, it can take several minutes before you can open Blockscout in a browser.
 
-4. Open the appropriate URL for the chain you want to explore:
+1. Open the appropriate URL for the chain you want to explore:
 
    ```sh
    chain 20: http://chain-20.evm.kadena.local:8000
@@ -653,7 +654,7 @@ To use Blockscout:
    chain 23: http://chain-23.evm.kadena.local:8000
    chain 24: http://chain-24.evm.kadena.local:8000
    ```
-   
+
    You can view transactions executed on Chainweb EVM chains using Blockscout and the following URLs.
 
    - [Chainweb EVM chain 20](http://chain-20.evm.kadena.local:8000)

@@ -15,7 +15,7 @@ export const $root = $({ cwd: path.join(__dirname, '../../') });
 
 $.verbose = CONFIG.VERBOSE;
 
-const createDockerFileName = (project?: ProjectType) => {
+export const createDockerFileName = (project?: ProjectType) => {
   return `../devnet/docker-compose.yaml`;
   //return `../devnet/${project}-docker-compose.yaml`;
 };

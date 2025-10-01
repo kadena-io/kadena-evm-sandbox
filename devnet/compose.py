@@ -14,6 +14,7 @@ import json
 import yaml
 from secp256k1 import PrivateKey
 from typing import TypedDict, Any
+import base64
 
 DEFAULT_CHAINWEB_NODE_IMAGE = "ghcr.io/kadena-io/evm-devnet-chainweb-node:latest"
 DEFAULT_MINING_CLIENT_IMAGE = "ghcr.io/kadena-io/chainweb-mining-client:latest"
@@ -209,7 +210,7 @@ def payload_provider_config(
             }
             | {
                 "default": {
-                    "redeemAccount": f"{innerEvmMinerAddress}",
+                    "redeemAccount": convertAccount(innerEvmMinerAddress),
                     "redeemChain": 0,
                 },
             }
@@ -1281,6 +1282,11 @@ def minimal_project(update_secrets: bool = False) -> Spec:
     )
 
 
+def convertAccount(account:str) -> str:
+    account_bytes = account.encode('utf-8')
+    # Encode to Base64
+    return base64.b64encode(account_bytes).decode('utf-8')
+
 # A project for testing and debugging chainweb-node itself. It runs several
 # nodes in different configurations.
 #
@@ -1313,18 +1319,18 @@ def kadena_dev_project(update_secrets: bool = False) -> Spec:
                 has_frontend=False,
                 evm_impl=evm_impl,
             ),
-            # chainweb_node(
-            #     "kadena-dev",
-            #     "miner-1",
-            #     evm_cids,
-            #     pact_cids,
-            #     is_bootnode=False,
-            #     mining_mode="simulation",
-            #     exposed=False,
-            #     has_frontend=False,
-            #     evm_impl=evm_impl,
-            #     minerAddress="0xd42d71cdc2A0a78fE7fBE7236c19925f62C442bA"
-            # ),
+            chainweb_node(
+                "kadena-dev",
+                "miner-1",
+                evm_cids,
+                pact_cids,
+                is_bootnode=False,
+                mining_mode="simulation",
+                exposed=False,
+                has_frontend=False,
+                evm_impl=evm_impl,
+                minerAddress= "0xd42d71cdc2A0a78fE7fBE7236c19925f62C442bA"
+            ),
             chainweb_node(
                 "kadena-dev",
                 "miner-2",

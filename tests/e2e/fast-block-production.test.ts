@@ -9,7 +9,6 @@ import {
   waitFor,
   waitForMinCutHeight,
 } from './devnet-utils';
-import { DOCKER_COMPOSE_FILE } from './devnet-utils';
 import { createLogger } from './utils';
 import { fs, $ } from 'zx';
 
@@ -25,12 +24,12 @@ describe(`e2e: verify fast block production for reth`, () => {
   });
   afterAll(() => {
     if (CONFIG.CLEAN_AFTER) {
-      return stopAndRemoveNetwork();
+      return stopAndRemoveNetwork('kadena-dev');
     }
   });
 
   test(`e2e: produces 1 block a second or faster`, async () => {
-    await generateDockerComposeAndStartNetwork();
+    await generateDockerComposeAndStartNetwork('kadena-dev');
 
     console.log('waiting for cut-height to reach 98*4...');
     await waitForMinCutHeight(98 * 4, { timeoutSeconds: 150 });

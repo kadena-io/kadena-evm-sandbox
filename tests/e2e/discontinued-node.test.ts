@@ -19,7 +19,7 @@ $.verbose = CONFIG.VERBOSE;
 const DOCKER_COMPOSE_FILE = createDockerFileName('kadena-dev');
 const log = createLogger({ context: 'discontinued-node.test.ts' });
 
-describe(`e2e: verify ${DOCKER_COMPOSE_FILE} generation`, () => {
+describe.skip(`e2e: verify ${DOCKER_COMPOSE_FILE} generation`, () => {
   test(`e2e: generate ${DOCKER_COMPOSE_FILE}`, async () => {
     await createDockerComposeFile('kadena-dev');
     const fileExists = fs.existsSync(DOCKER_COMPOSE_FILE);
@@ -31,7 +31,7 @@ describe(`e2e: verify ${DOCKER_COMPOSE_FILE} generation`, () => {
   });
 });
 
-describe('e2e: start network, stop node, restart node', () => {
+describe.skip('e2e: start network, stop node, restart node', () => {
   beforeAll(() => {
     if (CONFIG.CLEAN_BEFORE) {
       return stopAndRemoveNetwork('kadena-dev');

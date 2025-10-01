@@ -44,4 +44,4 @@ jobs:
         if: always()
         run: |
           # I am unsure this is needed as this VM will delete after use
-          # ./network devnet stop
+          ./network devnet stop

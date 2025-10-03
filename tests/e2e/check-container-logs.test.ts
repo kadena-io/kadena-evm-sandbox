@@ -65,43 +65,68 @@ describe('e2e: check container logs during for errors, warnings, crashes etc', (
     'appdev-consensus',
   ];
 
-  const testContainer = async (container: string) => {
-    console.log('starting log check for', container);
-    const c = await docker.getContainer(container.trim());
+  const testContainer =
+    (cleanFunction?: (container: string, lines: string[]) => string[]) =>
+    async (container: string): Promise<string[]> => {
+      console.log('starting log check for', container);
+      const c = await docker.getContainer(container.trim());
 
-    // Fetch logs
-    const logBuffer = await c.logs({
-      follow: false,
-      stdout: true,
-      stderr: true,
-      timestamps: true,
-    });
+      // Fetch logs
+      const logBuffer = await c.logs({
+        follow: false,
+        stdout: true,
+        stderr: true,
+        timestamps: true,
+      });
 
-    // Convert buffer to string and split into lines
-    const logText = logBuffer.toString('utf8');
-    const logLines = logText.split('\n');
+      // Convert buffer to string and split into lines
+      const logText = logBuffer.toString('utf8');
+      const logLines = logText.split('\n');
+      const affectedLines: string[] = [];
 
-    // Filter and display lines containing errors, warnings, or crashes
-    logLines.forEach((line) => {
-      if (/error|warning|crash|exception|failed/i.test(line)) {
-        console.log(container, 'Issue detected:', line);
+      // Filter and display lines containing errors, warnings, or crashes
+      logLines.forEach((line) => {
+        if (/error|warning|crash|exception|failed/i.test(line)) {
+          affectedLines.push(line);
+          console.log(container, 'Issue detected:', line);
+        }
+      });
+
+      if (cleanFunction) {
+        return cleanFunction(container, affectedLines);
       }
-    });
 
-    if (!logLines.some((line) => /error|warning|crash|exception|failed/i.test(line))) {
-      console.log(container, 'No issues (errors, warnings, crashes, etc.) found in the logs.');
-    }
+      return affectedLines;
+    };
+
+  // the appdev-consensus container and the bootnode-consensus container have a some expected warnings
+  // because no miners were started in those containers. so we can ignore those lines
+  const cleanLines = (container: string, lines: string[]): string[] => {
+    return lines.filter(
+      (line) =>
+        !/EVM miner address is not set for ChainId/.test(line) &&
+        container !== 'appdev-consensus' &&
+        container !== 'bootnode-consensus'
+    );
   };
 
   test('should show no errors on startup', async () => {
-    const promises = containerArray.map(testContainer);
+    const promises = containerArray.map(testContainer(cleanLines));
     const results = await Promise.all(promises);
+
+    results.forEach((logsArray) => {
+      expect(logsArray.length).toBe(0);
+    });
   });
   test('should show no errors during block production', async () => {
     const devnetStatus = await getDevnetStatus();
     await waitForMinCutHeight(devnetStatus.cutHeight + 98 * 1, { timeoutSeconds: 150 });
 
-    const promises = containerArray.map(testContainer);
+    const promises = containerArray.map(testContainer(cleanLines));
     const results = await Promise.all(promises);
+
+    results.forEach((logsArray) => {
+      expect(logsArray.length).toBe(0);
+    });
   });
 });

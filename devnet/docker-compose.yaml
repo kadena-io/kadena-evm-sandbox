@@ -1,0 +1,707 @@
+configs:
+    bootnode-chain-spec-20:
+        file: chain-specs/chain-spec-20.json
+    bootnode-chain-spec-21:
+        file: chain-specs/chain-spec-21.json
+    bootnode-chain-spec-22:
+        file: chain-specs/chain-spec-22.json
+    bootnode-chain-spec-23:
+        file: chain-specs/chain-spec-23.json
+    bootnode-chain-spec-24:
+        file: chain-specs/chain-spec-24.json
+    bootnode-consensus-config:
+        file: ./config/consensus-config.yaml
+    bootnode-nginx-config:
+        file: ./config/default/bootnode/nginx.conf
+    bootnode-nginx-html:
+        file: ./config/default/bootnode/index.html
+    bootnode-payload-providers:
+        file: ./config/default/bootnode/payload-providers.yaml
+name: chainweb-evm
+networks:
+    bootnode-frontend: null
+    bootnode-internal: null
+    p2p: null
+secrets:
+    bootnode-consensus-p2p-certificate:
+        file: ./config/bootnode-consensus-p2p.cert.pem
+    bootnode-consensus-p2p-key:
+        file: ./config/bootnode-consensus-p2p.key.pem
+    bootnode-evm-20-p2p-secret:
+        file: ./config/default/bootnode/evm-20-p2p-secret
+    bootnode-evm-21-p2p-secret:
+        file: ./config/default/bootnode/evm-21-p2p-secret
+    bootnode-evm-22-p2p-secret:
+        file: ./config/default/bootnode/evm-22-p2p-secret
+    bootnode-evm-23-p2p-secret:
+        file: ./config/default/bootnode/evm-23-p2p-secret
+    bootnode-evm-24-p2p-secret:
+        file: ./config/default/bootnode/evm-24-p2p-secret
+    bootnode-jwtsecret:
+        file: ./config/default/bootnode/jwtsecret
+services:
+    allocations:
+        build:
+            context: ../allocations
+            dockerfile: Dockerfile
+        container_name: bootnode-allocations
+        depends_on:
+            bootnode-evm-20:
+                condition: service_started
+        environment:
+        - RPC_URL=http://bootnode-evm-20:8545
+        image: ${ALLOCATIONS_IMAGE:-ghcr.io/kadena-io/evm-devnet-allocations:latest}
+        networks:
+            bootnode-internal: null
+    bootnode-consensus:
+        configs:
+        -   mode: '0440'
+            source: bootnode-consensus-config
+            target: /chainweb/config/consensus.yaml
+        -   mode: '0440'
+            source: bootnode-payload-providers
+            target: /chainweb/config/payload-providers.yaml
+        container_name: bootnode-consensus
+        depends_on:
+            bootnode-evm-20:
+                condition: service_started
+            bootnode-evm-21:
+                condition: service_started
+            bootnode-evm-22:
+                condition: service_started
+            bootnode-evm-23:
+                condition: service_started
+            bootnode-evm-24:
+                condition: service_started
+        deploy:
+            restart_policy:
+                condition: on-failure
+                delay: 5s
+                max_attempts: 3
+                window: 120s
+            update_config:
+                delay: 60s
+                order: stop-first
+        entrypoint:
+        - /chainweb/chainweb-node
+        - +RTS
+        - -T
+        - -H400M
+        - -A64M
+        - -RTS
+        - --config-file=config/consensus.yaml
+        - --config-file=config/payload-providers.yaml
+        - --database-directory=/chainweb/db
+        - --disable-pow
+        - --cluster-id=bootnode-consensus
+        - --bootstrap-reachability=0
+        - --p2p-certificate-chain-file=/run/secrets/p2p.cert.pem
+        - --p2p-certificate-key-file=/run/secrets/p2p.key.pem
+        - --p2p-hostname=bootnode-consensus
+        - --enable-mining-coordination
+        expose:
+        - '1789'
+        - '1848'
+        healthcheck:
+            interval: 30s
+            retries: 5
+            start_period: 2m
+            test:
+            - CMD
+            - /bin/bash
+            - -c
+            - 'exec 3<>/dev/tcp/localhost/1848; printf "GET /health-check HTTP/1.1\r\nhost:
+                http://localhost:1848\r\nConnection: close\r\n\r\n" >&3; grep -q "200
+                OK" <&3 || exit 1'
+            timeout: 30s
+        hostname: bootnode-consensus
+        image: ${CHAINWEB_NODE_IMAGE:-ghcr.io/kadena-io/evm-devnet-chainweb-node:latest}
+        labels:
+            com.chainweb.devnet.chainweb-node: ''
+            com.chainweb.devnet.description: EVM Devnet Chainweb Node
+            com.docker.lb.ip_hash: true
+        networks:
+            bootnode-internal: null
+            p2p: null
+        platform: linux/amd64
+        ports:
+        - 11848:1848
+        restart: unless-stopped
+        secrets:
+        -   source: bootnode-consensus-p2p-key
+            target: p2p.key.pem
+        -   source: bootnode-consensus-p2p-certificate
+            target: p2p.cert.pem
+        stop_grace_period: 20s
+        stop_signal: SIGINT
+        ulimits:
+            nofile:
+                hard: 65535
+                soft: 65535
+        volumes:
+        - bootnode-consensus_data:/chainweb/db:rw
+    bootnode-evm-20:
+        configs:
+        -   mode: '0440'
+            source: bootnode-chain-spec-20
+            target: /config/chain-spec.json
+        container_name: bootnode-evm-20
+        depends_on:
+            bootnode-evm-init-20:
+                condition: service_completed_successfully
+        entrypoint:
+        - /app/kadena-reth
+        - node
+        - --datadir=/root/ethereum
+        - --chain=/config/chain-spec.json
+        - --metrics=0.0.0.0:9001
+        - --log.file.directory=/root/logs
+        - --addr=0.0.0.0
+        - --port=30323
+        - --authrpc.jwtsecret=/run/secrets/jwtsecret
+        - --authrpc.addr=0.0.0.0
+        - --authrpc.port=8551
+        - --http
+        - --http.addr=0.0.0.0
+        - --http.port=8545
+        - --rpc.eth-proof-window=1024
+        - --http.api=eth,net,web3,admin,debug,trace,txpool,rpc,reth,ots
+        - --ws
+        - --ws.addr=0.0.0.0
+        - --ws.port=8546
+        - --ws.api=eth,net,web3,admin,debug,trace,txpool,rpc,reth,ots
+        - --disable-nat
+        - --nat=none
+        - --disable-dns-discovery
+        - --discovery.port=30323
+        - --engine.persistence-threshold=0
+        - --engine.memory-block-buffer-target=0
+        - --p2p-secret-key=/run/secrets/p2p-secret
+        expose:
+        - '8545'
+        - '8546'
+        - '8551'
+        - '9001'
+        - 30323/tcp
+        - 30323/udp
+        hostname: bootnode-evm-20
+        image: ${RETH_IMAGE:-ghcr.io/kadena-io/kadena-reth:sha-eff370d}
+        networks:
+            bootnode-internal: null
+            p2p: null
+        ports:
+        - 28545:8545
+        - 28546:8546
+        restart: unless-stopped
+        secrets:
+        -   source: bootnode-jwtsecret
+            target: jwtsecret
+        -   source: bootnode-evm-20-p2p-secret
+            target: p2p-secret
+        ulimits:
+            nofile:
+                hard: 65535
+                soft: 65535
+        volumes:
+        - bootnode-evm-20_data:/root/ethereum/
+        - bootnode_logs:/root/logs/
+    bootnode-evm-21:
+        configs:
+        -   mode: '0440'
+            source: bootnode-chain-spec-21
+            target: /config/chain-spec.json
+        container_name: bootnode-evm-21
+        depends_on:
+            bootnode-evm-init-21:
+                condition: service_completed_successfully
+        entrypoint:
+        - /app/kadena-reth
+        - node
+        - --datadir=/root/ethereum
+        - --chain=/config/chain-spec.json
+        - --metrics=0.0.0.0:9001
+        - --log.file.directory=/root/logs
+        - --addr=0.0.0.0
+        - --port=30324
+        - --authrpc.jwtsecret=/run/secrets/jwtsecret
+        - --authrpc.addr=0.0.0.0
+        - --authrpc.port=8551
+        - --http
+        - --http.addr=0.0.0.0
+        - --http.port=8545
+        - --rpc.eth-proof-window=1024
+        - --http.api=eth,net,web3,admin,debug,trace,txpool,rpc,reth,ots
+        - --ws
+        - --ws.addr=0.0.0.0
+        - --ws.port=8546
+        - --ws.api=eth,net,web3,admin,debug,trace,txpool,rpc,reth,ots
+        - --disable-nat
+        - --nat=none
+        - --disable-dns-discovery
+        - --discovery.port=30324
+        - --engine.persistence-threshold=0
+        - --engine.memory-block-buffer-target=0
+        - --p2p-secret-key=/run/secrets/p2p-secret
+        expose:
+        - '8545'
+        - '8546'
+        - '8551'
+        - '9001'
+        - 30324/tcp
+        - 30324/udp
+        hostname: bootnode-evm-21
+        image: ${RETH_IMAGE:-ghcr.io/kadena-io/kadena-reth:sha-eff370d}
+        networks:
+            bootnode-internal: null
+            p2p: null
+        ports:
+        - 29545:8545
+        - 29546:8546
+        restart: unless-stopped
+        secrets:
+        -   source: bootnode-jwtsecret
+            target: jwtsecret
+        -   source: bootnode-evm-21-p2p-secret
+            target: p2p-secret
+        ulimits:
+            nofile:
+                hard: 65535
+                soft: 65535
+        volumes:
+        - bootnode-evm-21_data:/root/ethereum/
+        - bootnode_logs:/root/logs/
+    bootnode-evm-22:
+        configs:
+        -   mode: '0440'
+            source: bootnode-chain-spec-22
+            target: /config/chain-spec.json
+        container_name: bootnode-evm-22
+        depends_on:
+            bootnode-evm-init-22:
+                condition: service_completed_successfully
+        entrypoint:
+        - /app/kadena-reth
+        - node
+        - --datadir=/root/ethereum
+        - --chain=/config/chain-spec.json
+        - --metrics=0.0.0.0:9001
+        - --log.file.directory=/root/logs
+        - --addr=0.0.0.0
+        - --port=30325
+        - --authrpc.jwtsecret=/run/secrets/jwtsecret
+        - --authrpc.addr=0.0.0.0
+        - --authrpc.port=8551
+        - --http
+        - --http.addr=0.0.0.0
+        - --http.port=8545
+        - --rpc.eth-proof-window=1024
+        - --http.api=eth,net,web3,admin,debug,trace,txpool,rpc,reth,ots
+        - --ws
+        - --ws.addr=0.0.0.0
+        - --ws.port=8546
+        - --ws.api=eth,net,web3,admin,debug,trace,txpool,rpc,reth,ots
+        - --disable-nat
+        - --nat=none
+        - --disable-dns-discovery
+        - --discovery.port=30325
+        - --engine.persistence-threshold=0
+        - --engine.memory-block-buffer-target=0
+        - --p2p-secret-key=/run/secrets/p2p-secret
+        expose:
+        - '8545'
+        - '8546'
+        - '8551'
+        - '9001'
+        - 30325/tcp
+        - 30325/udp
+        hostname: bootnode-evm-22
+        image: ${RETH_IMAGE:-ghcr.io/kadena-io/kadena-reth:sha-eff370d}
+        networks:
+            bootnode-internal: null
+            p2p: null
+        ports:
+        - 30545:8545
+        - 30546:8546
+        restart: unless-stopped
+        secrets:
+        -   source: bootnode-jwtsecret
+            target: jwtsecret
+        -   source: bootnode-evm-22-p2p-secret
+            target: p2p-secret
+        ulimits:
+            nofile:
+                hard: 65535
+                soft: 65535
+        volumes:
+        - bootnode-evm-22_data:/root/ethereum/
+        - bootnode_logs:/root/logs/
+    bootnode-evm-23:
+        configs:
+        -   mode: '0440'
+            source: bootnode-chain-spec-23
+            target: /config/chain-spec.json
+        container_name: bootnode-evm-23
+        depends_on:
+            bootnode-evm-init-23:
+                condition: service_completed_successfully
+        entrypoint:
+        - /app/kadena-reth
+        - node
+        - --datadir=/root/ethereum
+        - --chain=/config/chain-spec.json
+        - --metrics=0.0.0.0:9001
+        - --log.file.directory=/root/logs
+        - --addr=0.0.0.0
+        - --port=30326
+        - --authrpc.jwtsecret=/run/secrets/jwtsecret
+        - --authrpc.addr=0.0.0.0
+        - --authrpc.port=8551
+        - --http
+        - --http.addr=0.0.0.0
+        - --http.port=8545
+        - --rpc.eth-proof-window=1024
+        - --http.api=eth,net,web3,admin,debug,trace,txpool,rpc,reth,ots
+        - --ws
+        - --ws.addr=0.0.0.0
+        - --ws.port=8546
+        - --ws.api=eth,net,web3,admin,debug,trace,txpool,rpc,reth,ots
+        - --disable-nat
+        - --nat=none
+        - --disable-dns-discovery
+        - --discovery.port=30326
+        - --engine.persistence-threshold=0
+        - --engine.memory-block-buffer-target=0
+        - --p2p-secret-key=/run/secrets/p2p-secret
+        expose:
+        - '8545'
+        - '8546'
+        - '8551'
+        - '9001'
+        - 30326/tcp
+        - 30326/udp
+        hostname: bootnode-evm-23
+        image: ${RETH_IMAGE:-ghcr.io/kadena-io/kadena-reth:sha-eff370d}
+        networks:
+            bootnode-internal: null
+            p2p: null
+        ports:
+        - 31545:8545
+        - 31546:8546
+        restart: unless-stopped
+        secrets:
+        -   source: bootnode-jwtsecret
+            target: jwtsecret
+        -   source: bootnode-evm-23-p2p-secret
+            target: p2p-secret
+        ulimits:
+            nofile:
+                hard: 65535
+                soft: 65535
+        volumes:
+        - bootnode-evm-23_data:/root/ethereum/
+        - bootnode_logs:/root/logs/
+    bootnode-evm-24:
+        configs:
+        -   mode: '0440'
+            source: bootnode-chain-spec-24
+            target: /config/chain-spec.json
+        container_name: bootnode-evm-24
+        depends_on:
+            bootnode-evm-init-24:
+                condition: service_completed_successfully
+        entrypoint:
+        - /app/kadena-reth
+        - node
+        - --datadir=/root/ethereum
+        - --chain=/config/chain-spec.json
+        - --metrics=0.0.0.0:9001
+        - --log.file.directory=/root/logs
+        - --addr=0.0.0.0
+        - --port=30327
+        - --authrpc.jwtsecret=/run/secrets/jwtsecret
+        - --authrpc.addr=0.0.0.0
+        - --authrpc.port=8551
+        - --http
+        - --http.addr=0.0.0.0
+        - --http.port=8545
+        - --rpc.eth-proof-window=1024
+        - --http.api=eth,net,web3,admin,debug,trace,txpool,rpc,reth,ots
+        - --ws
+        - --ws.addr=0.0.0.0
+        - --ws.port=8546
+        - --ws.api=eth,net,web3,admin,debug,trace,txpool,rpc,reth,ots
+        - --disable-nat
+        - --nat=none
+        - --disable-dns-discovery
+        - --discovery.port=30327
+        - --engine.persistence-threshold=0
+        - --engine.memory-block-buffer-target=0
+        - --p2p-secret-key=/run/secrets/p2p-secret
+        expose:
+        - '8545'
+        - '8546'
+        - '8551'
+        - '9001'
+        - 30327/tcp
+        - 30327/udp
+        hostname: bootnode-evm-24
+        image: ${RETH_IMAGE:-ghcr.io/kadena-io/kadena-reth:sha-eff370d}
+        networks:
+            bootnode-internal: null
+            p2p: null
+        ports:
+        - 32545:8545
+        - 32546:8546
+        restart: unless-stopped
+        secrets:
+        -   source: bootnode-jwtsecret
+            target: jwtsecret
+        -   source: bootnode-evm-24-p2p-secret
+            target: p2p-secret
+        ulimits:
+            nofile:
+                hard: 65535
+                soft: 65535
+        volumes:
+        - bootnode-evm-24_data:/root/ethereum/
+        - bootnode_logs:/root/logs/
+    bootnode-evm-init-20:
+        command:
+        - 'true'
+        configs:
+        -   mode: '0440'
+            source: bootnode-chain-spec-20
+            target: /config/chain-spec.json
+        container_name: bootnode-evm-init-20
+        entrypoint:
+        - /bin/sh
+        - -c
+        hostname: bootnode-evm-init-20
+        image: ${RETH_IMAGE:-ghcr.io/kadena-io/kadena-reth:sha-eff370d}
+        networks:
+            bootnode-internal: null
+        restart: 'no'
+        ulimits:
+            nofile:
+                hard: 65535
+                soft: 65535
+        volumes:
+        - bootnode-evm-20_data:/root/.ethereum/
+        - bootnode_logs:/root/logs/
+    bootnode-evm-init-21:
+        command:
+        - 'true'
+        configs:
+        -   mode: '0440'
+            source: bootnode-chain-spec-21
+            target: /config/chain-spec.json
+        container_name: bootnode-evm-init-21
+        entrypoint:
+        - /bin/sh
+        - -c
+        hostname: bootnode-evm-init-21
+        image: ${RETH_IMAGE:-ghcr.io/kadena-io/kadena-reth:sha-eff370d}
+        networks:
+            bootnode-internal: null
+        restart: 'no'
+        ulimits:
+            nofile:
+                hard: 65535
+                soft: 65535
+        volumes:
+        - bootnode-evm-21_data:/root/.ethereum/
+        - bootnode_logs:/root/logs/
+    bootnode-evm-init-22:
+        command:
+        - 'true'
+        configs:
+        -   mode: '0440'
+            source: bootnode-chain-spec-22
+            target: /config/chain-spec.json
+        container_name: bootnode-evm-init-22
+        entrypoint:
+        - /bin/sh
+        - -c
+        hostname: bootnode-evm-init-22
+        image: ${RETH_IMAGE:-ghcr.io/kadena-io/kadena-reth:sha-eff370d}
+        networks:
+            bootnode-internal: null
+        restart: 'no'
+        ulimits:
+            nofile:
+                hard: 65535
+                soft: 65535
+        volumes:
+        - bootnode-evm-22_data:/root/.ethereum/
+        - bootnode_logs:/root/logs/
+    bootnode-evm-init-23:
+        command:
+        - 'true'
+        configs:
+        -   mode: '0440'
+            source: bootnode-chain-spec-23
+            target: /config/chain-spec.json
+        container_name: bootnode-evm-init-23
+        entrypoint:
+        - /bin/sh
+        - -c
+        hostname: bootnode-evm-init-23
+        image: ${RETH_IMAGE:-ghcr.io/kadena-io/kadena-reth:sha-eff370d}
+        networks:
+            bootnode-internal: null
+        restart: 'no'
+        ulimits:
+            nofile:
+                hard: 65535
+                soft: 65535
+        volumes:
+        - bootnode-evm-23_data:/root/.ethereum/
+        - bootnode_logs:/root/logs/
+    bootnode-evm-init-24:
+        command:
+        - 'true'
+        configs:
+        -   mode: '0440'
+            source: bootnode-chain-spec-24
+            target: /config/chain-spec.json
+        container_name: bootnode-evm-init-24
+        entrypoint:
+        - /bin/sh
+        - -c
+        hostname: bootnode-evm-init-24
+        image: ${RETH_IMAGE:-ghcr.io/kadena-io/kadena-reth:sha-eff370d}
+        networks:
+            bootnode-internal: null
+        restart: 'no'
+        ulimits:
+            nofile:
+                hard: 65535
+                soft: 65535
+        volumes:
+        - bootnode-evm-24_data:/root/.ethereum/
+        - bootnode_logs:/root/logs/
+    bootnode-frontend:
+        configs:
+        -   mode: '0440'
+            source: bootnode-nginx-config
+            target: /etc/nginx/nginx.conf
+        -   mode: '0440'
+            source: bootnode-nginx-html
+            target: /usr/share/nginx/html/index.html
+        container_name: bootnode-frontend
+        depends_on:
+            bootnode-consensus:
+                condition: service_healthy
+            bootnode-evm-20:
+                condition: service_started
+            bootnode-evm-21:
+                condition: service_started
+            bootnode-evm-22:
+                condition: service_started
+            bootnode-evm-23:
+                condition: service_started
+            bootnode-evm-24:
+                condition: service_started
+        expose:
+        - '1848'
+        hostname: bootnode-frontend
+        image: ${NGINX_IMAGE:-nginx:latest}
+        networks:
+            bootnode-frontend: null
+            bootnode-internal: null
+        platform: linux/amd64
+        ports:
+        - 1848:1848
+        restart: unless-stopped
+        volumes:
+        - bootnode_logs:/var/log/nginx
+    bootnode-mining-client:
+        container_name: bootnode-mining-client
+        depends_on:
+            bootnode-consensus:
+                condition: service_healthy
+        entrypoint:
+        - /chainweb-mining-client/chainweb-mining-client
+        - --node=bootnode-consensus:1848
+        - --thread-count=1
+        - --no-tls
+        - --worker=on-demand
+        - --hash-rate=1000000
+        - --constant-delay-block-time=${BLOCK_RATE:-2}
+        - --on-demand-port=1917
+        hostname: bootnode-mining-client
+        image: ${MINING_CLIENT_IMAGE:-ghcr.io/kadena-io/chainweb-mining-client:latest}
+        networks:
+            bootnode-internal: null
+        platform: linux/amd64
+        ports:
+        - 1917:1917
+        restart: unless-stopped
+    bootnode-mining-trigger:
+        container_name: bootnode-mining-trigger
+        depends_on:
+            bootnode-consensus:
+                condition: service_healthy
+        entrypoint:
+        - bun
+        - --watch
+        - index.ts
+        environment:
+            CHAINS: ${CHAINS:-20}
+            CONSENSUS_ENDPOINT: http://bootnode-consensus:1848/chainweb/0.0/evm-development
+            CONTINUOUS_INTERVAL: ${CONTINUOUS_INTERVAL:-20000}
+            MINER_HOSTNAME: bootnode-mining-client
+            MINING_MODE: ${MINING_MODE:-triggered}
+            MINING_PORT: '1917'
+            TRIGGER_BLOCK_COUNT: ${TRIGGER_BLOCK_COUNT:-1}
+            TRIGGER_PORT: '11848'
+        expose:
+        - '11848'
+        hostname: bootnode-mining-trigger
+        image: oven/bun:latest
+        networks:
+            bootnode-internal: null
+        restart: unless-stopped
+        volumes:
+        - ./mining-trigger:/app
+        working_dir: /app
+    curl:
+        environment:
+            CL_NODES: ${CL_NODES:-bootnode-consensus}
+        image: curlimages/curl:latest
+        labels:
+            com.chainweb.devnet.debug: ''
+            com.chainweb.devnet.description: Curl Into Network
+        networks:
+            bootnode-internal: null
+            p2p: null
+        profiles:
+        - debug
+    debug:
+        build:
+            context: ./debug
+            dockerfile: Dockerfile
+        command:
+        - "\n            source ./functions.sh\n            info $$HEIGHT\n      \
+            \      "
+        entrypoint:
+        - /bin/bash
+        - -c
+        environment:
+            CL_NODES: ${CL_NODES:-bootnode-consensus}
+            HEIGHT: ${HEIGHT:-latest}
+            JWT_SECRET: ${JWT_SECRET:-10b45e8907ab12dd750f688733e73cf433afadfd2f270e5b75a6b8fff22dd352}
+        networks:
+            bootnode-internal: null
+            p2p: null
+        profiles:
+        - debug
+volumes:
+    bootnode-consensus_data: null
+    bootnode-evm-20_data: null
+    bootnode-evm-21_data: null
+    bootnode-evm-22_data: null
+    bootnode-evm-23_data: null
+    bootnode-evm-24_data: null
+    bootnode_logs: null
+

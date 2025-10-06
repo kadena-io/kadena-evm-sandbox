@@ -14,6 +14,7 @@ import json
 import yaml
 from secp256k1 import PrivateKey
 from typing import TypedDict, Any
+import base64
 
 DEFAULT_CHAINWEB_NODE_IMAGE = "ghcr.io/kadena-io/evm-devnet-chainweb-node:latest"
 DEFAULT_MINING_CLIENT_IMAGE = "ghcr.io/kadena-io/chainweb-mining-client:latest"
@@ -175,7 +176,8 @@ def payload_provider_config(
     mining_node: bool,
     node_name: str,
     evm_chains: list[int],
-    pact_chains: list[int]
+    pact_chains: list[int],
+    minerAddress: str | None = evmMinerAddress
 ) -> None:
     config = {
         "chainweb": {
@@ -188,7 +190,7 @@ def payload_provider_config(
                     }
                     |
                     ({
-                    "minerAddress": f"{evmMinerAddress}",
+                    "minerAddress": f"{minerAddress}",
                     }
                     if mining_node else {})
                 for cid in evm_chains
@@ -207,7 +209,7 @@ def payload_provider_config(
             }
             | {
                 "default": {
-                    "redeemAccount": "0xd42d71cdc2A0a78fE7fBE7236c19925f62C442bA",
+                    "redeemAccount": account_to_base64(minerAddress),
                     "redeemChain": 0,
                 },
             }
@@ -1043,9 +1045,10 @@ def chainweb_node(
     has_frontend: bool = False,
     exposed: bool = False,
     evm_impl: str = "reth",
+    minerAddress: str | None = None,
 ) -> Spec:
     jwtsecret_config(project_name, node_name)
-    payload_provider_config(project_name, mining_mode is not None, node_name, evm_cids, pact_cids)
+    payload_provider_config(project_name, mining_mode is not None, node_name, evm_cids, pact_cids, minerAddress)
     cdir = config_dir(project_name, node_name)
 
 
@@ -1278,6 +1281,11 @@ def minimal_project(update_secrets: bool = False) -> Spec:
     )
 
 
+def account_to_base64(account:str) -> str:
+    account_bytes = account.encode('utf-8')
+    # Encode to Base64
+    return base64.b64encode(account_bytes).decode('utf-8')
+
 # A project for testing and debugging chainweb-node itself. It runs several
 # nodes in different configurations.
 #
@@ -1320,6 +1328,7 @@ def kadena_dev_project(update_secrets: bool = False) -> Spec:
                 exposed=False,
                 has_frontend=False,
                 evm_impl=evm_impl,
+                minerAddress= "0xd42d71cdc2A0a78fE7fBE7236c19925f62C442bA"
             ),
             chainweb_node(
                 "kadena-dev",
@@ -1331,6 +1340,7 @@ def kadena_dev_project(update_secrets: bool = False) -> Spec:
                 exposed=False,
                 has_frontend=False,
                 evm_impl=evm_impl,
+                minerAddress="0x38a6BD13CC381c68751BE2cef97BD79EBcb2Bb31"
             ),
             chainweb_node(
                 "kadena-dev",

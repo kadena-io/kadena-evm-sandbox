@@ -3,23 +3,25 @@ import {
   $devnet,
   CONFIG,
   createDockerComposeFile,
+  createDockerFileName,
   generateDockerComposeAndStartNetwork,
   getDevnetStatus,
   stopAndRemoveNetwork,
   waitFor,
   waitForMinCutHeight,
 } from './devnet-utils';
-import { DOCKER_COMPOSE_FILE } from './devnet-utils';
 import { createLogger } from './utils';
 import { fs, $ } from 'zx';
+import { restartContainer, stopContainer } from './node-utils';
 
 $.verbose = CONFIG.VERBOSE;
 
+const DOCKER_COMPOSE_FILE = createDockerFileName('kadena-dev');
 const log = createLogger({ context: 'discontinued-node.test.ts' });
 
 describe(`e2e: verify ${DOCKER_COMPOSE_FILE} generation`, () => {
   test(`e2e: generate ${DOCKER_COMPOSE_FILE}`, async () => {
-    await createDockerComposeFile();
+    await createDockerComposeFile('kadena-dev');
     const fileExists = fs.existsSync(DOCKER_COMPOSE_FILE);
     expect(fileExists).toBe(true);
     expect(async () => {
@@ -32,17 +34,17 @@ describe(`e2e: verify ${DOCKER_COMPOSE_FILE} generation`, () => {
 describe('e2e: start network, stop node, restart node', () => {
   beforeAll(() => {
     if (CONFIG.CLEAN_BEFORE) {
-      return stopAndRemoveNetwork();
+      return stopAndRemoveNetwork('kadena-dev');
     }
   });
   afterAll(() => {
     if (CONFIG.CLEAN_AFTER) {
-      return stopAndRemoveNetwork();
+      //return stopAndRemoveNetwork('kadena-dev');
     }
   });
 
   test(`e2e: generate ${DOCKER_COMPOSE_FILE}`, async () => {
-    await generateDockerComposeAndStartNetwork();
+    await generateDockerComposeAndStartNetwork('kadena-dev');
 
     await waitFor(
       ({ chains, cutHeight }) => {
@@ -55,10 +57,11 @@ describe('e2e: start network, stop node, restart node', () => {
     );
 
     console.log('stopping bootnode-evm-20...');
-    await $devnet`docker compose -f ${DOCKER_COMPOSE_FILE} stop bootnode-evm-20`;
+    await stopContainer('bootnode-evm-20');
+    //await $devnet`docker compose -f ${DOCKER_COMPOSE_FILE} stop bootnode-evm-20`;
     log('bootnode-evm-20 stopped');
 
-    await waitForMinCutHeight(98);
+    await waitForMinCutHeight(98 * 2, { timeoutSeconds: 300 });
 
     console.log('verifying lowest chain-height is evm-20...');
     const devnetStatus = await getDevnetStatus();
@@ -73,7 +76,8 @@ describe('e2e: start network, stop node, restart node', () => {
     expect(lowestHeight).toEqual(evm20);
 
     console.log('restarting bootnode-evm-20...');
-    await $devnet`docker compose -f ${DOCKER_COMPOSE_FILE} start bootnode-evm-20`;
+    await restartContainer('bootnode-evm-20');
+    //await $devnet`docker compose -f ${DOCKER_COMPOSE_FILE} start bootnode-evm-20`;
     console.log('bootnode-evm-20 started');
 
     console.log('waiting for cut-height to catch up...');

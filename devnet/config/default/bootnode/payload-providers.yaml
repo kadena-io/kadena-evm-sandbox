@@ -89,5 +89,5 @@ chainweb:
       miner: *id001
       type: pact
     default:
-      redeemAccount: '0xd42d71cdc2A0a78fE7fBE7236c19925f62C442bA'
+      redeemAccount: MHhkNDJkNzFjZGMyQTBhNzhmRTdmQkU3MjM2YzE5OTI1ZjYyQzQ0MmJB
       redeemChain: 0

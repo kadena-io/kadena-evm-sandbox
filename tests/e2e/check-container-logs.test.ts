@@ -65,7 +65,7 @@ describe('e2e: check container logs during for errors, warnings, crashes etc', (
     'appdev-consensus',
   ];
 
-  const testContainer =
+  const filterErrorLines =
     (cleanFunction?: (container: string, lines: string[]) => string[]) =>
     async (container: string): Promise<string[]> => {
       console.log('starting log check for', container);
@@ -111,7 +111,7 @@ describe('e2e: check container logs during for errors, warnings, crashes etc', (
   };
 
   test('should show no errors on startup', async () => {
-    const promises = containerArray.map(testContainer(cleanLines));
+    const promises = containerArray.map(filterErrorLines(cleanLines));
     const results = await Promise.all(promises);
 
     results.forEach((logsArray) => {
@@ -122,7 +122,7 @@ describe('e2e: check container logs during for errors, warnings, crashes etc', (
     const devnetStatus = await getDevnetStatus();
     await waitForMinCutHeight(devnetStatus.cutHeight + 98 * 1, { timeoutSeconds: 150 });
 
-    const promises = containerArray.map(testContainer(cleanLines));
+    const promises = containerArray.map(filterErrorLines(cleanLines));
     const results = await Promise.all(promises);
 
     results.forEach((logsArray) => {

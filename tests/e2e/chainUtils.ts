@@ -1,7 +1,7 @@
 import { createPublicClient, defineChain, http } from 'viem';
 
 export type EVMChainId = '20' | '21' | '22' | '23' | '24';
-export const EVMCHAINS: EVMChainId[] = ['20', '21', '22', '23', '24'];
+export const EVMCHAINS: EVMChainId[] = ['20', '21', '22', '23', '24'] as const;
 const STARTBLOCKCHAINWEB = '5920';
 const STARTCHAIN_ID = '20';
 

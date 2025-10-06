@@ -177,9 +177,8 @@ def payload_provider_config(
     node_name: str,
     evm_chains: list[int],
     pact_chains: list[int],
-    minerAddress: str | None = None,
+    minerAddress: str | None = evmMinerAddress
 ) -> None:
-    innerEvmMinerAddress = minerAddress or evmMinerAddress
     config = {
         "chainweb": {
             "payloadProviders": {
@@ -191,7 +190,7 @@ def payload_provider_config(
                     }
                     |
                     ({
-                    "minerAddress": f"{innerEvmMinerAddress}",
+                    "minerAddress": f"{minerAddress}",
                     }
                     if mining_node else {})
                 for cid in evm_chains
@@ -210,7 +209,7 @@ def payload_provider_config(
             }
             | {
                 "default": {
-                    "redeemAccount": convertAccount(innerEvmMinerAddress),
+                    "redeemAccount": account_to_base64(minerAddress),
                     "redeemChain": 0,
                 },
             }
@@ -1282,7 +1281,7 @@ def minimal_project(update_secrets: bool = False) -> Spec:
     )
 
 
-def convertAccount(account:str) -> str:
+def account_to_base64(account:str) -> str:
     account_bytes = account.encode('utf-8')
     # Encode to Base64
     return base64.b64encode(account_bytes).decode('utf-8')

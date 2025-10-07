@@ -1,5 +1,26 @@
 #!/usr/bin/env bash
 
+function usage() {
+    echo "Usage: $0 [NODE_NAME]"
+    echo
+    echo "Fetch and display the current consensus state of the specified Chainweb node."
+    echo
+    echo "Options:"
+    echo "  NODE_NAME       The name of the Chainweb node to query (default: bootnode-consensus)"
+    echo "  -h, --help, -?  Show this help message and exit"
+}
+
+for arg in "$@"; do
+  case "$arg" in
+    --help|-h|-?)
+      usage
+      exit 0
+      ;;
+    *)
+      ;;
+  esac
+done
+
 export NODE=${1:-bootnode-consensus}
 
 function get_summary_json() {

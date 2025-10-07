@@ -45,7 +45,7 @@ function get_summary() {
             { chain: .key|tonumber
             , height: .value.height
             , hash: .value.hash
-            , type: (if ((.key|tonumber) > 19 and (.key|tonumber) < 40) then "evm" else "default" end)
+            , type: (if ((.key|tonumber) > 19 and (.key|tonumber) < 25) then "evm" else "default" end)
             } 
         | with_entries (.key |= ascii_downcase)
         ]

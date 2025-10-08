@@ -34,7 +34,7 @@ DEFAULT_GETH_IMAGE = "ethereum/client-go"
 # - a prototypic ERC-20 x-chain SPV precompile,
 # - a performance improvement for faster payload production.
 # - untested experimental support for non-monotonic updates.
-DEFAULT_RETH_IMAGE = "ghcr.io/kadena-io/kadena-reth:sha-eff370d"
+DEFAULT_RETH_IMAGE = "ghcr.io/kadena-io/kadena-reth:sha-efd0465"
 
 # The Ethereum network ID (chainID) base for the EVM chains in Kadena devnets.
 #
@@ -763,6 +763,8 @@ def evm_service(
             "node",
             "--datadir=/root/ethereum",
             "--chain=/config/chain-spec.json",
+            # config
+            "--engine.always-process-payload-attributes-on-canonical-head",
             # metrics
             "--metrics=0.0.0.0:9001",
             "--log.file.directory=/root/logs",

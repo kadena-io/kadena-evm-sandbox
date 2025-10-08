@@ -154,6 +154,7 @@ services:
         - node
         - --datadir=/root/ethereum
         - --chain=/config/chain-spec.json
+        - --engine.always-process-payload-attributes-on-canonical-head
         - --metrics=0.0.0.0:9001
         - --log.file.directory=/root/logs
         - --addr=0.0.0.0
@@ -185,7 +186,7 @@ services:
         - 30323/tcp
         - 30323/udp
         hostname: bootnode-evm-20
-        image: ${RETH_IMAGE:-ghcr.io/kadena-io/kadena-reth:sha-eff370d}
+        image: ${RETH_IMAGE:-ghcr.io/kadena-io/kadena-reth:sha-efd0465}
         networks:
             bootnode-internal: null
             p2p: null
@@ -219,6 +220,7 @@ services:
         - node
         - --datadir=/root/ethereum
         - --chain=/config/chain-spec.json
+        - --engine.always-process-payload-attributes-on-canonical-head
         - --metrics=0.0.0.0:9001
         - --log.file.directory=/root/logs
         - --addr=0.0.0.0
@@ -250,7 +252,7 @@ services:
         - 30324/tcp
         - 30324/udp
         hostname: bootnode-evm-21
-        image: ${RETH_IMAGE:-ghcr.io/kadena-io/kadena-reth:sha-eff370d}
+        image: ${RETH_IMAGE:-ghcr.io/kadena-io/kadena-reth:sha-efd0465}
         networks:
             bootnode-internal: null
             p2p: null
@@ -284,6 +286,7 @@ services:
         - node
         - --datadir=/root/ethereum
         - --chain=/config/chain-spec.json
+        - --engine.always-process-payload-attributes-on-canonical-head
         - --metrics=0.0.0.0:9001
         - --log.file.directory=/root/logs
         - --addr=0.0.0.0
@@ -315,7 +318,7 @@ services:
         - 30325/tcp
         - 30325/udp
         hostname: bootnode-evm-22
-        image: ${RETH_IMAGE:-ghcr.io/kadena-io/kadena-reth:sha-eff370d}
+        image: ${RETH_IMAGE:-ghcr.io/kadena-io/kadena-reth:sha-efd0465}
         networks:
             bootnode-internal: null
             p2p: null
@@ -349,6 +352,7 @@ services:
         - node
         - --datadir=/root/ethereum
         - --chain=/config/chain-spec.json
+        - --engine.always-process-payload-attributes-on-canonical-head
         - --metrics=0.0.0.0:9001
         - --log.file.directory=/root/logs
         - --addr=0.0.0.0
@@ -380,7 +384,7 @@ services:
         - 30326/tcp
         - 30326/udp
         hostname: bootnode-evm-23
-        image: ${RETH_IMAGE:-ghcr.io/kadena-io/kadena-reth:sha-eff370d}
+        image: ${RETH_IMAGE:-ghcr.io/kadena-io/kadena-reth:sha-efd0465}
         networks:
             bootnode-internal: null
             p2p: null
@@ -414,6 +418,7 @@ services:
         - node
         - --datadir=/root/ethereum
         - --chain=/config/chain-spec.json
+        - --engine.always-process-payload-attributes-on-canonical-head
         - --metrics=0.0.0.0:9001
         - --log.file.directory=/root/logs
         - --addr=0.0.0.0
@@ -445,7 +450,7 @@ services:
         - 30327/tcp
         - 30327/udp
         hostname: bootnode-evm-24
-        image: ${RETH_IMAGE:-ghcr.io/kadena-io/kadena-reth:sha-eff370d}
+        image: ${RETH_IMAGE:-ghcr.io/kadena-io/kadena-reth:sha-efd0465}
         networks:
             bootnode-internal: null
             p2p: null
@@ -477,7 +482,7 @@ services:
         - /bin/sh
         - -c
         hostname: bootnode-evm-init-20
-        image: ${RETH_IMAGE:-ghcr.io/kadena-io/kadena-reth:sha-eff370d}
+        image: ${RETH_IMAGE:-ghcr.io/kadena-io/kadena-reth:sha-efd0465}
         networks:
             bootnode-internal: null
         restart: 'no'
@@ -500,7 +505,7 @@ services:
         - /bin/sh
         - -c
         hostname: bootnode-evm-init-21
-        image: ${RETH_IMAGE:-ghcr.io/kadena-io/kadena-reth:sha-eff370d}
+        image: ${RETH_IMAGE:-ghcr.io/kadena-io/kadena-reth:sha-efd0465}
         networks:
             bootnode-internal: null
         restart: 'no'
@@ -523,7 +528,7 @@ services:
         - /bin/sh
         - -c
         hostname: bootnode-evm-init-22
-        image: ${RETH_IMAGE:-ghcr.io/kadena-io/kadena-reth:sha-eff370d}
+        image: ${RETH_IMAGE:-ghcr.io/kadena-io/kadena-reth:sha-efd0465}
         networks:
             bootnode-internal: null
         restart: 'no'
@@ -546,7 +551,7 @@ services:
         - /bin/sh
         - -c
         hostname: bootnode-evm-init-23
-        image: ${RETH_IMAGE:-ghcr.io/kadena-io/kadena-reth:sha-eff370d}
+        image: ${RETH_IMAGE:-ghcr.io/kadena-io/kadena-reth:sha-efd0465}
         networks:
             bootnode-internal: null
         restart: 'no'
@@ -569,7 +574,7 @@ services:
         - /bin/sh
         - -c
         hostname: bootnode-evm-init-24
-        image: ${RETH_IMAGE:-ghcr.io/kadena-io/kadena-reth:sha-eff370d}
+        image: ${RETH_IMAGE:-ghcr.io/kadena-io/kadena-reth:sha-efd0465}
         networks:
             bootnode-internal: null
         restart: 'no'

@@ -26,7 +26,7 @@ describe('e2e: initial block height limit', () => {
   });
   afterAll(() => {
     if (CONFIG.CLEAN_AFTER) {
-      // return stopAndRemoveNetwork('kadena-dev');
+      return stopAndRemoveNetwork('default');
     }
   });
 

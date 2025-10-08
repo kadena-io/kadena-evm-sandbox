@@ -1,5 +1,5 @@
 .venv
-# config
+config
 docker-compose.test.yml
 docker-compose.yml
 # docker-compose.yaml

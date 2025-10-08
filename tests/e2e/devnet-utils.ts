@@ -2,13 +2,14 @@ import { $, fs, path } from 'zx';
 import { waitSeconds } from './utils';
 import Docker from 'dockerode';
 
-export const docker = new Docker({ socketPath: '/var/run/docker.sock' });
+export const docker = new Docker();
 
 export const CONFIG = {
   CLEAN_BEFORE: true,
   CLEAN_AFTER: true,
   VERBOSE: false,
 };
+
 
 export const $devnet = $({ cwd: path.join(__dirname, '../../devnet') });
 export const $root = $({ cwd: path.join(__dirname, '../../') });
@@ -37,7 +38,12 @@ export async function stopAndRemoveNetwork(project: ProjectType) {
   }
 }
 
-export type ProjectType = 'minimal' | 'kadena-dev' | 'kadena-dev-singleton-evm' | 'appdev';
+export type ProjectType =
+  | 'default'
+  | 'minimal'
+  | 'kadena-dev'
+  | 'kadena-dev-singleton-evm'
+  | 'appdev';
 
 export async function generateDockerComposeAndStartNetwork(project: ProjectType) {
   await createDockerComposeFile(project);
@@ -46,7 +52,7 @@ export async function generateDockerComposeAndStartNetwork(project: ProjectType)
 
 export async function createDockerComposeFile(project: ProjectType) {
   console.log(`Generating ${createDockerFileName(project)}...`);
-  await $devnet`uv run python ./compose.py > ${createDockerFileName(project)} --project ${project}`;
+  await $devnet`uv run python ./compose.py --project ${project} > ${createDockerFileName(project)}`;
 }
 
 export async function startNetwork(project: ProjectType) {

@@ -8,9 +8,8 @@ import {
   getDevnetStatus,
   stopAndRemoveNetwork,
   waitFor,
-  waitForMinCutHeight,
 } from './devnet-utils';
-import { createLogger, waitSeconds } from './utils';
+import { createLogger } from './utils';
 import { fs, $ } from 'zx';
 import { restartContainer, stopContainer } from './node-utils';
 

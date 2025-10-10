@@ -16,12 +16,12 @@ import { restartContainer, stopContainer } from './node-utils';
 
 $.verbose = CONFIG.VERBOSE;
 
-const DOCKER_COMPOSE_FILE = createDockerFileName('kadena-dev');
+const DOCKER_COMPOSE_FILE = createDockerFileName('e2e-test-single-node');
 const log = createLogger({ context: 'discontinued-node.test.ts' });
 
 describe(`e2e: verify ${DOCKER_COMPOSE_FILE} generation`, () => {
   test(`e2e: generate ${DOCKER_COMPOSE_FILE}`, async () => {
-    await createDockerComposeFile('kadena-dev');
+    await createDockerComposeFile('e2e-test-single-node');
     const fileExists = fs.existsSync(DOCKER_COMPOSE_FILE);
     expect(fileExists).toBe(true);
     expect(async () => {
@@ -34,17 +34,17 @@ describe(`e2e: verify ${DOCKER_COMPOSE_FILE} generation`, () => {
 describe('e2e: start network, stop node, restart node', () => {
   beforeAll(() => {
     if (CONFIG.CLEAN_BEFORE) {
-      return stopAndRemoveNetwork('kadena-dev');
+      return stopAndRemoveNetwork('e2e-test-single-node');
     }
   });
   afterAll(() => {
     if (CONFIG.CLEAN_AFTER) {
-      //return stopAndRemoveNetwork('kadena-dev');
+      //return stopAndRemoveNetwork('e2e-test-single-node');
     }
   });
 
   test(`e2e: generate ${DOCKER_COMPOSE_FILE}`, async () => {
-    await generateDockerComposeAndStartNetwork('kadena-dev');
+    await generateDockerComposeAndStartNetwork('e2e-test-single-node');
 
     await waitFor(
       ({ chains, cutHeight }) => {
@@ -79,6 +79,7 @@ describe('e2e: start network, stop node, restart node', () => {
     await restartContainer('bootnode-evm-20');
     //await $devnet`docker compose -f ${DOCKER_COMPOSE_FILE} start bootnode-evm-20`;
     console.log('bootnode-evm-20 started');
+
 
     console.log('waiting for cut-height to catch up...');
     try {

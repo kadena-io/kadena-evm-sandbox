@@ -1289,6 +1289,37 @@ def default_project(update_secrets: bool = False) -> Spec:
     )
 
 
+def e2e_test_project(): 
+        # Create boostrap information
+    evm_cids = list(range(20, 25))
+    pact_cids = list(range(0, 20))
+    evm_impl = EVM_IMPL
+
+    # Create bootstrap node IDs
+    evm_bootnodes("default", "bootnode", evm_cids, update=update_secrets)
+
+    top: Spec = spec
+    top["name"] = "chainweb-evm"
+    top["networks"] = {"p2p": None}
+
+    return join_specs(
+        [
+            top,
+            chainweb_node(
+                "default",
+                "bootnode",
+                evm_cids,
+                pact_cids,
+                is_bootnode=True,
+                mining_mode="continuous",
+                exposed=True,
+                has_frontend=True,
+                evm_impl=evm_impl,
+            ),
+            other_services(["bootnode"]),
+        ]
+    )
+
 # A minimal project setup. It runs a single exposed bootnode that has simulation
 # mining enabled.
 #
@@ -1334,7 +1365,6 @@ def account_to_base64(account: str) -> str:
     account_bytes = account.encode("utf-8")
     # Encode to Base64
     return base64.b64encode(account_bytes).decode("utf-8")
-
 
 # A project for testing and debugging chainweb-node itself. It runs several
 # nodes in different configurations.
@@ -1617,6 +1647,108 @@ def mining_pool_project(update_secrets: bool = False) -> Spec:
     )
 
 
+def e2e_test_single_node(update_secrets: bool = False) -> Spec:
+    # Create boostrap information
+    evm_cids = list(range(20, 25))
+    pact_cids = list(range(0, 20))
+    evm_impl = EVM_IMPL
+
+    # Create bootstrap node IDs
+    evm_bootnodes("default", "bootnode", evm_cids, update=update_secrets)
+
+    top: Spec = spec
+    top["name"] = "chainweb-evm"
+    top["networks"] = {"p2p": None}
+
+    return join_specs(
+        [
+            top,
+            chainweb_node(
+                "default",
+                "bootnode",
+                evm_cids,
+                pact_cids,
+                is_bootnode=True,
+                mining_mode="on-demand",
+                exposed=True,
+                has_frontend=True,
+                evm_impl=evm_impl,
+            ),
+            other_services(["bootnode"]),
+        ]
+    )
+
+def e2e_test_multi_node(update_secrets: bool = False) -> Spec:
+    nodes = ["bootnode", "appdev", "miner-1", "miner-2"]
+    evm_impl = EVM_IMPL
+
+    # Create boostrap information
+    evm_cids = list(range(20, 25))
+    pact_cids = list(range(0, 20))
+
+    # Create bootstrap node IDs
+    evm_bootnodes("kadena-dev", "bootnode", evm_cids, update=update_secrets)
+
+    top: Spec = spec
+    top["name"] = "chainweb-evm"
+    top["networks"] = {"p2p": None}
+
+    return join_specs(
+        [
+            top,
+            chainweb_node(
+                "kadena-dev",
+                "bootnode",
+                evm_cids,
+                pact_cids,
+                is_bootnode=True,
+                mining_mode=None,
+                exposed=False,
+                has_frontend=False,
+                evm_impl=evm_impl,
+            ),
+            chainweb_node(
+                "kadena-dev",
+                "miner-1",
+                evm_cids,
+                pact_cids,
+                is_bootnode=False,
+                mining_mode="on-demand",
+                exposed=False,
+                has_frontend=False,
+                evm_impl=evm_impl,
+                minerAddress="0xd42d71cdc2A0a78fE7fBE7236c19925f62C442bA",
+            ),
+            chainweb_node(
+                "kadena-dev",
+                "miner-2",
+                evm_cids,
+                pact_cids,
+                is_bootnode=False,
+                mining_mode="on-demand",
+                exposed=False,
+                has_frontend=False,
+                evm_impl=evm_impl,
+                minerAddress="0x38a6BD13CC381c68751BE2cef97BD79EBcb2Bb31",
+            ),
+            chainweb_node(
+                "kadena-dev",
+                "appdev",
+                [20, 24],
+                [1, 5, 19],
+                is_bootnode=False,
+                mining_mode=None,
+                exposed=True,
+                has_frontend=True,
+                evm_impl=evm_impl,
+            ),
+            other_services(nodes),
+        ]
+    )
+
+
+
+
 # #############################################################################
 # main
 
@@ -1667,5 +1799,9 @@ match args.project:
         print(yaml.dump(pact_project(update_secrets=update_secrets), indent=4))
     case "mining-pool":
         print(yaml.dump(mining_pool_project(update_secrets=update_secrets), indent=4))
+    case "e2e-test-single-node":
+        print(yaml.dump(e2e_test_single_node(update_secrets=update_secrets), indent=4))
+    case "e2e-test-multi-miner":
+        print(yaml.dump(e2e_test_multi_node(update_secrets=update_secrets), indent=4))
     case _:
         print(yaml.dump(default_project(update_secrets=update_secrets), indent=4))

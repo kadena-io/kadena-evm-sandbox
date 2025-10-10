@@ -1,5 +1,7 @@
 import net from 'net';
 import fetch from 'node-fetch';
+import { continuousMining } from './continuousMining';
+import { retry } from './utils';
 
 // Configuration from environment variables
 const config = {
@@ -24,7 +26,7 @@ const config = {
 export async function makeBlocks(chainMap: Record<string, number>): Promise<Response> {
   const chainCount = Object.keys(chainMap).length;
   const blockCounts = Object.values(chainMap);
-  
+
   if (blockCounts.every(count => count === blockCounts[0])) {
     console.log(`[${new Date().toLocaleTimeString()}] Mining ${blockCounts[0]} block(s) on ${chainCount} chains`);
   } else {
@@ -109,11 +111,11 @@ async function startTriggeredMining() {
         const rawData = data.toString();
         const chainId = rawData.match(/X-Original-URI: .*\/chain\/(\d+)\//)?.[1] as string;
         const body = JSON.parse(rawData.split('\r\n\r\n')[1] || '{}');
-        
+
         if (['eth_sendRawTransaction', 'eth_sendTransaction'].includes(body.method)) {
           console.log(`⚡ Transaction detected on chain ${chainId}`);
           miningTriggered = true;
-          
+
           setTimeout(async () => {
             console.log(`⛏️  Mining ${config.TRIGGER_BLOCK_COUNT} blocks on chain ${chainId}`);
             await makeBlocks({ [chainId]: config.TRIGGER_BLOCK_COUNT });
@@ -144,31 +146,17 @@ async function startTriggeredMining() {
 // Continuous mining mode
 async function startContinuousMining() {
   console.log('🔁 Starting continuous mining mode');
-  const defaultChainMap = getDefaultChainMap();
-  const chainCount = config.CHAINS.length;
-  let lastHeight = await retryOperation(getCutHeight);
-  let expectedHeight = lastHeight + chainCount;
-  
-  console.log(`📏 Current height: ${lastHeight}, Target: ${expectedHeight}`);
+  let interval: number;
 
-  // Mining interval
-  const interval = setInterval(async () => {
-    try {
-      const currentHeight = await getCutHeight();
-      
-      if (currentHeight < expectedHeight) {
-        console.log(`⏳ Height: ${currentHeight}/${expectedHeight} - mining...`);
-        await makeBlocks(defaultChainMap);
-      } else {
-        expectedHeight = currentHeight + chainCount;
-        console.log(`✅ Reached target. New target: ${expectedHeight}`);
-      }
-      
-      lastHeight = currentHeight;
-    } catch (error) {
-      console.error('Continuous mining error:', error);
-    }
-  }, config.CONTINUOUS_INTERVAL);
+  retry(
+    async () => {
+      interval = await continuousMining().catch((error) => {
+        console.error('Continuous mining error:', error);
+        throw error;
+      });
+    },
+    { count: 5, delay: 5000 }
+  );
 
   // Cleanup
   process.on('SIGTERM', () => {
@@ -205,7 +193,7 @@ async function runWithRetry() {
   } catch (error) {
     errorCount++;
     console.error(`Main error (${errorCount}/${MAX_ERRORS}):`, error);
-    
+
     if (errorCount < MAX_ERRORS) {
       console.log(`Retrying in 2 seconds...`);
       setTimeout(runWithRetry, 2000);

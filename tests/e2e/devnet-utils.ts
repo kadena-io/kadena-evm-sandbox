@@ -38,12 +38,7 @@ export async function stopAndRemoveNetwork(project: ProjectType) {
   }
 }
 
-export type ProjectType =
-  | 'default'
-  | 'minimal'
-  | 'kadena-dev'
-  | 'kadena-dev-singleton-evm'
-  | 'appdev';
+export type ProjectType = 'e2e-test-single-node' | 'e2e-test-multi-miner';
 
 export async function generateDockerComposeAndStartNetwork(project: ProjectType) {
   await createDockerComposeFile(project);
@@ -52,12 +47,12 @@ export async function generateDockerComposeAndStartNetwork(project: ProjectType)
 
 export async function createDockerComposeFile(project: ProjectType) {
   console.log(`Generating ${createDockerFileName(project)}...`);
-  await $devnet`uv run python ./compose.py --project ${project} > ${createDockerFileName(project)}`;
+  await $devnet`MINING_MODE=continuous uv run python ./compose.py --project ${project} > ${createDockerFileName(project)}`;
 }
 
 export async function startNetwork(project: ProjectType) {
   console.log('starting network...');
-  await $devnet`docker compose -f ${createDockerFileName(project)} up -d`;
+  await $devnet`MINING_MODE=continuous docker compose -f ${createDockerFileName(project)} up -d`;
 }
 
 export interface DevnetChainStatus {

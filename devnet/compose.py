@@ -16,17 +16,25 @@ from secp256k1 import PrivateKey
 from typing import TypedDict, Any
 import base64
 
+import logging
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+
+# DEFAULT_CHAINWEB_NODE_IMAGE = "ghcr.io/kadena-io/chainweb-node:pp-evm"
 DEFAULT_CHAINWEB_NODE_IMAGE = "ghcr.io/kadena-io/evm-devnet-chainweb-node:latest"
+# DEFAULT_CHAINWEB_NODE_IMAGE = "ghcr.io/kadena-io/chainweb-node:sha-0847474-frozen"
 DEFAULT_MINING_CLIENT_IMAGE = "ghcr.io/kadena-io/chainweb-mining-client:latest"
 
 # This does not yet include any precompiles.
 DEFAULT_GETH_IMAGE = "ethereum/client-go"
 
-# This includes 
+# This includes
 # - a prototypic ERC-20 x-chain SPV precompile,
 # - a performance improvement for faster payload production.
 # - untested experimental support for non-monotonic updates.
-DEFAULT_RETH_IMAGE = "ghcr.io/kadena-io/kadena-reth:sha-eff370d"
+DEFAULT_RETH_IMAGE = "ghcr.io/kadena-io/kadena-reth:sha-efd0465"
 
 # The Ethereum network ID (chainID) base for the EVM chains in Kadena devnets.
 #
@@ -37,7 +45,7 @@ DEFAULT_RETH_IMAGE = "ghcr.io/kadena-io/kadena-reth:sha-eff370d"
 NET_ID_BASE = 1789
 
 # Default EVM implementation to use.
-EVM_IMPL="reth"
+EVM_IMPL = "reth"
 
 # #############################################################################
 # BOILERPLATE
@@ -138,8 +146,10 @@ def join_specs(specs: list[Spec]) -> Spec:
 # CONFIGURATION FILES
 # #############################################################################
 
+
 def config_dir(project_name: str, node_name: str) -> str:
     return f"./config/{project_name}/{node_name}"
+
 
 # #############################################################################
 # Payload Provider Configuration for Consensus
@@ -165,10 +175,10 @@ def jwtsecret_config(project_name, node_name: str, update: bool = False) -> None
     An existing file is not overwritten unless `update` is set to True.
     """
     os.makedirs(config_dir(project_name, node_name), exist_ok=True)
-    file = f"{config_dir(project_name,node_name)}/jwtsecret"
+    file = f"{config_dir(project_name, node_name)}/jwtsecret"
     if update or not os.path.exists(file):
         with open(file, "wb") as f:
-            f.write(jwtsecret.encode('ascii'))
+            f.write(jwtsecret.encode("ascii"))
 
 
 def payload_provider_config(
@@ -177,39 +187,41 @@ def payload_provider_config(
     node_name: str,
     evm_chains: list[int],
     pact_chains: list[int],
-    minerAddress: str | None = evmMinerAddress
+    minerAddress: str | None = evmMinerAddress,
 ) -> None:
     config = {
         "chainweb": {
             "payloadProviders": {
-                f"chain-{cid}":
-                    {
+                f"chain-{cid}": {
                     "type": "evm",
                     "engineUri": f"http://{node_name}-evm-{cid}:8551/",
                     "engineJwtSecret": f"{jwtsecret}",
+                }
+                | (
+                    {
+                        "minerAddress": f"{minerAddress}",
                     }
-                    |
-                    ({
-                    "minerAddress": f"{minerAddress}",
-                    }
-                    if mining_node else {})
+                    if mining_node
+                    else {}
+                )
                 for cid in evm_chains
             }
             | {
-                f"chain-{cid}":
-                    {
+                f"chain-{cid}": {
                     "type": "pact",
+                }
+                | (
+                    {
+                        "miner": defaultPactMiner,
                     }
-                    |
-                    ({
-                    "miner": defaultPactMiner,
-                    }
-                    if mining_node else {})
+                    if mining_node
+                    else {}
+                )
                 for cid in pact_chains
             }
             | {
                 "default": {
-                    "redeemAccount": account_to_base64(minerAddress),
+                    "redeemAccount": account_to_base64(minerAddress),  # type: ignore
                     "redeemChain": 0,
                 },
             }
@@ -291,9 +303,15 @@ def nginx_index_html(project_name, node_name, evm_cids, port=1848):
     ```
 
     ## Links
-    - [/chainweb/0.0/evm-development/cut](http://localhost:{port}/chainweb/0.0/evm-development/cut)
-    - [/chainweb/0.0/evm-development/chain/0/pact/api/v1](http://localhost:{port}/chainweb/0.0/evm-development/chain/0/pact/api/v1)
-    - [/chainweb/0.0/evm-development/chain/20/evm/rpc](http://localhost:{port}/chainweb/0.0/evm-development/chain/20/evm/rpc)
+    - [/chainweb/0.0/evm-development/cut](http://localhost:{
+                port
+            }/chainweb/0.0/evm-development/cut)
+    - [/chainweb/0.0/evm-development/chain/0/pact/api/v1](http://localhost:{
+                port
+            }/chainweb/0.0/evm-development/chain/0/pact/api/v1)
+    - [/chainweb/0.0/evm-development/chain/20/evm/rpc](http://localhost:{
+                port
+            }/chainweb/0.0/evm-development/chain/20/evm/rpc)
 
     ## Endpoints
     The following endpoints are available. They all start with prefix
@@ -308,10 +326,12 @@ def nginx_index_html(project_name, node_name, evm_cids, port=1848):
 <summary>Pact API</summary>
     <zero-md>
     <script type="text/markdown">
-{''.join(
-    f'- [Pact API <prefix>/chain/{cid}/pact/api/v1](http://localhost:{port}/chainweb/0.0/evm-development/chain/{cid}/pact/api/v1)\n'
-    for cid in pact_chains
-)}
+{
+                "".join(
+                    f"- [Pact API <prefix>/chain/{cid}/pact/api/v1](http://localhost:{port}/chainweb/0.0/evm-development/chain/{cid}/pact/api/v1)\n"
+                    for cid in pact_chains
+                )
+            }
         </script>
     </zero-md>
 </details>
@@ -319,10 +339,12 @@ def nginx_index_html(project_name, node_name, evm_cids, port=1848):
     <summary>EVM RPC</summary>
     <zero-md>
         <script type="text/markdown">
-    {''.join(
-        f'- [EVM RPC <prefix>/chain/{cid}/evm/rpc](http://localhost:{port}/chainweb/0.0/evm-development/chain/{cid}/evm/rpc)\n'
-        for cid in evm_cids
-    )}
+    {
+                "".join(
+                    f"- [EVM RPC <prefix>/chain/{cid}/evm/rpc](http://localhost:{port}/chainweb/0.0/evm-development/chain/{cid}/evm/rpc)\n"
+                    for cid in evm_cids
+                )
+            }
         </script>
     </zero-md>
 </details>
@@ -332,25 +354,28 @@ def nginx_index_html(project_name, node_name, evm_cids, port=1848):
 ## Hardhat config
 ```
 {
-    json.dumps({
-        "chainweb": {
-            "devnet": {
-                "chains": len(evm_cids),
-                "type": 'external',
-                "chainwebChainIdOffset": 20,
-                "chainIdOffset": NET_ID_BASE,
-                "accounts": [
-                    "0xe711c50150f500fdebec57e5c299518c2f7b36271c138c55759e5b4515dc7161",
-                    "0xb332ddc4e0801582e154d10cad8b672665656cbf0097f2b47483c0cfe3261299",
-                    "0x28536b3ec112d99faeceb6cfaccd4b2b920fcb7cd6689ed3b2f842142ce196cb",
-                    "0x9ff14f986d2e7c49c6b1f598aa55b8d79adfebb3e1c094abad8bd515ddcb1d6a",
-                    "0x14fcd41cf1adc5ac71e1da6e8463a293520be53a1a0059d9730a01fc5aee5cb2"
-                ],
-                "externalHostUrl": f"http://localhost:{port}/chainweb/0.0/evm-development/",
-            },
-        },
-    }, indent=2)
-}
+                json.dumps(
+                    {
+                        "chainweb": {
+                            "devnet": {
+                                "chains": len(evm_cids),
+                                "type": "external",
+                                "chainwebChainIdOffset": 20,
+                                "chainIdOffset": NET_ID_BASE,
+                                "accounts": [
+                                    "0xe711c50150f500fdebec57e5c299518c2f7b36271c138c55759e5b4515dc7161",
+                                    "0xb332ddc4e0801582e154d10cad8b672665656cbf0097f2b47483c0cfe3261299",
+                                    "0x28536b3ec112d99faeceb6cfaccd4b2b920fcb7cd6689ed3b2f842142ce196cb",
+                                    "0x9ff14f986d2e7c49c6b1f598aa55b8d79adfebb3e1c094abad8bd515ddcb1d6a",
+                                    "0x14fcd41cf1adc5ac71e1da6e8463a293520be53a1a0059d9730a01fc5aee5cb2",
+                                ],
+                                "externalHostUrl": f"http://localhost:{port}/chainweb/0.0/evm-development/",
+                            },
+                        },
+                    },
+                    indent=2,
+                )
+            }
 ```
 </script>
 </zero-md>
@@ -415,16 +440,21 @@ http {{
             add_header Access-Control-Allow-Origin *;
         }}
 
-{''.join(
-        f"""location = /mining-trigger {{
+{
+                "".join(
+                    f'''location = /mining-trigger {{
             internal;
             proxy_pass http://{node_name}-mining-trigger:11848/trigger;
             proxy_set_header X-Original-URI $request_uri;
-        }}""") if mining else ''
-}
+        }}'''
+                )
+                if mining
+                else ""
+            }
 
-{''.join(
-        f"""
+{
+                "".join(
+                    f'''
         location /chainweb/0.0/evm-development/chain/{cid}/evm/rpc {{
             mirror /mining-trigger;
             add_header Access-Control-Allow-Origin *;
@@ -440,9 +470,10 @@ http {{
             proxy_http_version 1.1;
             proxy_read_timeout 86400;
         }}
-"""
-        for cid in evm_cids
-    )}
+'''
+                    for cid in evm_cids
+                )
+            }
     }}
 }}
 """
@@ -478,7 +509,9 @@ http {{
 #   - https://api.chainweb.com/chainweb/{apiVersion}/mainnet01/chain/{chainId}/evm/api/v1/... -> bootnode-evm-{cid}:8545
 
 
-def nginx_reverse_proxy(node_name: str, evm_cids: list[int], exposed: bool = False) -> Service:
+def nginx_reverse_proxy(
+    node_name: str, evm_cids: list[int], exposed: bool = False
+) -> Service:
     result: Service = {
         "container_name": f"{node_name}-frontend",
         "hostname": f"{node_name}-frontend",
@@ -659,8 +692,10 @@ def chainweb_consensus_service(
 
     return result
 
+
 # ############################################################################# #
 # EVM Services
+
 
 def evm_init_service(
     node_name: str,
@@ -670,12 +705,10 @@ def evm_init_service(
 ) -> Service:
     if evm_impl == "reth":
         image = f"${{RETH_IMAGE:-{DEFAULT_RETH_IMAGE}}}"
-        command = [ "true" ]
+        command = ["true"]
     elif evm_impl == "geth":
         image = f"${{GETH_IMAGE:-{DEFAULT_GETH_IMAGE}}}"
-        command = [ 
-            '[ -d "/root/.ethereum/geth" ] || geth init /config/chain-spec.json'
-        ]
+        command = ['[ -d "/root/.ethereum/geth" ] || geth init /config/chain-spec.json']
     else:
         raise ValueError(f"Unknown EVM implementation: {evm_impl}")
 
@@ -699,10 +732,11 @@ def evm_init_service(
             f"{node_name}-internal": None,
         },
         "ulimits": {"nofile": {"soft": 65535, "hard": 65535}},
-        "entrypoint": [ "/bin/sh", "-c" ],
+        "entrypoint": ["/bin/sh", "-c"],
         "command": command,
     }
     return result
+
 
 def evm_service(
     node_name: str,
@@ -714,7 +748,6 @@ def evm_service(
     evm_impl: str = "reth",
     use_private_apis: bool = True,
 ) -> Service:
-
     # apis:
     default_apis = "eth,net,web3"
     private_apis = "admin,debug,trace,txpool"
@@ -730,6 +763,8 @@ def evm_service(
             "node",
             "--datadir=/root/ethereum",
             "--chain=/config/chain-spec.json",
+            # config
+            "--engine.always-process-payload-attributes-on-canonical-head",
             # metrics
             "--metrics=0.0.0.0:9001",
             "--log.file.directory=/root/logs",
@@ -758,10 +793,10 @@ def evm_service(
             f"--discovery.port={30303 + cid}",
             # persistence
             "--engine.persistence-threshold=0",
-            "--engine.memory-block-buffer-target=0"
+            "--engine.memory-block-buffer-target=0",
         ]
     elif evm_impl == "geth":
-        private_apis = private_apis + ",personal" # ,miner"
+        private_apis = private_apis + ",personal"  # ,miner"
         apis = default_apis + "," + private_apis if use_private_apis else default_apis
         image = f"${{GETH_IMAGE:-{DEFAULT_GETH_IMAGE}}}"
         nodekey_arg = "--nodekey=/run/secrets/p2p-secret"
@@ -800,7 +835,9 @@ def evm_service(
         "restart": "unless-stopped",
         "image": image,
         "depends_on": {
-            f"{node_name}-evm-init-{cid}": {"condition": "service_completed_successfully"}
+            f"{node_name}-evm-init-{cid}": {
+                "condition": "service_completed_successfully"
+            }
         },
         "secrets": [
             {
@@ -845,7 +882,7 @@ def evm_service(
 
     # bootnode
     if is_bootnode:
-        result["entrypoint"] += [ nodekey_arg ]
+        result["entrypoint"] += [nodekey_arg]
         result["secrets"] += [
             {
                 "source": f"{node_name}-evm-{cid}-p2p-secret",
@@ -853,7 +890,7 @@ def evm_service(
             }
         ]
     if boot_enodes is not None and len(boot_enodes) > 0:
-        result["entrypoint"] += [f"--bootnodes={",".join(boot_enodes)}"]
+        result["entrypoint"] += [f"--bootnodes={','.join(boot_enodes)}"]
 
     return result
 
@@ -991,8 +1028,8 @@ def debug(nodes: list[str]) -> Service:
         "environment": {
             "HEIGHT": "${HEIGHT:-latest}",
             "CL_NODES": "${CL_NODES:-"
-                + ",".join([n + "-consensus" for n in nodes])
-                + "}",
+            + ",".join([n + "-consensus" for n in nodes])
+            + "}",
             "JWT_SECRET": f"${{JWT_SECRET:-{jwtsecret}}}",
         },
         "command": [
@@ -1045,12 +1082,18 @@ def chainweb_node(
     has_frontend: bool = False,
     exposed: bool = False,
     evm_impl: str = "reth",
-    minerAddress: str | None = None,
+    minerAddress: str | None = evmMinerAddress,
 ) -> Spec:
     jwtsecret_config(project_name, node_name)
-    payload_provider_config(project_name, mining_mode is not None, node_name, evm_cids, pact_cids, minerAddress)
+    payload_provider_config(
+        project_name,
+        mining_mode is not None,
+        node_name,
+        evm_cids,
+        pact_cids,
+        minerAddress,
+    )
     cdir = config_dir(project_name, node_name)
-
 
     # EVM bootnodes for each EVM chain:
     def boot_enodes(cid: int) -> list[str]:
@@ -1062,12 +1105,12 @@ def chainweb_node(
 
     result: Spec = {
         "name": f"{node_name}",
-        "secrets": {
-            f"{node_name}-jwtsecret": {"file": f"{cdir}/jwtsecret"}
-        },
+        "secrets": {f"{node_name}-jwtsecret": {"file": f"{cdir}/jwtsecret"}},
         "configs": {
             f"{node_name}-consensus-config": {"file": "./config/consensus-config.yaml"},
-            f"{node_name}-payload-providers": { "file": f"{cdir}/payload-providers.yaml"},
+            f"{node_name}-payload-providers": {
+                "file": f"{cdir}/payload-providers.yaml"
+            },
         }
         | {
             f"{node_name}-chain-spec-{cid}": {
@@ -1105,7 +1148,7 @@ def chainweb_node(
             f"{node_name}-evm-{cid}": evm_service(
                 node_name,
                 cid,
-                boot_enodes = boot_enodes(cid) if not is_bootnode else [],
+                boot_enodes=boot_enodes(cid) if not is_bootnode else [],
                 is_bootnode=is_bootnode,
                 exposed=exposed,
                 evm_impl=evm_impl,
@@ -1115,9 +1158,13 @@ def chainweb_node(
     }
 
     if has_frontend:
-
         # Create nginx reverse proxy configuration for exposed nodes
-        nginx_proxy_config(project_name, node_name, evm_cids, mining=False if mining_mode is None else True)
+        nginx_proxy_config(
+            project_name,
+            node_name,
+            evm_cids,
+            mining=False if mining_mode is None else True,
+        )
         nginx_index_html(project_name, node_name, evm_cids)
         cdir = config_dir(project_name, node_name)
 
@@ -1237,9 +1284,10 @@ def default_project(update_secrets: bool = False) -> Spec:
                 has_frontend=True,
                 evm_impl=evm_impl,
             ),
-            other_services(['bootnode']),
+            other_services(["bootnode"]),
         ]
     )
+
 
 # A minimal project setup. It runs a single exposed bootnode that has simulation
 # mining enabled.
@@ -1281,10 +1329,12 @@ def minimal_project(update_secrets: bool = False) -> Spec:
     )
 
 
-def account_to_base64(account:str) -> str:
-    account_bytes = account.encode('utf-8')
+def account_to_base64(account: str) -> str:
+    logger.info(f"Encoding account to Base64: {account}")
+    account_bytes = account.encode("utf-8")
     # Encode to Base64
-    return base64.b64encode(account_bytes).decode('utf-8')
+    return base64.b64encode(account_bytes).decode("utf-8")
+
 
 # A project for testing and debugging chainweb-node itself. It runs several
 # nodes in different configurations.
@@ -1328,7 +1378,7 @@ def kadena_dev_project(update_secrets: bool = False) -> Spec:
                 exposed=False,
                 has_frontend=False,
                 evm_impl=evm_impl,
-                minerAddress= "0xd42d71cdc2A0a78fE7fBE7236c19925f62C442bA"
+                minerAddress="0xd42d71cdc2A0a78fE7fBE7236c19925f62C442bA",
             ),
             chainweb_node(
                 "kadena-dev",
@@ -1340,7 +1390,7 @@ def kadena_dev_project(update_secrets: bool = False) -> Spec:
                 exposed=False,
                 has_frontend=False,
                 evm_impl=evm_impl,
-                minerAddress="0x38a6BD13CC381c68751BE2cef97BD79EBcb2Bb31"
+                minerAddress="0x38a6BD13CC381c68751BE2cef97BD79EBcb2Bb31",
             ),
             chainweb_node(
                 "kadena-dev",
@@ -1573,7 +1623,9 @@ def mining_pool_project(update_secrets: bool = False) -> Spec:
 parser = argparse.ArgumentParser()
 parser.add_argument("--exposed-chains")
 parser.add_argument("--project")
-parser.add_argument("--update-secrets", action="store_true", help="Update existing secrets")
+parser.add_argument(
+    "--update-secrets", action="store_true", help="Update existing secrets"
+)
 args = parser.parse_args()
 
 # All available EVM chains
@@ -1594,15 +1646,21 @@ match args.project:
     case "kadena-dev":
         print(yaml.dump(kadena_dev_project(update_secrets=update_secrets), indent=4))
     case "kadena-dev-singleton-evm":
-        print(yaml.dump(kadena_dev_singleton_evm_project(update_secrets=update_secrets), indent=4))
+        print(
+            yaml.dump(
+                kadena_dev_singleton_evm_project(update_secrets=update_secrets),
+                indent=4,
+            )
+        )
     case "appdev":
         print(
             yaml.dump(
                 app_dev_project(
                     exposed_evm_chains,
                     exposed_pact_chains,
-                    update_secrets=update_secrets
-                ), indent=4
+                    update_secrets=update_secrets,
+                ),
+                indent=4,
             )
         )
     case "pact":

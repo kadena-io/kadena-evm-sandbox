@@ -21,12 +21,14 @@ export const stopContainer = async (containerName: string) => {
   try {
     // Get the container by ID or name
     const container = docker.getContainer(containerName);
+    console.log(`Stopping container: ${containerName}`);
 
     // Stop the container
     await container.stop();
     console.log(`Container ${containerName} stopped successfully.`);
   } catch (error: any) {
     console.error('Error stopping container:', error.message);
+    throw error;
   }
 };
 

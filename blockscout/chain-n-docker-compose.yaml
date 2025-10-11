@@ -118,8 +118,13 @@ services:
     labels:
       caddy: ${HTTP_PROTOCOL}://chain-${CHAINWEB_CHAIN_ID}.${BASE_EXPLORER_DOMAIN}
       caddy.handle_path: "/stats-service/*"
+      caddy.handle_path.@allowed_origins: "header Origin *"
       caddy.handle_path.0_rewrite: "* {uri}"
-      caddy.handle_path.reverse_proxy: "{{ upstreams 8050 }}"
+      caddy.handle_path.0_reverse_proxy: "{{ upstreams 8050 }}"
+      caddy.handle_path.0_header: "@allowed_origins Access-Control-Allow-Credentials true"
+      caddy.handle_path.1_header: "@allowed_origins Access-Control-Allow-Origin {http.request.header.Origin}"
+      caddy.handle_path.2_header: "@allowed_origins Access-Control-Allow-Methods \"GET, POST, OPTIONS\""
+      caddy.handle_path.3_header: "@allowed_origins Access-Control-Allow-Headers *"
 
   user-ops-indexer:
     depends_on:

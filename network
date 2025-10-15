@@ -155,7 +155,7 @@ function solidity () {
             shift
             (
                 cd solidity &&
-                npx hardhat test
+                npx hardhat test "$@"
             )
             ;;
         "")

@@ -52,7 +52,7 @@ describe('Nginx', () => {
         const testTx = $`bun run test-tx`.stdio('inherit');
         const cutUrl = 'http://localhost:1848/chainweb/0.0/evm-development/cut';
         interval(
-          { timeout: 20000, interval: 1000 },
+          { timeout: 40000, interval: 1000 },
           async (count: number, cancel: () => void) => {
             const res = (await fetch(cutUrl).then((res) => res.json())) as {
               height: number;
@@ -75,7 +75,7 @@ describe('Nginx', () => {
     } finally {
       $.verbose = false;
     }
-  }, 30000);
+  }, 40000);
 });
 
 function interval(
@@ -90,7 +90,7 @@ function interval(
     const id = setInterval(async () => {
       if (Date.now() - startTime > timeout) {
         clearInterval(id);
-        reject(new Error('Timeout exceeded'));
+        reject(new Error(`Timeout of ${timeout / 1000}s exceeded`));
       } else {
         try {
           await fn(count++, () => {

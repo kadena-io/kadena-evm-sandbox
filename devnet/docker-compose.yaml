@@ -115,7 +115,7 @@ services:
                 OK" <&3 || exit 1'
             timeout: 30s
         hostname: bootnode-consensus
-        image: ${CHAINWEB_NODE_IMAGE:-ghcr.io/kadena-io/evm-devnet-chainweb-node:latest}
+        image: ${CHAINWEB_NODE_IMAGE:-ghcr.io/kadena-io/evm-chainweb-node:sandbox}
         labels:
             com.chainweb.devnet.chainweb-node: ''
             com.chainweb.devnet.description: EVM Devnet Chainweb Node
@@ -185,7 +185,7 @@ services:
         - 30323/tcp
         - 30323/udp
         hostname: bootnode-evm-20
-        image: ${RETH_IMAGE:-ghcr.io/kadena-io/kadena-reth:sha-eff370d}
+        image: ${RETH_IMAGE:-ghcr.io/kadena-io/kadena-reth:sha-efd0465}
         networks:
             bootnode-internal: null
             p2p: null

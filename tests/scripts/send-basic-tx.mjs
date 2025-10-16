@@ -60,7 +60,7 @@ async function main() {
 
       // Wait a bit before trying again
       await new Promise((resolve) => setTimeout(resolve, 1000));
-      console.log('Still waiting...');
+      console.log(`Still waiting (since ${(Date.now() - startTime) / 1000}s) ...`);
     }
 
     console.log('Timeout reached! Transaction may still be pending.');
